@@ -74,16 +74,14 @@ const CARD_PAD = 40; // the cards' own bottom padding (pb-10)
 const CARD_GAP = 24; // breathing room between footage and text
 
 function towerCentre(t: number) {
-  const p = TOWER_TRACK;
-  if (t <= p[0][0]) return p[0][1];
-  for (let i = 1; i < p.length; i++) {
-    if (t <= p[i][0]) {
-      const [t0, x0] = p[i - 1];
-      const [t1, x1] = p[i];
-      return x0 + ((x1 - x0) * (t - t0)) / (t1 - t0);
-    }
-  }
-  return p[p.length - 1][1];
+  // Smooth continuous S-curve (smoothstep) from the crown (49.6% at t=0)
+  // to the shaft (25.8% at t=3.2s). Zero initial/final velocity ensures
+  // the tower seamlessly glides without any sudden jumps or popping from the side.
+  if (t <= 0.2) return 49.6;
+  if (t >= 3.2) return 25.8;
+  const p = (t - 0.2) / 3.0;
+  const ease = p * p * (3 - 2 * p);
+  return 49.6 + (25.8 - 49.6) * ease;
 }
 
 /** Cross-fade between two cards, in seconds of video time. */
@@ -184,9 +182,6 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
        * Chooses the `object-position` that puts the tower where we want it in
        * the container, given how hard cover is cropping at this size. Wide
        * screens crop little, so they keep the default framing.
-       *
-       * Keeping NARROW_TARGET = 0.5 ensures seamless, continuous tracking
-       * from Hero down through the entire timeline with zero jumping or popping.
        */
       const pan = (t: number) => {
         const w = video.clientWidth;
@@ -205,9 +200,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         }
         const f = towerCentre(t) / 100;
         const rawX = ((NARROW_TARGET * w - f * rendered) / (w - rendered)) * 100;
-        // Dampen horizontal shift so the tower stays stable in frame without overshooting to the right and swinging back
-        const dampedX = 50 + (rawX - 50) * 0.55;
-        video.style.objectPosition = `${clamp01(dampedX / 100) * 100}% 50%`;
+        video.style.objectPosition = `${clamp01(rawX / 100) * 100}% 50%`;
       };
 
       const frame = (f: number) => {
