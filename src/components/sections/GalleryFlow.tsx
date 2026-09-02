@@ -5,9 +5,21 @@ import { useRef } from "react";
 import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
 
 const SLOTS = [
-  "/img/photos/01.svg", "/img/photos/02.svg", "/img/photos/03.svg", "/img/photos/04.svg",
-  "/img/photos/05.svg", "/img/photos/06.svg", "/img/photos/07.svg", "/img/photos/08.svg",
-  "/img/photos/09.svg", "/img/photos/10.svg", "/img/photos/11.svg",
+  "/img/stage.svg",
+  "/img/photos/01.svg",
+  "/img/lights.svg",
+  "/img/photos/02.svg",
+  "/img/crowd.svg",
+  "/img/photos/03.svg",
+  "/img/poster.svg",
+  "/img/photos/04.svg",
+  "/img/stage.svg",
+  "/img/photos/05.svg",
+  "/img/lights.svg",
+  "/img/photos/06.svg",
+  "/img/crowd.svg",
+  "/img/photos/07.svg",
+  "/img/poster.svg",
 ];
 const RATIOS = ["4 / 3", "3 / 4", "1 / 1", "3 / 4", "4 / 3"];
 
@@ -268,11 +280,14 @@ export default function GalleryFlow() {
               style={{ width: `calc(var(--gs) * ${it.w}vw)`, opacity: 0 }}
             >
               <div
-                className="relative overflow-hidden bg-ink-2"
-                style={{ aspectRatio: it.ratio, boxShadow: "0 20px 60px rgba(0,0,0,0.6)" }}
+                className="cut-shape-sm relative overflow-hidden bg-ink-2 backdrop-blur-sm"
+                style={{
+                  aspectRatio: it.ratio,
+                  boxShadow: "0 20px 60px rgba(0,0,0,0.8), 0 0 20px rgba(255,59,47,0.15)",
+                }}
               >
                 <img src={it.src} alt="" loading="lazy" className="h-full w-full object-cover" />
-                <div className="pointer-events-none absolute inset-0 border border-hairline" />
+                <div className="pointer-events-none absolute inset-0 border border-hairline/60" />
               </div>
             </div>
           ))}
@@ -282,8 +297,8 @@ export default function GalleryFlow() {
           ref={chromeRef}
           className="pointer-events-none absolute inset-x-0 top-0 z-[200] mx-auto flex w-full max-w-(--maxw) items-center justify-between px-(--gutter) pt-10"
         >
-          <span className="eyebrow">07 — Gallery</span>
-          <span className="eyebrow">Scroll through</span>
+          <span className="badge-pill border-hairline-bold text-bone">08 — GALLERY ARCHIVE</span>
+          <span className="badge-pill border-red-hot/30 bg-red-hot/10 text-red-hot">✦ SCROLL FLY-THROUGH</span>
         </div>
 
         {/* the field hands over to black */}

@@ -144,7 +144,6 @@ export default function Film() {
       const onEnded = () => {
         finished = true;
         video.pause();
-        unlock();
         showEndCard(true);
       };
       const onPlaying = () => showEndCard(false);
@@ -155,29 +154,6 @@ export default function Film() {
         if (timeRef.current) timeRef.current.textContent = fmt(video.currentTime) + " / " + fmt(d);
       };
 
-      /* Scrolling up, Escape, or a media failure all release the hold. */
-      const onWheel = (e: WheelEvent) => {
-        if (locked && e.deltaY < 0) unlock();
-      };
-      let touchY = 0;
-      const onTouchStart = (e: TouchEvent) => {
-        touchY = e.touches[0]?.clientY ?? 0;
-      };
-      const onTouchMove = (e: TouchEvent) => {
-        if (locked && (e.touches[0]?.clientY ?? 0) - touchY > 14) unlock();
-      };
-      const onKey = (e: KeyboardEvent) => {
-        if (!locked) return;
-        if (["Escape", "ArrowUp", "PageUp", "Home"].includes(e.key)) unlock();
-      };
-
-      window.addEventListener("wheel", onWheel, { passive: true });
-      window.addEventListener("touchstart", onTouchStart, { passive: true });
-      window.addEventListener("touchmove", onTouchMove, { passive: true });
-      window.addEventListener("keydown", onKey);
-
-      video.addEventListener("error", unlock);
-      video.addEventListener("stalled", unlock);
       video.addEventListener("ended", onEnded);
       video.addEventListener("playing", onPlaying);
       video.addEventListener("timeupdate", onTime);
@@ -211,20 +187,13 @@ export default function Film() {
       });
 
       const teardown = () => {
-        unlock();
         visibility.kill();
-        window.removeEventListener("wheel", onWheel);
-        window.removeEventListener("touchstart", onTouchStart);
-        window.removeEventListener("touchmove", onTouchMove);
-        window.removeEventListener("keydown", onKey);
-        video.removeEventListener("error", unlock);
-        video.removeEventListener("stalled", unlock);
-        skipRef.current?.removeEventListener("click", onSkip);
         video.removeEventListener("ended", onEnded);
         video.removeEventListener("playing", onPlaying);
         video.removeEventListener("timeupdate", onTime);
         video.removeEventListener("loadedmetadata", onTime);
         soundRef.current?.removeEventListener("click", onSound);
+        skipRef.current?.removeEventListener("click", onSkip);
       };
 
       gsap.set(endRef.current, { opacity: 0, y: 12 });
@@ -262,7 +231,6 @@ export default function Film() {
           open.play();
           if (!finished) {
             void video.play().catch(() => {});
-            lock();
           }
         },
       });
@@ -277,7 +245,6 @@ export default function Film() {
         start: `top+=${CLOSE_BEFORE} top`,
         end: "bottom bottom",
         onLeaveBack: () => {
-          unlock();
           open.reverse();
           video.pause();
           video.currentTime = 0;
