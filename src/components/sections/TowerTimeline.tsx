@@ -211,8 +211,8 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
           }
           return;
         }
-        const progress = clamp01((t - 1.0) / 2.5);
-        const targetScreen = 0.50 + (configRef.current.narrowTarget - 0.50) * progress;
+        // Lock directly to narrowTarget (right side) so the tower never swings to the left
+        const targetScreen = configRef.current.narrowTarget;
 
         const f = towerCentre(t) / 100;
         const x = clamp01(((targetScreen * w - f * rendered) / (w - rendered))) * 100;
