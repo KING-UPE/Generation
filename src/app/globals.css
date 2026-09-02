@@ -117,7 +117,6 @@ html.lenis, html.lenis body { height: auto; }
   font-weight: 600;
   color: var(--bone);
   background: rgba(16, 16, 22, 0.9);
-  border: 1px solid var(--hairline-bold);
   --cut-tl: 6px;
   --cut-br: 10px;
   clip-path: polygon(
@@ -128,14 +127,21 @@ html.lenis, html.lenis body { height: auto; }
     0 100%,
     0 var(--cut-tl)
   );
+  filter: drop-shadow(1px 0 0 rgba(237, 237, 240, 0.25))
+          drop-shadow(-1px 0 0 rgba(237, 237, 240, 0.25))
+          drop-shadow(0 1px 0 rgba(237, 237, 240, 0.25))
+          drop-shadow(0 -1px 0 rgba(237, 237, 240, 0.25));
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .badge-pill:hover {
-  border-color: var(--red-hot);
-  box-shadow: 0 0 20px rgba(255, 59, 47, 0.35);
+  filter: drop-shadow(1px 0 0 var(--red-hot))
+          drop-shadow(-1px 0 0 var(--red-hot))
+          drop-shadow(0 1px 0 var(--red-hot))
+          drop-shadow(0 -1px 0 var(--red-hot))
+          drop-shadow(0 0 16px rgba(255, 59, 47, 0.4));
   color: #fff;
 }
 
@@ -145,20 +151,6 @@ html.lenis, html.lenis body { height: auto; }
   line-height: 0.9;
   letter-spacing: -0.02em;
   color: var(--bone);
-}
-
-.card-interactive {
-  position: relative;
-  background: var(--grad-card);
-  border: 1px solid var(--hairline);
-  transition: all 0.45s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-}
-
-.card-interactive:hover {
-  border-color: rgba(255, 59, 47, 0.6);
-  transform: translateY(-4px);
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8), 0 0 32px rgba(255, 59, 47, 0.18);
 }
 
 .text-lead {
@@ -202,8 +194,8 @@ html.lenis, html.lenis body { height: auto; }
 }
 
 /* ------------------------------------------------------------------
-   The signature cut-corner shape (from the reference sketch):
-   chamfered top-left + chamfered bottom-right, true 45° via calc().
+   The signature cut-corner shapes with continuous unbroken contour borders:
+   chamfered top-left + chamfered bottom-right, true 45° chamfers.
 ------------------------------------------------------------------ */
 .cut-shape {
   --cut-tl: clamp(2rem, 4.4vw, 4.5rem);
@@ -242,6 +234,67 @@ html.lenis, html.lenis body { height: auto; }
     0 100%,
     0 var(--cut-tl)
   );
+}
+
+.cut-card {
+  position: relative;
+  background: rgba(14, 14, 18, 0.95);
+  --cut-tl: clamp(0.75rem, 1.5vw, 1.25rem);
+  --cut-br: clamp(1.1rem, 2.2vw, 1.75rem);
+  clip-path: polygon(
+    var(--cut-tl) 0,
+    100% 0,
+    100% calc(100% - var(--cut-br)),
+    calc(100% - var(--cut-br)) 100%,
+    0 100%,
+    0 var(--cut-tl)
+  );
+  filter: drop-shadow(1px 0 0 rgba(237, 237, 240, 0.28))
+          drop-shadow(-1px 0 0 rgba(237, 237, 240, 0.28))
+          drop-shadow(0 1px 0 rgba(237, 237, 240, 0.28))
+          drop-shadow(0 -1px 0 rgba(237, 237, 240, 0.28));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cut-card:hover {
+  filter: drop-shadow(1px 0 0 rgba(255, 59, 47, 0.7))
+          drop-shadow(-1px 0 0 rgba(255, 59, 47, 0.7))
+          drop-shadow(0 1px 0 rgba(255, 59, 47, 0.7))
+          drop-shadow(0 -1px 0 rgba(255, 59, 47, 0.7))
+          drop-shadow(0 8px 24px rgba(255, 59, 47, 0.25));
+}
+
+.cut-card-red {
+  position: relative;
+  background: linear-gradient(135deg, rgba(42, 2, 7, 0.8) 0%, rgba(14, 14, 18, 0.95) 100%);
+  --cut-tl: clamp(0.75rem, 1.5vw, 1.25rem);
+  --cut-br: clamp(1.1rem, 2.2vw, 1.75rem);
+  clip-path: polygon(
+    var(--cut-tl) 0,
+    100% 0,
+    100% calc(100% - var(--cut-br)),
+    calc(100% - var(--cut-br)) 100%,
+    0 100%,
+    0 var(--cut-tl)
+  );
+  filter: drop-shadow(1px 0 0 rgba(255, 59, 47, 0.6))
+          drop-shadow(-1px 0 0 rgba(255, 59, 47, 0.6))
+          drop-shadow(0 1px 0 rgba(255, 59, 47, 0.6))
+          drop-shadow(0 -1px 0 rgba(255, 59, 47, 0.6))
+          drop-shadow(0 6px 24px rgba(255, 59, 47, 0.25));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cut-card-red:hover {
+  filter: drop-shadow(1px 0 0 var(--red-hot))
+          drop-shadow(-1px 0 0 var(--red-hot))
+          drop-shadow(0 1px 0 var(--red-hot))
+          drop-shadow(0 -1px 0 var(--red-hot))
+          drop-shadow(0 8px 32px rgba(255, 59, 47, 0.45));
 }
 
 .cut-btn {
@@ -286,8 +339,7 @@ html.lenis, html.lenis body { height: auto; }
   text-transform: uppercase;
   font-weight: 700;
   color: var(--bone);
-  background: rgba(16, 16, 22, 0.9);
-  border: 1px solid var(--hairline-bold);
+  background: rgba(16, 16, 22, 0.95);
   --cut-tl: 8px;
   --cut-br: 14px;
   clip-path: polygon(
@@ -298,15 +350,22 @@ html.lenis, html.lenis body { height: auto; }
     0 100%,
     0 var(--cut-tl)
   );
+  filter: drop-shadow(1px 0 0 rgba(237, 237, 240, 0.28))
+          drop-shadow(-1px 0 0 rgba(237, 237, 240, 0.28))
+          drop-shadow(0 1px 0 rgba(237, 237, 240, 0.28))
+          drop-shadow(0 -1px 0 rgba(237, 237, 240, 0.28));
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .cut-btn-outline:hover {
-  border-color: var(--red-hot);
+  filter: drop-shadow(1px 0 0 var(--red-hot))
+          drop-shadow(-1px 0 0 var(--red-hot))
+          drop-shadow(0 1px 0 var(--red-hot))
+          drop-shadow(0 -1px 0 var(--red-hot))
+          drop-shadow(0 0 24px rgba(255, 59, 47, 0.4));
   color: #fff;
-  box-shadow: 0 0 24px rgba(255, 59, 47, 0.4);
 }
 
 /* ------------------------------------------------------------------
