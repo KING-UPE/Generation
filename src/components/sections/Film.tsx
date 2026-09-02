@@ -144,6 +144,7 @@ export default function Film() {
       const onEnded = () => {
         finished = true;
         video.pause();
+        unlock();
         showEndCard(true);
       };
       const onPlaying = () => showEndCard(false);
@@ -154,6 +155,29 @@ export default function Film() {
         if (timeRef.current) timeRef.current.textContent = fmt(video.currentTime) + " / " + fmt(d);
       };
 
+      /* Scrolling up, Escape, or clicking Skip releases the lock so user is never trapped upward */
+      const onWheel = (e: WheelEvent) => {
+        if (locked && e.deltaY < 0) unlock();
+      };
+      let touchY = 0;
+      const onTouchStart = (e: TouchEvent) => {
+        touchY = e.touches[0]?.clientY ?? 0;
+      };
+      const onTouchMove = (e: TouchEvent) => {
+        if (locked && (e.touches[0]?.clientY ?? 0) - touchY > 14) unlock();
+      };
+      const onKey = (e: KeyboardEvent) => {
+        if (!locked) return;
+        if (["Escape", "ArrowUp", "PageUp", "Home"].includes(e.key)) unlock();
+      };
+
+      window.addEventListener("wheel", onWheel, { passive: true });
+      window.addEventListener("touchstart", onTouchStart, { passive: true });
+      window.addEventListener("touchmove", onTouchMove, { passive: true });
+      window.addEventListener("keydown", onKey);
+
+      video.addEventListener("error", unlock);
+      video.addEventListener("stalled", unlock);
       video.addEventListener("ended", onEnded);
       video.addEventListener("playing", onPlaying);
       video.addEventListener("timeupdate", onTime);
@@ -182,12 +206,26 @@ export default function Film() {
         trigger: section,
         start: "top bottom",
         end: "bottom top",
-        onLeave: () => video.pause(),
-        onLeaveBack: () => video.pause(),
+        onLeave: () => {
+          unlock();
+          video.pause();
+        },
+        onLeaveBack: () => {
+          unlock();
+          video.pause();
+          showEndCard(false);
+        },
       });
 
       const teardown = () => {
+        unlock();
         visibility.kill();
+        window.removeEventListener("wheel", onWheel);
+        window.removeEventListener("touchstart", onTouchStart);
+        window.removeEventListener("touchmove", onTouchMove);
+        window.removeEventListener("keydown", onKey);
+        video.removeEventListener("error", unlock);
+        video.removeEventListener("stalled", unlock);
         video.removeEventListener("ended", onEnded);
         video.removeEventListener("playing", onPlaying);
         video.removeEventListener("timeupdate", onTime);
@@ -223,6 +261,11 @@ export default function Film() {
               void video.play().catch(() => {});
             } else if (self.progress <= 0.03 && !video.paused) {
               video.pause();
+            }
+
+            // Lock scroll on first full expansion until video finishes playing
+            if (self.progress >= 0.72 && !finished && !locked) {
+              lock();
             }
           },
         },
