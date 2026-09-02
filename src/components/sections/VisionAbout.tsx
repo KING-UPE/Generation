@@ -23,7 +23,7 @@ export default function VisionAbout() {
   const stickyRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const deckRef = useRef<HTMLDivElement>(null);
-  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const flipDeckRef = useRef<HTMLDivElement>(null);
   const visionTextRef = useRef<HTMLDivElement>(null);
   const aboutTextRef = useRef<HTMLDivElement>(null);
 
@@ -32,11 +32,11 @@ export default function VisionAbout() {
       const container = containerRef.current;
       const stage = stageRef.current;
       const deck = deckRef.current;
+      const flipDeck = flipDeckRef.current;
       const visionText = visionTextRef.current;
       const aboutText = aboutTextRef.current;
-      const cards = cardRefs.current.filter(Boolean) as HTMLDivElement[];
 
-      if (!container || !stage || !deck || !visionText || !aboutText || !cards.length) return;
+      if (!container || !stage || !deck || !flipDeck || !visionText || !aboutText) return;
 
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
@@ -44,29 +44,7 @@ export default function VisionAbout() {
       // Initial state
       gsap.set(aboutText, { opacity: 0, y: 30, pointerEvents: "none" });
       gsap.set(visionText, { opacity: 1, y: 0, pointerEvents: "auto" });
-
-      // Clean 2-card fan for Vision (right side)
-      const visionFan = [
-        { xPercent: -5, yPercent: 6, rotation: -3.5, scale: 0.94 },
-        { xPercent: 5, yPercent: -4, rotation: 3, scale: 1 },
-      ];
-
-      // Clean 2-card fan for About (left side)
-      const aboutFan = [
-        { xPercent: 5, yPercent: 6, rotation: 3.5, scale: 0.94 },
-        { xPercent: -5, yPercent: -4, rotation: -3, scale: 1 },
-      ];
-
-      cards.forEach((card, i) => {
-        gsap.set(card, {
-          xPercent: visionFan[i]?.xPercent || 0,
-          yPercent: visionFan[i]?.yPercent || 0,
-          rotation: visionFan[i]?.rotation || 0,
-          scale: visionFan[i]?.scale || 1,
-          rotationY: 0,
-          zIndex: i,
-        });
-      });
+      gsap.set(flipDeck, { rotationY: 0, transformOrigin: "center center" });
 
       if (reduced) return;
 
@@ -118,22 +96,25 @@ export default function VisionAbout() {
         );
       }
 
-      // 3. 3D Card Flip (Vision -> About)
-      cards.forEach((card, i) => {
-        tl.to(
-          card,
-          {
-            rotationY: 180,
-            xPercent: aboutFan[i]?.xPercent || 0,
-            yPercent: aboutFan[i]?.yPercent || 0,
-            rotation: aboutFan[i]?.rotation || 0,
-            scale: aboutFan[i]?.scale || 1,
-            ease: "power2.inOut",
-            duration: 0.55,
-          },
-          0.2 + i * 0.08,
-        );
-      });
+      // 3. Smooth Unified 3D Deck Flip (Rotates entire 2-card deck with 0 plane clipping)
+      tl.to(
+        flipDeck,
+        {
+          rotationY: 180,
+          scale: 1.04,
+          ease: "power2.inOut",
+          duration: 0.55,
+        },
+        0.2,
+      ).to(
+        flipDeck,
+        {
+          scale: 1,
+          ease: "power2.out",
+          duration: 0.2,
+        },
+        0.75,
+      );
 
       // 4. Fade in About text
       tl.to(
@@ -203,29 +184,48 @@ export default function VisionAbout() {
               className="relative z-20 mx-auto aspect-[4/3] w-full max-w-[340px] sm:max-w-[380px] lg:mx-0 lg:max-w-[420px] xl:max-w-[460px]"
               style={{ perspective: 1800 }}
             >
-              <div className="relative h-full w-full [transform-style:preserve-3d]">
-                {VISION_CARDS.map((vCard, i) => {
-                  const aCard = ABOUT_CARDS[i] || ABOUT_CARDS[0];
-                  return (
+              {/* Unified 3D Flip Container: Flips front and back decks seamlessly */}
+              <div
+                ref={flipDeckRef}
+                className="relative h-full w-full [transform-style:preserve-3d] will-change-transform"
+              >
+                {/* ── FRONT DECK (Vision: 2 Fanned Cards) ── */}
+                <div className="absolute inset-0 [backface-visibility:hidden]">
+                  {VISION_CARDS.map((c, i) => (
                     <div
-                      key={i}
-                      ref={(el) => {
-                        cardRefs.current[i] = el;
+                      key={c.src}
+                      className="absolute inset-0"
+                      style={{
+                        transform:
+                          i === 0
+                            ? "translate(-5%, 6%) rotate(-3.5deg) scale(0.94)"
+                            : "translate(5%, -4%) rotate(3deg) scale(1)",
+                        zIndex: i,
                       }}
-                      className="absolute inset-0 will-change-transform [transform-style:preserve-3d]"
                     >
-                      {/* ── Front Face: Vision Card ── */}
-                      <div className="absolute inset-0 [backface-visibility:hidden]">
-                        <CutCard src={vCard.src} alt={vCard.alt} />
-                      </div>
-
-                      {/* ── Back Face: About Card (Pre-flipped 180deg) ── */}
-                      <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)]">
-                        <CutCard src={aCard.src} alt={aCard.alt} />
-                      </div>
+                      <CutCard src={c.src} alt={c.alt} />
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
+
+                {/* ── BACK DECK (About: 2 Fanned Cards, Pre-flipped 180deg) ── */}
+                <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)]">
+                  {ABOUT_CARDS.map((c, i) => (
+                    <div
+                      key={c.src}
+                      className="absolute inset-0"
+                      style={{
+                        transform:
+                          i === 0
+                            ? "translate(5%, 6%) rotate(3.5deg) scale(0.94)"
+                            : "translate(-5%, -4%) rotate(-3deg) scale(1)",
+                        zIndex: i,
+                      }}
+                    >
+                      <CutCard src={c.src} alt={c.alt} />
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
