@@ -96,19 +96,19 @@ const FADE = 0.35;
 const EDITIONS = [
   {
     year: "2023",
-    at: 2.8,
+    at: 1.6,
     venue: "Maharagama Youth Centre",
     crowd: "2,000+",
   },
   {
     year: "2024",
-    at: 5.2,
+    at: 4.6,
     venue: "Viharamahadevi Open Air Theatre",
     crowd: "4,500+",
   },
   {
     year: "2025",
-    at: 7.4,
+    at: 7.2,
     venue: "Lotus Tower Open Arena",
     crowd: "7,500+",
     sponsors: "SLIC General · Y FM",
@@ -131,7 +131,7 @@ const EDITIONS = [
   },
   {
     year: "2026",
-    at: 9.0,
+    at: 9.2,
     venue: "Lotus Tower Open Arena",
     crowd: "10,000+",
     date: "Saturday, 12 December 2026",
@@ -401,7 +401,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
       <section
         id="timeline"
         ref={timelineRef}
-        className="relative h-[400svh]"
+        className="relative h-[500svh]"
       >
         <div className="sticky top-0 h-[100svh] w-full overflow-hidden">
           <div className="mx-auto flex h-full w-full max-w-(--maxw) items-center px-(--gutter)">
