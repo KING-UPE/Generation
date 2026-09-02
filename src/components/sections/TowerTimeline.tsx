@@ -193,7 +193,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         video.style.objectPosition = `${clamp01(x / 100) * 100}% 50%`;
       };
 
-      const frame = (f: number) => {
+      const frame = (f: number, t: number) => {
         video.style.top = "";
         video.style.height = "100%";
 
@@ -201,12 +201,16 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         const shift = FRAME_SHIFT * (1 - f) + INTRO_RISE * intro.v;
         video.style.transform = `translateY(${shift.toFixed(2)}%) scale(${scale.toFixed(4)})`;
 
-        // Video fade-out at end of Hero, and smooth re-appearance entering 2nd Section (Timeline)
-        const transitionDip =
-          f < 0.5 ? Math.max(0, 1 - f / 0.44) : Math.min(1, (f - 0.56) / 0.44);
+        // 1. Hero fade-out: stays 100% visible through f = 0.55, then fades out smoothly between f = 0.55 and 0.88
+        const heroFade = f <= 0.55 ? 1 : Math.max(0, 1 - (f - 0.55) / 0.33);
 
-        const baseOpacity = clamp01((1 - intro.v) / 0.5);
-        video.style.opacity = String(baseOpacity * transitionDip);
+        // 2. Blackout hold & Timeline re-appearance:
+        // Holds in darkness between f = 0.88 and t = 0.7s, then fades in smoothly between t = 0.7s and 1.5s
+        const timelineFade = clamp01((t - 0.7) / 0.8);
+
+        const combinedOpacity = f < 0.88 ? heroFade : Math.max(heroFade, timelineFade);
+        const baseIntro = clamp01((1 - intro.v) / 0.5);
+        video.style.opacity = String(baseIntro * combinedOpacity);
       };
 
       /* Cards key off the same eased time the video is seeking to, so a card
@@ -246,7 +250,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         /* No lerp: jump straight to the frame the scroll position implies. */
         const snap = () => {
           if (Number.isFinite(video.duration)) video.currentTime = target;
-          frame(framingTarget);
+          frame(framingTarget, target);
           pan(target);
           paint(target);
         };
@@ -275,7 +279,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
           video.currentTime = current;
         }
         framing += (framingTarget - framing) * 0.16;
-        frame(framing);
+        frame(framing, current);
         pan(current);
         paint(current);
       };
@@ -283,7 +287,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
       gsap.to(intro, { v: 0, duration: 1.7, delay: 0.3, ease: "gen" });
 
       gsap.ticker.add(tick);
-      frame(0);
+      frame(0, 0);
       pan(0);
       paint(0);
 
