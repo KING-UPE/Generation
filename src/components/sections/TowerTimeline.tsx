@@ -113,8 +113,18 @@ const EDITIONS = [
     crowd: "7,500+",
     sponsors: "SLIC General · Y FM",
     sponsorLogos: [
-      { src: "/img/sponsors/slic.png", alt: "SLIC General - Sri Lanka Insurance" },
-      { src: "/img/sponsors/yfm.png", alt: "Y FM - The Original Youth Channel" },
+      {
+        src: "/img/sponsors/slic.png",
+        name: "SLIC General",
+        title: "Official Insurer",
+        alt: "SLIC General - Sri Lanka Insurance",
+      },
+      {
+        src: "/img/sponsors/yfm.png",
+        name: "Y FM 92.7",
+        title: "Official Media",
+        alt: "Y FM - The Original Youth Channel",
+      },
     ],
     photos:
       "https://www.facebook.com/media/set/?set=a.122160864974672421&type=3",
@@ -474,31 +484,42 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
                     </div>
 
                     {e.sponsors && (
-                      <div className="group relative overflow-hidden rounded-xl border border-hairline-bold bg-ink-2/90 p-3.5 backdrop-blur-md transition-all duration-300 hover:border-red-hot/50">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="font-mono-ui text-[10px] font-bold tracking-[0.2em] text-muted uppercase flex items-center gap-1.5">
-                            <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-hot" />
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-hot" />
+                          <span className="font-mono-ui text-[10px] font-bold tracking-[0.22em] text-muted uppercase">
                             Official Partners & Sponsors
-                          </span>
-                          <span className="text-[11px] font-semibold text-bone">
-                            {e.sponsors}
                           </span>
                         </div>
 
-                        {e.sponsorLogos && e.sponsorLogos.length > 0 && (
-                          <div className="mt-3 flex flex-wrap items-center gap-2.5">
+                        {e.sponsorLogos && e.sponsorLogos.length > 0 ? (
+                          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                             {e.sponsorLogos.map((logo, idx) => (
                               <div
                                 key={idx}
-                                className="flex h-11 items-center justify-center rounded-lg border border-hairline-bold bg-black/80 px-3 py-1.5 shadow-inner transition-all duration-300 hover:border-red-hot/50 hover:bg-black/95"
+                                className="group relative flex items-center gap-3 overflow-hidden rounded-xl border border-hairline-bold bg-ink-2/95 p-3 backdrop-blur-md transition-all duration-300 hover:border-red-hot/60 hover:bg-ink-3"
                               >
-                                <img
-                                  src={logo.src}
-                                  alt={logo.alt}
-                                  className="h-7 w-auto max-w-[95px] object-contain"
-                                />
+                                <div className="flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white p-1 shadow-sm transition-transform duration-300 group-hover:scale-105">
+                                  <img
+                                    src={logo.src}
+                                    alt={logo.alt}
+                                    className="h-full w-full object-contain"
+                                  />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-mono-ui text-[9px] font-bold tracking-wider text-muted uppercase">
+                                    {logo.title || "Official Partner"}
+                                  </p>
+                                  <p className="mt-0.5 truncate text-sm font-extrabold text-white">
+                                    {logo.name || logo.alt}
+                                  </p>
+                                </div>
                               </div>
                             ))}
+                          </div>
+                        ) : (
+                          <div className="rounded-xl border border-hairline bg-ink-2/80 p-3.5 backdrop-blur-md">
+                            <p className="text-xs font-semibold text-bone-muted">{e.sponsors}</p>
                           </div>
                         )}
                       </div>
