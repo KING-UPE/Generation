@@ -210,30 +210,30 @@ export default function Film() {
       gsap.set(uiRef.current, { opacity: 0 });
 
       // Bidirectional Scrubbed Timeline:
-      // Scrolling down: seamlessly expands tablet to fullscreen
-      // Scrolling up: seamlessly shrinks fullscreen back down into small tablet frame!
+      // Scrolling down: seamlessly expands tablet to fullscreen across 0 -> 0.85
+      // Scrolling up: immediately starts shrinking back down into small tablet frame!
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: section,
           start: "top top",
           end: "bottom bottom",
-          scrub: 1.2,
+          scrub: 0.8,
           onUpdate: (self) => {
-            if (self.progress > 0.12 && video.paused && !finished) {
+            if (self.progress > 0.08 && video.paused && !finished) {
               void video.play().catch(() => {});
-            } else if (self.progress <= 0.04 && !video.paused) {
+            } else if (self.progress <= 0.03 && !video.paused) {
               video.pause();
             }
           },
         },
       });
 
-      tl.to(textRef.current, { opacity: 0, y: -60, duration: 0.35, ease: "power2.inOut" }, 0)
-        .to(stage, { "--fp": 0, duration: 0.5, ease: "power2.inOut" }, 0)
-        .to(video, { scale: 1, duration: 0.5, ease: "power2.inOut" }, 0)
-        .to(chromeRef.current, { opacity: 0, duration: 0.3, ease: "power2.out" }, 0.12)
-        .to(uiRef.current, { opacity: 1, duration: 0.3, ease: "power2.out" }, 0.35)
-        .to({}, { duration: 0.5 }); // dwell in fullscreen
+      tl.to(textRef.current, { opacity: 0, y: -50, duration: 0.4, ease: "power2.inOut" }, 0)
+        .to(stage, { "--fp": 0, duration: 0.82, ease: "power2.inOut" }, 0)
+        .to(video, { scale: 1, duration: 0.82, ease: "power2.inOut" }, 0)
+        .to(chromeRef.current, { opacity: 0, duration: 0.35, ease: "power2.out" }, 0.2)
+        .to(uiRef.current, { opacity: 1, duration: 0.35, ease: "power2.out" }, 0.5)
+        .to({}, { duration: 0.18 });
 
       return () => {
         tl.kill();
@@ -244,7 +244,7 @@ export default function Film() {
   );
 
   return (
-    <section id="film" ref={sectionRef as React.RefObject<HTMLElement>} className="relative h-[220vh]">
+    <section id="film" ref={sectionRef as React.RefObject<HTMLElement>} className="relative h-[135vh]">
       <div
         ref={stageRef}
         className="sticky top-0 h-[100svh] w-full overflow-hidden"
