@@ -163,8 +163,11 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
 
       /**
        * Chooses the `object-position` that puts the tower where we want it in
-       * the container, given how hard cover is cropping at this size. Wide
-       * screens crop little, so they keep the default framing.
+       * the container.
+       * On mobile:
+       * - Hero (t <= 1.0): Crown is centered in the middle (50%).
+       * - Timeline (t >= 3.5): Shaft smoothly settles near the right side (74%),
+       *   giving ample space and full height for the edition cards on the left.
        */
       const pan = (t: number) => {
         const w = video.clientWidth;
@@ -181,9 +184,12 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
           video.style.objectPosition = "";
           return;
         }
-        // Keep the tower tracking straight and steady along NARROW_TARGET (near the right side)
+        // Monotonic transition: starts centered at 0.50 in Hero, smoothly glides to 0.74 in Timeline
+        const progress = clamp01((t - 1.0) / 2.5);
+        const targetScreen = 0.50 + (0.74 - 0.50) * progress;
+
         const f = towerCentre(t) / 100;
-        const x = ((NARROW_TARGET * w - f * rendered) / (w - rendered)) * 100;
+        const x = ((targetScreen * w - f * rendered) / (w - rendered)) * 100;
         video.style.objectPosition = `${clamp01(x / 100) * 100}% 50%`;
       };
 
