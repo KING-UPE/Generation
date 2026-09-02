@@ -201,14 +201,14 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         const shift = FRAME_SHIFT * (1 - f) + INTRO_RISE * intro.v;
         video.style.transform = `translateY(${shift.toFixed(2)}%) scale(${scale.toFixed(4)})`;
 
-        // 1. Hero fade-out: stays 100% visible through f = 0.55, then fades out smoothly between f = 0.55 and 0.88
-        const heroFade = f <= 0.55 ? 1 : Math.max(0, 1 - (f - 0.55) / 0.33);
+        // 1. Hero fade-out: stays 100% visible through f = 0.80, then fades out smoothly between f = 0.80 and 1.0
+        const heroFade = f <= 0.8 ? 1 : Math.max(0, 1 - (f - 0.8) / 0.2);
 
-        // 2. Blackout hold & Timeline re-appearance:
-        // Holds in darkness between f = 0.88 and t = 0.7s, then fades in smoothly between t = 0.7s and 1.5s
-        const timelineFade = clamp01((t - 0.7) / 0.8);
+        // 2. Extended blackout hold & Timeline re-appearance:
+        // Holds in darkness across f = 1.0 through t = 1.1s, then smoothly fades in between t = 1.1s and 1.8s
+        const timelineFade = clamp01((t - 1.1) / 0.7);
 
-        const combinedOpacity = f < 0.88 ? heroFade : Math.max(heroFade, timelineFade);
+        const combinedOpacity = f < 0.98 ? heroFade : Math.max(heroFade, timelineFade);
         const baseIntro = clamp01((1 - intro.v) / 0.5);
         video.style.opacity = String(baseIntro * combinedOpacity);
       };
