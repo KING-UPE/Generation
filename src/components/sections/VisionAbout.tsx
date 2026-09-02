@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
 import LitTitle from "@/components/ui/LitTitle";
 import ScrollCopy from "@/components/ui/ScrollCopy";
@@ -27,6 +27,9 @@ export default function VisionAbout() {
   const flipDeckRef = useRef<HTMLDivElement>(null);
   const visionTextRef = useRef<HTMLDivElement>(null);
   const aboutTextRef = useRef<HTMLDivElement>(null);
+
+  const [frontHovered, setFrontHovered] = useState<number | null>(null);
+  const [backHovered, setBackHovered] = useState<number | null>(null);
 
   useGSAP(
     () => {
@@ -148,10 +151,10 @@ export default function VisionAbout() {
           const r = deck.getBoundingClientRect();
           const nx = (e.clientX - r.left) / r.width - 0.5;
           const ny = (e.clientY - r.top) / r.height - 0.5;
-          tiltY(nx * 14);
-          tiltX(-ny * 12);
-          driftX(nx * 16);
-          driftY(ny * 12);
+          tiltY(nx * 12);
+          tiltX(-ny * 10);
+          driftX(nx * 14);
+          driftY(ny * 10);
         };
 
         const onLeave = () => {
@@ -219,44 +222,102 @@ export default function VisionAbout() {
                 >
                   {/* ── FRONT DECK (Vision: 2 Fanned Cards) ── */}
                   <div className="absolute inset-0 [backface-visibility:hidden]">
-                    {VISION_CARDS.map((c, i) => (
-                      <div
-                        key={c.src}
-                        className="group/card absolute inset-0 cursor-pointer transition-all duration-400 ease-out hover:z-30"
-                        style={{
-                          transform:
-                            i === 0
-                              ? "translate(-5%, 6%) rotate(-3.5deg) scale(0.94)"
-                              : "translate(5%, -4%) rotate(3deg) scale(1)",
-                          zIndex: i,
-                        }}
-                      >
-                        <div className="h-full w-full transition-all duration-400 ease-out group-hover/card:-translate-y-2.5 group-hover/card:scale-[1.04] group-hover/card:drop-shadow-[0_16px_36px_rgba(255,59,47,0.45)]">
+                    {VISION_CARDS.map((c, i) => {
+                      const isHovered = frontHovered === i;
+                      const isOtherHovered = frontHovered !== null && frontHovered !== i;
+
+                      let transform =
+                        i === 0
+                          ? "translate(-5%, 6%) rotate(-3.5deg) scale(0.94)"
+                          : "translate(5%, -4%) rotate(3deg) scale(1)";
+                      let zIndex = i + 1;
+                      let opacity = 1;
+                      let filter = "none";
+
+                      if (isHovered) {
+                        zIndex = 20;
+                        transform =
+                          i === 0
+                            ? "translate(-2%, -3%) rotate(-1deg) scale(1.05)"
+                            : "translate(2%, -3%) rotate(1deg) scale(1.05)";
+                        filter = "drop-shadow(0 16px 36px rgba(255, 59, 47, 0.45))";
+                      } else if (isOtherHovered) {
+                        zIndex = 1;
+                        opacity = 0.45;
+                        transform =
+                          i === 0
+                            ? "translate(-8%, 9%) rotate(-6deg) scale(0.9)"
+                            : "translate(8%, 9%) rotate(6deg) scale(0.9)";
+                      }
+
+                      return (
+                        <div
+                          key={c.src}
+                          onMouseEnter={() => setFrontHovered(i)}
+                          onMouseLeave={() => setFrontHovered(null)}
+                          className="absolute inset-0 cursor-pointer"
+                          style={{
+                            transform,
+                            zIndex,
+                            opacity,
+                            filter,
+                            transition: "all 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
+                          }}
+                        >
                           <CutCard src={c.src} alt={c.alt} />
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   {/* ── BACK DECK (About: 2 Fanned Cards, Pre-flipped 180deg) ── */}
                   <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)]">
-                    {ABOUT_CARDS.map((c, i) => (
-                      <div
-                        key={c.src}
-                        className="group/card absolute inset-0 cursor-pointer transition-all duration-400 ease-out hover:z-30"
-                        style={{
-                          transform:
-                            i === 0
-                              ? "translate(5%, 6%) rotate(3.5deg) scale(0.94)"
-                              : "translate(-5%, -4%) rotate(-3deg) scale(1)",
-                          zIndex: i,
-                        }}
-                      >
-                        <div className="h-full w-full transition-all duration-400 ease-out group-hover/card:-translate-y-2.5 group-hover/card:scale-[1.04] group-hover/card:drop-shadow-[0_16px_36px_rgba(255,59,47,0.45)]">
+                    {ABOUT_CARDS.map((c, i) => {
+                      const isHovered = backHovered === i;
+                      const isOtherHovered = backHovered !== null && backHovered !== i;
+
+                      let transform =
+                        i === 0
+                          ? "translate(5%, 6%) rotate(3.5deg) scale(0.94)"
+                          : "translate(-5%, -4%) rotate(-3deg) scale(1)";
+                      let zIndex = i + 1;
+                      let opacity = 1;
+                      let filter = "none";
+
+                      if (isHovered) {
+                        zIndex = 20;
+                        transform =
+                          i === 0
+                            ? "translate(2%, -3%) rotate(1deg) scale(1.05)"
+                            : "translate(-2%, -3%) rotate(-1deg) scale(1.05)";
+                        filter = "drop-shadow(0 16px 36px rgba(255, 59, 47, 0.45))";
+                      } else if (isOtherHovered) {
+                        zIndex = 1;
+                        opacity = 0.45;
+                        transform =
+                          i === 0
+                            ? "translate(8%, 9%) rotate(6deg) scale(0.9)"
+                            : "translate(-8%, 9%) rotate(-6deg) scale(0.9)";
+                      }
+
+                      return (
+                        <div
+                          key={c.src}
+                          onMouseEnter={() => setBackHovered(i)}
+                          onMouseLeave={() => setBackHovered(null)}
+                          className="absolute inset-0 cursor-pointer"
+                          style={{
+                            transform,
+                            zIndex,
+                            opacity,
+                            filter,
+                            transition: "all 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
+                          }}
+                        >
                           <CutCard src={c.src} alt={c.alt} />
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </div>
