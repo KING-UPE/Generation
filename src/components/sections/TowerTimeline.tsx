@@ -58,13 +58,23 @@ const INTRO_RISE = 40;
  * frame: it holds at centre while the crown is on screen, then slides left and
  * settles once the shaft takes over.
  *
+ * `pan` subtracts this from the crop to hold the tower still, so an error here
+ * does not blur the motion — it moves the tower the wrong way. Every value is
+ * sampled off the footage, 0.2s apart through the move; do not interpolate the
+ * middle by hand. The tower holds dead centre until about t=1.35 and only then
+ * goes, quickly. Guessing a straight ramp from t=1.0 instead put the reading
+ * 3.6% left of the truth at t=1.7, and that alone threw the tower 57px to the
+ * right and back again — the crop panned away while the tower stood still, and
+ * snapped back when the real motion caught up.
+ *
+ * Re-measure the same way after any change to the footage: draw each frame to
+ * a canvas, take the brightness-weighted mean column over pixels above ~12%
+ * luminance, and read it as a % of frame width.
  */
 const TOWER_TRACK: ReadonlyArray<readonly [number, number]> = [
-  [0, 49.6], [0.2, 49.6], [0.4, 49.6], [0.6, 49.6], [0.8, 49.6],
-  [1.0, 49.6], [1.2, 48.9], [1.4, 46.8], [1.6, 43.5], [1.8, 39.8],
-  [2.0, 36.6],
-  [2.2, 34.3], [2.4, 30.5], [2.6, 28.1], [2.8, 26.7], [3.0, 26.0], [3.2, 25.9],
-  [10, 26.0],
+  [0, 49.7], [1.0, 49.8], [1.2, 49.8], [1.4, 49.3], [1.6, 47.2], [1.8, 43.3],
+  [2.0, 38.1], [2.2, 34.3], [2.4, 30.5], [2.6, 28.1], [2.8, 26.7], [3.0, 26.0],
+  [3.2, 25.9], [10, 26.0],
 ];
 
 const NARROW = 768;

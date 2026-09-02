@@ -47,27 +47,28 @@ const TIMINGS = {
         </button>
       )}
 
-      {/* Expanded Live Controller Side Panel */}
+      {/* Expanded Live Controller Side Panel (Transparent Frosted Glass) */}
       {isOpen && (
         <div
-          className="cut-card flex max-h-[85vh] w-[92vw] max-w-[380px] flex-col overflow-hidden bg-ink/95 p-5 text-white backdrop-blur-xl transition-all duration-300 sm:w-[380px]"
+          className="cut-card flex max-h-[85vh] w-[92vw] max-w-[380px] flex-col overflow-hidden bg-black/40 p-5 text-white backdrop-blur-md transition-all duration-300 hover:bg-black/60 hover:backdrop-blur-lg sm:w-[380px]"
           style={{
-            boxShadow: "0 24px 60px rgba(0,0,0,0.85), 0 0 32px rgba(255,59,47,0.25)",
-            border: "1px solid rgba(255, 59, 47, 0.4)",
+            boxShadow: "0 16px 48px rgba(0,0,0,0.6), 0 0 24px rgba(255,59,47,0.2)",
+            border: "1px solid rgba(255, 59, 47, 0.35)",
+            background: "linear-gradient(135deg, rgba(12,12,18,0.45), rgba(6,6,10,0.4))",
           }}
         >
           {/* Panel Header */}
-          <div className="flex items-center justify-between border-b border-hairline/60 pb-3">
+          <div className="flex items-center justify-between border-b border-hairline/40 pb-3">
             <div className="flex items-center gap-2">
               <span className="inline-block h-2 w-2 rounded-full bg-red-hot animate-ping" />
-              <h4 className="font-mono-ui text-xs font-bold tracking-widest text-white uppercase">
+              <h4 className="font-mono-ui text-xs font-bold tracking-widest text-white uppercase drop-shadow">
                 Live Timeline Tuner
               </h4>
             </div>
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="cut-shape-xs flex h-7 w-7 cursor-pointer items-center justify-center bg-ink-2 text-xs text-bone-muted transition-colors hover:bg-red-hot hover:text-white"
+              className="cut-shape-xs flex h-7 w-7 cursor-pointer items-center justify-center bg-black/40 text-xs text-bone-muted transition-colors hover:bg-red-hot hover:text-white"
             >
               ✕
             </button>
