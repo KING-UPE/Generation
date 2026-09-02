@@ -1,8 +1,7 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef } from "react";
 import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
-import { useTimelineConfig } from "@/context/TimelineTunerContext";
 
 /**
  * The seek-optimised build, not the original.
@@ -65,22 +64,17 @@ const INTRO_RISE = 40;
  * not interpolate the middle by hand. The tower holds dead centre until about
  * t=1.35 and only then goes, quickly. Guessing a straight ramp from t=1.0
  * instead put the reading 3.6% left of the truth at t=1.7, and that alone threw
- * the tower 57px to the right and back again — the crop panned away while the
- * tower stood still, and snapped back when the real motion caught up. Even at
- * 0.2s spacing the corner at t=1.75 was still worth 12px of that.
- *
- * Re-measure the same way after any change to the footage: draw each frame to
- * a canvas, take the brightness-weighted mean column over pixels above ~12%
- * luminance, and read it as a % of frame width.
  */
 const TOWER_TRACK: ReadonlyArray<readonly [number, number]> = [
-  [0, 49.7], [1.0, 49.8], [1.2, 49.8], [1.3, 49.7], [1.4, 49.3], [1.5, 48.4],
-  [1.6, 47.2], [1.7, 45.7], [1.8, 43.3], [1.9, 41.2], [2.0, 38.1], [2.1, 36.3],
-  [2.2, 34.3], [2.3, 31.9], [2.4, 30.5], [2.6, 28.1], [2.8, 26.7], [3.0, 26.0],
-  [3.2, 25.9], [10, 26.0],
+  [0, 49.6], [0.2, 49.6], [0.4, 49.6], [0.6, 49.6], [0.8, 49.6],
+  [1.0, 49.6], [1.2, 48.9], [1.4, 46.8], [1.6, 43.5], [1.8, 39.8],
+  [2.0, 36.6],
+  [2.2, 34.3], [2.4, 30.5], [2.6, 28.1], [2.8, 26.7], [3.0, 26.0], [3.2, 25.9],
+  [10, 26.0],
 ];
 
 const NARROW = 768;
+const NARROW_TARGET = 0.84;
 
 function towerCentre(t: number) {
   const p = TOWER_TRACK;
@@ -95,19 +89,24 @@ function towerCentre(t: number) {
   return p[p.length - 1][1];
 }
 
-const EDITIONS_BASE = [
+const FADE = 0.45;
+
+const EDITIONS = [
   {
     year: "2023",
+    at: 2.0,
     venue: "Maharagama Youth Centre",
     crowd: "2,000+",
   },
   {
     year: "2024",
+    at: 4.8,
     venue: "Viharamahadevi Open Air Theatre",
     crowd: "4,500+",
   },
   {
     year: "2025",
+    at: 7.2,
     venue: "Lotus Tower Open Arena",
     crowd: "7,500+",
     sponsors: "SLIC General · Y FM",
@@ -130,6 +129,7 @@ const EDITIONS_BASE = [
   },
   {
     year: "2026",
+    at: 9.0,
     venue: "Lotus Tower Open Arena",
     crowd: "10,000+",
     date: "Saturday, 12 December 2026",
@@ -139,35 +139,20 @@ const EDITIONS_BASE = [
 
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
+function cardAlpha(t: number, i: number) {
+  const start = EDITIONS[i].at;
+  const next = EDITIONS[i + 1];
+  const rampIn = clamp01((t - start) / FADE);
+  const rampOut = next ? clamp01((next.at - t) / FADE) : 1;
+  return Math.min(rampIn, rampOut);
+}
+
 export default function TowerTimeline({ children }: { children: React.ReactNode }) {
-  const { config } = useTimelineConfig();
   const rootRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLElement | null)[]>([]);
-  const configRef = useRef(config);
-  configRef.current = config;
-
-  const editions = [
-    { ...EDITIONS_BASE[0], at: config.edition2023 },
-    { ...EDITIONS_BASE[1], at: config.edition2024 },
-    { ...EDITIONS_BASE[2], at: config.edition2025 },
-    { ...EDITIONS_BASE[3], at: config.edition2026 },
-  ];
-
-  function cardAlpha(t: number, i: number) {
-    const start = editions[i].at;
-    const next = editions[i + 1];
-    const fade = configRef.current.fadeDuration;
-    const rampIn = clamp01((t - start) / fade);
-    const rampOut = next ? clamp01((next.at - t) / fade) : 1;
-    return Math.min(rampIn, rampOut);
-  }
-
-  useEffect(() => {
-    ScrollTrigger.refresh();
-  }, [config.heroRunway, config.timelineHeight]);
 
   useGSAP(
     () => {
@@ -212,7 +197,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
           return;
         }
         // Lock directly to narrowTarget (right side) so the tower never swings to the left
-        const targetScreen = configRef.current.narrowTarget;
+        const targetScreen = NARROW_TARGET;
 
         const f = towerCentre(t) / 100;
         const x = clamp01(((targetScreen * w - f * rendered) / (w - rendered))) * 100;
@@ -406,11 +391,11 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         />
       </div>
 
-      {/* Pulled up over the pinned frame: dynamic scroll runway for stage expansion */}
+      {/* Pulled up over the pinned frame: 20vh scroll runway for swift, responsive stage expansion */}
       <div
         ref={heroRef}
         className="relative"
-        style={{ marginTop: "-100svh", height: `${config.heroRunway}vh` }}
+        style={{ marginTop: "-100svh", height: "20vh" }}
       >
         <div className="h-[100svh] w-full overflow-hidden">{children}</div>
       </div>
@@ -418,13 +403,12 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
       <section
         id="timeline"
         ref={timelineRef}
-        className="relative"
-        style={{ height: `${config.timelineHeight}svh` }}
+        className="relative h-[480svh]"
       >
         <div className="sticky top-0 h-[100svh] w-full overflow-hidden">
           <div className="mx-auto flex h-full w-full max-w-(--maxw) items-center px-(--gutter)">
             <div className="relative mr-auto h-full w-full max-w-[280px] sm:max-w-[340px] md:mx-0 md:ml-auto md:h-[62vh] md:w-[52%] md:max-w-[460px]">
-              {editions.map((e, i) => (
+              {EDITIONS.map((e, i) => (
                 <article
                   key={e.year}
                   ref={(el) => {

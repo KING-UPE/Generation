@@ -4,8 +4,6 @@ import VisionAbout from "@/components/sections/VisionAbout";
 import Film from "@/components/sections/Film";
 import GalleryFlow from "@/components/sections/GalleryFlow";
 import ScrollRail from "@/components/ui/ScrollRail";
-import TimelineTuner from "@/components/ui/TimelineTuner";
-import { TimelineTunerProvider } from "@/context/TimelineTunerContext";
 
 /** Sections 01–02 live upstream; this page starts at 03 by design. */
 const MARKERS = [
@@ -19,7 +17,7 @@ const MARKERS = [
 
 export default function Home() {
   return (
-    <TimelineTunerProvider>
+    <>
       <ScrollRail markers={MARKERS} />
       <TowerTimeline>
         <Hero />
@@ -27,8 +25,8 @@ export default function Home() {
       <VisionAbout />
       <Film />
       <GalleryFlow />
-      <TimelineTuner />
-    </TimelineTunerProvider>
+    </>
   );
 }
+
 
