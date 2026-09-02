@@ -362,7 +362,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         That cannot work here: `position: sticky` always establishes a stacking
         context, so the video had no backdrop to blend against.
       */}
-      <div className="pointer-events-none sticky top-0 z-[-1] h-[100svh] overflow-hidden">
+      <div className="pointer-events-none sticky top-0 z-[-1] h-[100svh] overflow-hidden bg-black">
         <video
           ref={videoRef}
           className="absolute inset-0 h-full w-full object-cover"

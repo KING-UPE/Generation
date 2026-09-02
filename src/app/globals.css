@@ -5,9 +5,9 @@
    Black canvas, red gradient energy, editorial minimalism.
 ------------------------------------------------------------------ */
 :root {
-  --ink:        #050507;
-  --ink-2:      #0C0C10;
-  --ink-3:      #14141C;
+  --ink:        #000000;
+  --ink-2:      #08080B;
+  --ink-3:      #101015;
   --hairline:   rgba(237, 237, 240, 0.15);
   --hairline-bold: rgba(237, 237, 240, 0.28);
 
@@ -54,7 +54,7 @@
 * { -webkit-tap-highlight-color: transparent; }
 
 html {
-  background: var(--ink);
+  background: #000000;
   scroll-behavior: auto;
 }
 
