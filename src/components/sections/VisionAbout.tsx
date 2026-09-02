@@ -16,7 +16,7 @@ const ABOUT_CARDS = [
   { src: "/img/crowd.svg", alt: "Crowd with hands raised" },
 ];
 
-const TITLE_SIZE = "text-[clamp(3rem,8vw,7.5rem)] leading-[0.92] tracking-[-0.02em]";
+const TITLE_SIZE = "text-[clamp(4.2rem,10.5vw,9.5rem)] leading-[0.9] tracking-[-0.025em]";
 
 export default function VisionAbout() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -149,19 +149,19 @@ export default function VisionAbout() {
         className="sticky top-0 flex h-[100svh] w-full items-center justify-center overflow-hidden py-6"
       >
         <div ref={stageRef} className="relative mx-auto w-full max-w-(--maxw) px-(--gutter)">
-          <div className="relative flex flex-col justify-between gap-8 lg:min-h-[480px] lg:flex-row lg:items-center">
+          <div className="relative flex flex-col justify-between gap-10 lg:min-h-[480px] lg:flex-row lg:items-center">
             {/* ── LEFT COLUMN: Vision Text (Fades out) ────────────────── */}
             <div
               ref={visionTextRef}
-              className="relative z-10 flex w-full flex-col gap-5 lg:max-w-[480px] xl:max-w-[540px]"
+              className="relative z-10 flex w-full flex-col gap-7 md:gap-9 lg:max-w-[500px] xl:max-w-[560px]"
             >
               <div>
-                <LitTitle className={TITLE_SIZE} radius={320} weight={1.9}>
+                <LitTitle className={TITLE_SIZE} radius={340} weight={1.9}>
                   Vision
                 </LitTitle>
               </div>
 
-              <ScrollCopy className="text-[clamp(0.95rem,1.15vw,1.15rem)] font-medium leading-[1.8] text-bone">
+              <ScrollCopy className="text-[clamp(0.95rem,1.15vw,1.15rem)] font-medium leading-[1.85] text-bone">
                 One night where a generation shows up loud. We build the stage, the sound and the room around them, so the music is the only thing anyone leaves remembering.
               </ScrollCopy>
             </div>
@@ -220,15 +220,15 @@ export default function VisionAbout() {
             {/* ── RIGHT COLUMN: About Text (Fades in) ────────────────── */}
             <div
               ref={aboutTextRef}
-              className="pointer-events-none absolute right-0 top-1/2 z-10 flex w-full -translate-y-1/2 flex-col gap-5 px-(--gutter) lg:max-w-[480px] lg:px-0 xl:max-w-[540px]"
+              className="pointer-events-none absolute right-0 top-1/2 z-10 flex w-full -translate-y-1/2 flex-col gap-7 md:gap-9 px-(--gutter) lg:max-w-[500px] lg:px-0 xl:max-w-[560px]"
             >
               <div>
-                <LitTitle className={TITLE_SIZE} radius={320} weight={1.9}>
+                <LitTitle className={TITLE_SIZE} radius={340} weight={1.9}>
                   About
                 </LitTitle>
               </div>
 
-              <ScrollCopy className="text-[clamp(0.95rem,1.15vw,1.15rem)] font-medium leading-[1.8] text-bone">
+              <ScrollCopy className="text-[clamp(0.95rem,1.15vw,1.15rem)] font-medium leading-[1.85] text-bone">
                 Generation is produced by ECheM. Live performance, design and sound engineering held to a single production standard, for an audience that still turns up in person.
               </ScrollCopy>
             </div>
