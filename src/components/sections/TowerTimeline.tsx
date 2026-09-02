@@ -51,8 +51,8 @@ const TOWER_TRACK: ReadonlyArray<readonly [number, number]> = [
  * falls outside it entirely. Narrow screens pan to keep it in view.
  */
 const NARROW = 768;
-/** Where the tower should land on a narrow screen, as a fraction of the frame. */
-const NARROW_TARGET = 0.5;
+/** Where the tower should land on a narrow screen, as a fraction of the frame (near the right side). */
+const NARROW_TARGET = 0.68;
 
 function towerCentre(t: number) {
   const p = TOWER_TRACK;
@@ -181,13 +181,9 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
           video.style.objectPosition = "";
           return;
         }
-        // Smoothly and continuously glides from 0.50 (centered in hero) to 0.74 (near the right side in timeline)
-        const progress = clamp01(t / 2.2);
-        const smoothProgress = progress * progress * (3 - 2 * progress);
-        const targetX = 0.50 + (0.74 - 0.50) * smoothProgress;
-
+        // Keep the tower tracking straight and steady along NARROW_TARGET (near the right side)
         const f = towerCentre(t) / 100;
-        const x = ((targetX * w - f * rendered) / (w - rendered)) * 100;
+        const x = ((NARROW_TARGET * w - f * rendered) / (w - rendered)) * 100;
         video.style.objectPosition = `${clamp01(x / 100) * 100}% 50%`;
       };
 
