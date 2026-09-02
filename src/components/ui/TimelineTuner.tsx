@@ -83,8 +83,8 @@ const TIMINGS = {
               </div>
               <input
                 type="range"
-                min="20"
-                max="120"
+                min="0"
+                max="150"
                 step="5"
                 value={config.heroRunway}
                 onChange={(e) => updateConfig("heroRunway", Number(e.target.value))}
@@ -103,8 +103,8 @@ const TIMINGS = {
               </div>
               <input
                 type="range"
-                min="250"
-                max="750"
+                min="100"
+                max="800"
                 step="25"
                 value={config.timelineHeight}
                 onChange={(e) => updateConfig("timelineHeight", Number(e.target.value))}
@@ -124,7 +124,7 @@ const TIMINGS = {
               <input
                 type="range"
                 min="0.0"
-                max="3.0"
+                max="6.0"
                 step="0.1"
                 value={config.edition2023}
                 onChange={(e) => updateConfig("edition2023", Number(e.target.value))}
@@ -140,8 +140,8 @@ const TIMINGS = {
               </div>
               <input
                 type="range"
-                min="1.5"
-                max="5.5"
+                min="1.0"
+                max="8.0"
                 step="0.1"
                 value={config.edition2024}
                 onChange={(e) => updateConfig("edition2024", Number(e.target.value))}
@@ -157,8 +157,8 @@ const TIMINGS = {
               </div>
               <input
                 type="range"
-                min="4.0"
-                max="7.8"
+                min="2.0"
+                max="9.5"
                 step="0.1"
                 value={config.edition2025}
                 onChange={(e) => updateConfig("edition2025", Number(e.target.value))}
@@ -174,8 +174,8 @@ const TIMINGS = {
               </div>
               <input
                 type="range"
-                min="6.5"
-                max="9.6"
+                min="4.0"
+                max="10.0"
                 step="0.1"
                 value={config.edition2026}
                 onChange={(e) => updateConfig("edition2026", Number(e.target.value))}
@@ -191,8 +191,8 @@ const TIMINGS = {
               </div>
               <input
                 type="range"
-                min="0.1"
-                max="0.8"
+                min="0.05"
+                max="1.5"
                 step="0.05"
                 value={config.fadeDuration}
                 onChange={(e) => updateConfig("fadeDuration", Number(e.target.value))}
@@ -208,15 +208,15 @@ const TIMINGS = {
               </div>
               <input
                 type="range"
-                min="0.30"
-                max="0.85"
+                min="0.20"
+                max="0.95"
                 step="0.02"
                 value={config.narrowTarget}
                 onChange={(e) => updateConfig("narrowTarget", Number(e.target.value))}
                 className="accent-red-hot h-1.5 w-full cursor-pointer rounded-lg bg-white/20"
               />
               <span className="text-[10px] text-white/50 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
-                50% = centered in middle, 74% = right side
+                50% = centered in middle, 84% = right side
               </span>
             </div>
           </div>

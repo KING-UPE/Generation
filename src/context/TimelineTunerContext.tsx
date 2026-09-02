@@ -14,14 +14,14 @@ export interface TimelineConfig {
 }
 
 export const DEFAULT_CONFIG: TimelineConfig = {
-  heroRunway: 55,
-  timelineHeight: 500,
-  fadeDuration: 0.35,
-  narrowTarget: 0.5,
-  edition2023: 0.6,
-  edition2024: 3.6,
-  edition2025: 6.4,
-  edition2026: 8.4,
+  heroRunway: 20,
+  timelineHeight: 250,
+  fadeDuration: 0.75,
+  narrowTarget: 0.84,
+  edition2023: 3.0,
+  edition2024: 5.5,
+  edition2025: 7.8,
+  edition2026: 9.6,
 };
 
 interface TunerContextType {
