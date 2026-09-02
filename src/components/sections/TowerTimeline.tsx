@@ -426,27 +426,61 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
                     style={{ background: "var(--grad-red)" }}
                   />
 
-                  <dl className="mt-8 grid max-w-[46ch] grid-cols-[6.5rem_1fr] gap-x-5 gap-y-4 sm:grid-cols-[8.5rem_1fr] sm:gap-x-6">
-                    {e.date ? (
-                      <>
-                        <dt className="eyebrow pt-1 font-bold text-red-hot">Date</dt>
-                        <dd className="text-base font-bold leading-snug text-white md:text-lg">{e.date}</dd>
-                      </>
-                    ) : null}
+                  {/* Highlighted Event Telemetry Matrix */}
+                  <div className="mt-8 flex flex-col gap-3 max-w-[48ch]">
+                    {e.date && (
+                      <div className="group relative overflow-hidden rounded-xl border border-red-hot/50 bg-gradient-to-r from-red-black/70 via-ink-2/90 to-ink-2/90 p-4 backdrop-blur-md transition-all duration-300 hover:border-red-hot shadow-[0_8px_28px_rgba(255,59,47,0.2)]">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-mono-ui text-[11px] font-bold tracking-[0.22em] text-red-hot uppercase flex items-center gap-2">
+                            <span className="inline-block h-2 w-2 rounded-full bg-red-hot animate-ping" />
+                            Confirmed Event Date
+                          </span>
+                          <span className="font-mono-ui text-[10px] font-bold text-red-hot bg-red-hot/15 border border-red-hot/30 px-2.5 py-0.5 rounded-full">
+                            COLOMBO 2026
+                          </span>
+                        </div>
+                        <p className="mt-2 text-base font-extrabold tracking-tight text-white sm:text-lg">
+                          {e.date}
+                        </p>
+                      </div>
+                    )}
 
-                    <dt className="eyebrow pt-1 font-bold text-muted">Venue</dt>
-                    <dd className="text-base font-bold leading-snug text-white md:text-lg">{e.venue}</dd>
+                    <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                      {/* Venue Card */}
+                      <div className="group relative overflow-hidden rounded-xl border border-hairline-bold bg-ink-2/90 p-3.5 backdrop-blur-md transition-all duration-300 hover:border-red-hot/60 hover:bg-ink-3/95">
+                        <span className="font-mono-ui text-[10px] font-bold tracking-[0.2em] text-muted uppercase flex items-center gap-1.5">
+                          <span className="inline-block h-1.5 w-1.5 rounded-full bg-dim group-hover:bg-red-hot transition-colors" />
+                          Venue
+                        </span>
+                        <p className="mt-1 text-sm font-bold leading-snug text-bone group-hover:text-white transition-colors sm:text-base">
+                          {e.venue}
+                        </p>
+                      </div>
 
-                    <dt className="eyebrow pt-1 font-bold text-muted">Crowd</dt>
-                    <dd className="text-base font-bold leading-snug text-white md:text-lg">{e.crowd}</dd>
+                      {/* Crowd Card */}
+                      <div className="group relative overflow-hidden rounded-xl border border-hairline-bold bg-ink-2/90 p-3.5 backdrop-blur-md transition-all duration-300 hover:border-red-hot/60 hover:bg-ink-3/95">
+                        <span className="font-mono-ui text-[10px] font-bold tracking-[0.2em] text-muted uppercase flex items-center gap-1.5">
+                          <span className="inline-block h-1.5 w-1.5 rounded-full bg-dim group-hover:bg-red-hot transition-colors" />
+                          Crowd Capacity
+                        </span>
+                        <p className="mt-1 text-sm font-extrabold leading-snug text-white sm:text-base">
+                          {e.crowd}
+                        </p>
+                      </div>
+                    </div>
 
-                    {e.sponsors ? (
-                      <>
-                        <dt className="eyebrow pt-1 font-bold text-muted">Sponsors</dt>
-                        <dd className="text-base font-medium leading-snug text-bone-muted md:text-lg">{e.sponsors}</dd>
-                      </>
-                    ) : null}
-                  </dl>
+                    {e.sponsors && (
+                      <div className="group relative overflow-hidden rounded-xl border border-hairline bg-ink-2/70 p-3.5 backdrop-blur-md transition-all duration-300 hover:border-hairline-bold">
+                        <span className="font-mono-ui text-[10px] font-bold tracking-[0.2em] text-dim uppercase flex items-center gap-1.5">
+                          <span className="inline-block h-1 w-1 rounded-full bg-dim" />
+                          Official Partners
+                        </span>
+                        <p className="mt-1 text-xs font-semibold leading-snug text-bone-muted sm:text-sm">
+                          {e.sponsors}
+                        </p>
+                      </div>
+                    )}
+                  </div>
 
                   {e.photos ? (
                     <a
@@ -454,7 +488,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
                       target="_blank"
                       rel="noreferrer noopener"
                       data-cursor="link"
-                      className="badge-pill pointer-events-auto mt-8 inline-flex w-fit items-center gap-2 border-hairline-bold text-bone hover:border-red-hot hover:text-white"
+                      className="badge-pill pointer-events-auto mt-6 inline-flex w-fit items-center gap-2 border-hairline-bold bg-ink-2/80 px-4 py-2 text-xs font-bold text-bone backdrop-blur-md transition-all duration-300 hover:border-red-hot hover:text-white hover:shadow-[0_4px_16px_rgba(255,59,47,0.3)]"
                     >
                       <span>VIEW EVENT ARCHIVE</span> <span aria-hidden>↗</span>
                     </a>
