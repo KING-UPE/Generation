@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useRef, useState } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
@@ -12,17 +12,10 @@ import EditionMark from "@/components/ui/EditionMark";
 const WORDMARK = "GENERATION";
 const EDITION = "26";
 const PREV_EDITION = "25";
-const TAGLINE = "TALENTS BY ECHEM";
+const TAGLINE = "Talents by ECheM";
 
 const MARK_SIZE =
   "text-[clamp(2.75rem,13.2vw,13rem)] leading-[0.85] tracking-[-0.01em]";
-
-const HERO_STATS = [
-  { value: "3,500+", label: "ATTENDEE CAPACITY", detail: "Strict single-night cap" },
-  { value: "120 kW", label: "PK SOUND SYSTEM", detail: "Custom tuned sub arrays" },
-  { value: "14+", label: "LIVE ACTS & PRODUCERS", detail: "Curated electronic & live" },
-  { value: "8 HRS", label: "NON-STOP LIVE SHOW", detail: "4K volumetric laser stage" },
-];
 
 export default function Hero() {
   const rootRef = useRef<HTMLElement>(null);
@@ -56,8 +49,8 @@ export default function Hero() {
       if (reduced) return;
 
       gsap.to(markRef.current, {
-        yPercent: -18,
-        opacity: 0.35,
+        yPercent: -22,
+        opacity: 0.25,
         ease: "none",
         scrollTrigger: {
           trigger: root,
@@ -83,31 +76,16 @@ export default function Hero() {
     <section
       id="hero"
       ref={rootRef as React.RefObject<HTMLElement>}
-      className="relative flex min-h-[100svh] flex-col justify-between overflow-hidden pb-12 pt-6"
+      className="relative flex min-h-[100svh] flex-col overflow-hidden"
     >
-      <Spotlight size={980} opacity={0.48} />
+      <Spotlight size={980} opacity={0.42} />
 
-      {/* Top HUD Header */}
-      <header className="relative z-10 mx-auto flex w-full max-w-(--maxw) flex-wrap items-center justify-between gap-4 px-(--gutter) pt-4 md:pt-6">
-        <div className="flex items-center gap-3">
-          <span className="badge-pill bg-black/60 font-mono-ui font-bold text-bone">
-            {TAGLINE}
-          </span>
-          <span className="hidden font-mono-ui text-xs font-semibold tracking-wider text-muted sm:inline-block">
-            COLOMBO // 2026
-          </span>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="badge-pill border-red-hot/40 bg-red-black/50 text-red-hot">
-            <span className="h-2 w-2 animate-ping rounded-full bg-red-hot" />
-            <span className="font-bold tracking-widest">OCTOBER 24, 2026 · LIVE ARENA</span>
-          </div>
-        </div>
+      <header className="relative z-10 mx-auto flex w-full max-w-(--maxw) items-center justify-between px-(--gutter) pt-8 md:pt-10">
+        <span className="eyebrow">{TAGLINE}</span>
+        <span className="eyebrow">Colombo · 2026</span>
       </header>
 
-      {/* Main Title Centerpiece */}
-      <div className="relative z-10 mx-auto flex w-full max-w-(--maxw) flex-1 flex-col justify-center px-(--gutter) py-10 md:py-16">
+      <div className="relative z-10 mx-auto flex w-full max-w-(--maxw) flex-1 flex-col justify-center px-(--gutter) py-20">
         <div ref={markRef} className="relative will-change-transform">
           <div className="inline-flex items-start">
             <div className="relative">
@@ -133,7 +111,7 @@ export default function Hero() {
                 }
                 style={{
                   backgroundImage:
-                    "radial-gradient(circle 260px at var(--mx, 50%) var(--my, 50%), #FF5A3C 0%, #FF2E2E 32%, #E10600 52%, transparent 72%)",
+                    "radial-gradient(circle 250px at var(--mx, 50%) var(--my, 50%), #FF5A3C 0%, #FF2E2E 32%, #E10600 52%, transparent 72%)",
                   WebkitBackgroundClip: "text",
                   backgroundClip: "text",
                   color: "transparent",
@@ -146,78 +124,38 @@ export default function Hero() {
             <EditionMark
               from={PREV_EDITION}
               to={EDITION}
-              className="ml-[0.4em] mt-[0.16em] text-[clamp(2rem,6.2vw,6rem)] font-bold text-red-hot"
+              className="ml-[0.4em] mt-[0.16em] text-[clamp(2rem,6.2vw,6rem)]"
             />
           </div>
         </div>
 
-        {/* Lead description & Action Bar */}
-        <div className="mt-8 flex flex-col gap-6 md:mt-10 md:flex-row md:items-end md:justify-between">
-          <div className="flex max-w-[54ch] flex-col gap-3">
-            <div className="flex items-center gap-2">
-              <span className="font-mono-ui text-xs font-bold tracking-widest text-red-hot">
-                ✦ EDITION 26 EXPERIENCE
-              </span>
-              <span className="text-dim">/</span>
-              <span className="font-mono-ui text-xs font-semibold text-muted">
-                LOTUS TOWER ARENA
-              </span>
-            </div>
-            <p className="text-lead">
-              One night where sound engineering and live performance collide. Held to an uncompromising production standard in Colombo.
-            </p>
-          </div>
+        <div className="mt-10 flex flex-wrap items-center justify-between gap-8 md:mt-14">
+          <RevealText as="p" delay={0.95} start="top 100%" className="eyebrow">
+            The 2026 edition
+          </RevealText>
 
-          <div className="flex flex-wrap items-center gap-4">
-            <Magnetic strength={16}>
-              <a
-                href="#vision"
-                data-cursor="link"
-                className="cut-shape-sm group inline-flex items-center gap-3 px-8 py-4 text-sm font-bold tracking-tight text-white shadow-[0_10px_30px_rgba(225,6,0,0.35)] transition-all duration-300 hover:shadow-[0_14px_42px_rgba(255,59,47,0.55)]"
-                style={{ background: "var(--grad-red)" }}
-              >
-                Explore 3D Stage
-                <span className="transition-transform duration-500 group-hover:translate-x-1">
-                  →
-                </span>
-              </a>
-            </Magnetic>
-
-            <Magnetic strength={12}>
-              <a
-                href="#film"
-                data-cursor="link"
-                className="cut-shape-sm group inline-flex items-center gap-2 border border-hairline-bold bg-ink-2/90 px-6 py-4 text-sm font-bold text-bone backdrop-blur-md transition-colors duration-300 hover:border-red-hot hover:text-white"
-              >
-                Watch Trailer
-              </a>
-            </Magnetic>
-          </div>
+          <Magnetic strength={16}>
+            <a
+              href="#timeline"
+              data-cursor="link"
+              className="cut-shape-sm group inline-flex items-center gap-3 px-7 py-4 text-sm font-semibold tracking-tight text-white"
+              style={{ background: "var(--grad-red)" }}
+            >
+              Be part of it
+              <span className="transition-transform duration-500 group-hover:translate-x-1">
+                →
+              </span>
+            </a>
+          </Magnetic>
         </div>
       </div>
 
-      {/* 4 Big Bold Event Stat Cards */}
-      <div className="relative z-10 mx-auto w-full max-w-(--maxw) px-(--gutter)">
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
-          {HERO_STATS.map((s, i) => (
-            <div
-              key={i}
-              className="card-interactive cut-shape-sm flex flex-col justify-between p-4 sm:p-5"
-            >
-              <span className="stat-number text-bone transition-colors duration-300 group-hover:text-red-hot">
-                {s.value}
-              </span>
-              <div className="mt-2">
-                <p className="font-mono-ui text-xs font-bold tracking-wider text-bone">
-                  {s.label}
-                </p>
-                <p className="mt-0.5 text-xs font-medium text-muted">
-                  {s.detail}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
+      <div className="pointer-events-none absolute bottom-10 left-1/2 z-10 hidden -translate-x-1/2 flex-col items-center gap-3 lg:flex">
+        <span
+          ref={cueRef}
+          className="block h-14 w-px origin-top"
+          style={{ background: "var(--grad-red)" }}
+        />
       </div>
     </section>
   );
