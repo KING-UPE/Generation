@@ -54,34 +54,17 @@ const NARROW = 768;
 /** Where the tower should land on a narrow screen, as a fraction of the frame. */
 const NARROW_TARGET = 0.5;
 
-/**
- * On a phone the footage shrinks to a band across the upper screen, leaving the
- * lower half to the cards.
- *
- * The box gets shorter but keeps `object-cover`, so it still crops in around
- * the tower — the frame is mostly empty black, and showing all of it just makes
- * the tower a stamp in the corner. Full frame height is visible at any box
- * height under cover, which is what keeps the vertical "GENERATION 23" whole.
- *
- * (An earlier attempt faded the bottom of the footage out with a gradient mask.
- * That erased the lower half of the tower — which is exactly where the start of
- * the vertical word sits, hence the clipped "…RATION 23".)
- */
-const BAND_TOP = 0; // % of stage height the band starts at — flush to the top
-const BAND_HEIGHT = 60; // % of stage height — the *most* the band may take
-const BAND_MIN = 34; // …and the least, on very short screens
-const CARD_PAD = 40; // the cards' own bottom padding (pb-10)
-const CARD_GAP = 24; // breathing room between footage and text
-
 function towerCentre(t: number) {
-  // Smooth continuous S-curve (smoothstep) from the crown (49.6% at t=0)
-  // to the shaft (25.8% at t=3.2s). Zero initial/final velocity ensures
-  // the tower seamlessly glides without any sudden jumps or popping from the side.
-  if (t <= 0.2) return 49.6;
-  if (t >= 3.2) return 25.8;
-  const p = (t - 0.2) / 3.0;
-  const ease = p * p * (3 - 2 * p);
-  return 49.6 + (25.8 - 49.6) * ease;
+  const p = TOWER_TRACK;
+  if (t <= p[0][0]) return p[0][1];
+  for (let i = 1; i < p.length; i++) {
+    if (t <= p[i][0]) {
+      const [t0, x0] = p[i - 1];
+      const [t1, x1] = p[i];
+      return x0 + ((x1 - x0) * (t - t0)) / (t1 - t0);
+    }
+  }
+  return p[p.length - 1][1];
 }
 
 /** Cross-fade between two cards, in seconds of video time. */
@@ -198,12 +181,16 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
           video.style.objectPosition = "";
           return;
         }
+        // Smooth continuous centroid tracking: keeps the tower body centered throughout scroll
         const f = towerCentre(t) / 100;
-        const rawX = ((NARROW_TARGET * w - f * rendered) / (w - rendered)) * 100;
-        video.style.objectPosition = `${clamp01(rawX / 100) * 100}% 50%`;
+        const x = ((NARROW_TARGET * w - f * rendered) / (w - rendered)) * 100;
+        video.style.objectPosition = `${clamp01(x / 100) * 100}% 50%`;
       };
 
       const frame = (f: number) => {
+        video.style.top = "";
+        video.style.height = "100%";
+
         const scale = FRAME_SCALE + (1 - FRAME_SCALE) * f;
         const shift = FRAME_SHIFT * (1 - f) + INTRO_RISE * intro.v;
         video.style.transform = `translateY(${shift.toFixed(2)}%) scale(${scale.toFixed(4)})`;
@@ -327,14 +314,14 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
       >
         <div className="sticky top-0 h-[100svh] w-full overflow-hidden">
           <div className="mx-auto flex h-full w-full max-w-(--maxw) items-center px-(--gutter)">
-            <div className="relative mx-auto h-full w-full max-w-[480px] md:ml-auto md:mr-0 md:h-[62vh] md:w-[52%] md:max-w-none">
+            <div className="relative mx-auto h-full w-full max-w-[480px] md:mx-0 md:ml-auto md:h-[62vh] md:w-[52%] md:max-w-none">
               {EDITIONS.map((e, i) => (
                 <article
                   key={e.year}
                   ref={(el) => {
                     cardRefs.current[i] = el;
                   }}
-                  className="absolute inset-0 flex flex-col justify-end pb-8 sm:pb-12 opacity-0 will-change-transform md:justify-center md:pb-0"
+                  className="absolute inset-0 flex flex-col justify-end pb-8 opacity-0 will-change-transform sm:pb-10 md:justify-center md:pb-0"
                 >
                   <span className="badge-pill mb-2 sm:mb-4 w-fit">
                     {e.upcoming ? (
@@ -350,76 +337,76 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
                     )}
                   </span>
 
-                  <h3 className="font-display text-[clamp(2.75rem,8.5vw,8.5rem)] leading-[0.88] tracking-[-0.02em] text-white">
+                  <h3 className="font-display text-[clamp(3.5rem,10vw,8.5rem)] leading-[0.88] tracking-[-0.02em] text-white">
                     {e.year}
                   </h3>
 
                   <span
                     aria-hidden
-                    className="mt-2.5 sm:mt-5 block h-1 w-16 sm:w-24 rounded-full"
+                    className="mt-3 sm:mt-6 block h-1 w-20 sm:w-24 rounded-full"
                     style={{ background: "var(--grad-red)" }}
                   />
 
                   {/* Highlighted Event Telemetry Matrix */}
-                  <div className="mt-3.5 sm:mt-7 flex flex-col gap-2 sm:gap-3 max-w-[48ch]">
+                  <div className="mt-4 sm:mt-8 flex flex-col gap-2.5 sm:gap-3 max-w-[48ch]">
                     {e.date && (
-                      <div className="cut-card-red group relative overflow-hidden p-3 sm:p-4 backdrop-blur-md">
+                      <div className="cut-card-red group relative overflow-hidden p-4 backdrop-blur-md">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="font-mono-ui text-[10px] sm:text-[11px] font-bold tracking-[0.22em] text-red-hot uppercase flex items-center gap-1.5">
-                            <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-hot animate-ping" />
+                          <span className="font-mono-ui text-[11px] font-bold tracking-[0.22em] text-red-hot uppercase flex items-center gap-2">
+                            <span className="inline-block h-2 w-2 rounded-full bg-red-hot animate-ping" />
                             Confirmed Event Date
                           </span>
-                          <span className="badge-pill border-red-hot/30 bg-red-hot/20 text-[9px] sm:text-[10px] font-bold text-red-hot py-0.5 px-2">
+                          <span className="badge-pill border-red-hot/30 bg-red-hot/20 text-[10px] font-bold text-red-hot py-0.5">
                             COLOMBO 2026
                           </span>
                         </div>
-                        <p className="mt-1 text-sm sm:text-base font-extrabold tracking-tight text-white sm:text-lg">
+                        <p className="mt-2 text-base font-extrabold tracking-tight text-white sm:text-lg">
                           {e.date}
                         </p>
                       </div>
                     )}
 
-                    <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
+                    <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                       {/* Venue Card */}
-                      <div className="cut-card group relative flex flex-col justify-between overflow-hidden p-2.5 sm:p-3.5 backdrop-blur-md">
-                        <span className="font-mono-ui text-[9px] sm:text-[10px] font-bold tracking-[0.2em] text-muted uppercase flex items-center gap-1">
-                          <span className="inline-block h-1 w-1 rounded-full bg-dim group-hover:bg-red-hot transition-colors" />
+                      <div className="cut-card group relative flex flex-col justify-between overflow-hidden p-3.5 backdrop-blur-md">
+                        <span className="font-mono-ui text-[10px] font-bold tracking-[0.2em] text-muted uppercase flex items-center gap-1.5">
+                          <span className="inline-block h-1.5 w-1.5 rounded-full bg-dim group-hover:bg-red-hot transition-colors" />
                           Venue
                         </span>
-                        <p className="mt-1 text-xs sm:text-sm md:text-base font-bold leading-snug text-bone group-hover:text-white transition-colors">
+                        <p className="mt-2 text-sm font-bold leading-snug text-bone group-hover:text-white transition-colors sm:text-base">
                           {e.venue}
                         </p>
                       </div>
 
                       {/* Crowd Card */}
-                      <div className="cut-card group relative flex flex-col justify-between overflow-hidden p-2.5 sm:p-3.5 backdrop-blur-md">
-                        <span className="font-mono-ui text-[9px] sm:text-[10px] font-bold tracking-[0.2em] text-muted uppercase flex items-center gap-1">
-                          <span className="inline-block h-1 w-1 rounded-full bg-dim group-hover:bg-red-hot transition-colors" />
+                      <div className="cut-card group relative flex flex-col justify-between overflow-hidden p-3.5 backdrop-blur-md">
+                        <span className="font-mono-ui text-[10px] font-bold tracking-[0.2em] text-muted uppercase flex items-center gap-1.5">
+                          <span className="inline-block h-1.5 w-1.5 rounded-full bg-dim group-hover:bg-red-hot transition-colors" />
                           {e.upcoming ? "Expected Crowd" : "Recorded Crowd"}
                         </span>
-                        <p className="font-display mt-0.5 text-xl sm:text-2xl md:text-3xl font-normal leading-none tracking-tight text-white">
+                        <p className="font-display mt-1 text-2xl font-normal leading-none tracking-tight text-white sm:text-3xl">
                           {e.crowd}
                         </p>
                       </div>
                     </div>
 
                     {e.sponsors && (
-                      <div className="flex flex-col gap-1.5 sm:gap-2">
-                        <div className="flex items-center gap-1.5">
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-2">
                           <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-hot" />
-                          <span className="font-mono-ui text-[9px] sm:text-[10px] font-bold tracking-[0.22em] text-muted uppercase">
+                          <span className="font-mono-ui text-[10px] font-bold tracking-[0.22em] text-muted uppercase">
                             Official Partners & Sponsors
                           </span>
                         </div>
 
                         {e.sponsorLogos && e.sponsorLogos.length > 0 ? (
-                          <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
+                          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                             {e.sponsorLogos.map((logo, idx) => (
                               <div
                                 key={idx}
-                                className="cut-card group relative flex items-center gap-2 sm:gap-3 overflow-hidden p-2 sm:p-3 backdrop-blur-md"
+                                className="cut-card group relative flex items-center gap-3 overflow-hidden p-3 backdrop-blur-md"
                               >
-                                <div className="cut-shape-xs flex h-9 w-12 sm:h-12 sm:w-16 shrink-0 items-center justify-center overflow-hidden bg-white p-0.5 sm:p-1 shadow-sm transition-transform duration-300 group-hover:scale-105">
+                                <div className="cut-shape-xs flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden bg-white p-1 shadow-sm transition-transform duration-300 group-hover:scale-105">
                                   <img
                                     src={logo.src}
                                     alt={logo.alt}
@@ -427,10 +414,10 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
                                   />
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                  <p className="font-mono-ui text-[8px] sm:text-[9px] font-bold tracking-wider text-muted uppercase">
+                                  <p className="font-mono-ui text-[9px] font-bold tracking-wider text-muted uppercase">
                                     {logo.title || "Official Partner"}
                                   </p>
-                                  <p className="mt-0.5 truncate text-xs sm:text-sm font-extrabold text-white">
+                                  <p className="mt-0.5 truncate text-sm font-extrabold text-white">
                                     {logo.name || logo.alt}
                                   </p>
                                 </div>
@@ -438,7 +425,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
                             ))}
                           </div>
                         ) : (
-                          <div className="cut-card p-2.5 sm:p-3.5 backdrop-blur-md">
+                          <div className="cut-card p-3.5 backdrop-blur-md">
                             <p className="text-xs font-semibold text-bone-muted">{e.sponsors}</p>
                           </div>
                         )}
