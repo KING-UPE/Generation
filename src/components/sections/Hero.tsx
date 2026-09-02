@@ -104,13 +104,13 @@ export default function Hero() {
 
       <header
         ref={headerRef}
-        className="relative z-10 mx-auto flex w-full max-w-(--maxw) items-center justify-between px-(--gutter) pt-8 md:pt-10 will-change-transform"
+        className="relative z-10 mx-auto flex w-full max-w-(--maxw) items-center justify-between px-(--gutter) pt-6 md:pt-10 will-change-transform"
       >
         <span className="badge-pill">{TAGLINE}</span>
         <span className="badge-pill">Colombo · 2026</span>
       </header>
 
-      <div className="relative z-10 mx-auto flex w-full max-w-(--maxw) flex-1 flex-col justify-center px-(--gutter) py-20">
+      <div className="relative z-10 mx-auto flex w-full max-w-(--maxw) flex-1 flex-col justify-start px-(--gutter) pt-10 sm:pt-14 md:pt-16 pb-12">
         <div ref={markRef} className="relative will-change-transform">
           <div className="inline-flex items-start">
             <div className="relative">

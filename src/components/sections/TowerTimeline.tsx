@@ -196,8 +196,11 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
           }
           return;
         }
-        // Lock directly to narrowTarget (right side) so the tower never swings to the left
-        const targetScreen = NARROW_TARGET;
+        // In Hero (t <= 0.6s): Crown is centered in the middle (0.50).
+        // As user scrolls into Timeline (t: 0.6s -> 2.2s): Smoothly glides to the right side (0.84).
+        const progress = clamp01((t - 0.6) / 1.6);
+        const smoothProgress = progress * progress * (3 - 2 * progress);
+        const targetScreen = 0.50 + (NARROW_TARGET - 0.50) * smoothProgress;
 
         const f = towerCentre(t) / 100;
         const x = clamp01(((targetScreen * w - f * rendered) / (w - rendered))) * 100;
