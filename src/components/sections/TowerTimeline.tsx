@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
+import { useTimelineConfig } from "@/context/TimelineTunerContext";
 
 /**
  * The seek-optimised build, not the original.
@@ -57,28 +58,16 @@ const INTRO_RISE = 40;
  * frame: it holds at centre while the crown is on screen, then slides left and
  * settles once the shaft takes over.
  *
- * Sampled every 0.2s through the move, not just at its endpoints. The knots
- * used to sit at t=1 and t=2 and the reading between them was a straight line,
- * but the tower does not leave centre until about t=1.3 and then goes quickly:
- * at t=1.4 the line said 45.0% when the tower was still at 49.3%. `pan` trusts
- * this table to cancel the tower's motion, so a 4.3% error here became a 62px
- * sideways lurch on screen — the frame panned away and the tower did not go
- * with it. Re-measure the same way after any change to the footage.
  */
 const TOWER_TRACK: ReadonlyArray<readonly [number, number]> = [
-  [0, 49.7], [1.2, 49.8], [1.4, 49.3], [1.6, 47.2], [1.8, 43.3], [2.0, 38.1],
+  [0, 49.6], [0.2, 49.6], [0.4, 49.6], [0.6, 49.6], [0.8, 49.6],
+  [1.0, 49.6], [1.2, 48.9], [1.4, 46.8], [1.6, 43.5], [1.8, 39.8],
+  [2.0, 36.6],
   [2.2, 34.3], [2.4, 30.5], [2.6, 28.1], [2.8, 26.7], [3.0, 26.0], [3.2, 25.9],
   [10, 26.0],
 ];
 
-/**
- * Below this width, `object-cover` on 16:9 footage crops so hard that the
- * visible window is the middle quarter of the frame — and the tower, at ~26%,
- * falls outside it entirely. Narrow screens pan to keep it in view.
- */
 const NARROW = 768;
-/** Where the tower should land on a narrow screen, as a fraction of the frame (centered in the middle). */
-const NARROW_TARGET = 0.5;
 
 function towerCentre(t: number) {
   const p = TOWER_TRACK;
@@ -93,29 +82,19 @@ function towerCentre(t: number) {
   return p[p.length - 1][1];
 }
 
-/** Cross-fade between two cards, in seconds of video time. */
-const FADE = 0.35;
-
-/**
- * When each card appears, in seconds of the footage — matched to where that
- * year is legible on the tower shaft. The last one holds to the end.
- */
-const EDITIONS = [
+const EDITIONS_BASE = [
   {
     year: "2023",
-    at: 0.6,
     venue: "Maharagama Youth Centre",
     crowd: "2,000+",
   },
   {
     year: "2024",
-    at: 3.6,
     venue: "Viharamahadevi Open Air Theatre",
     crowd: "4,500+",
   },
   {
     year: "2025",
-    at: 6.4,
     venue: "Lotus Tower Open Arena",
     crowd: "7,500+",
     sponsors: "SLIC General · Y FM",
@@ -138,7 +117,6 @@ const EDITIONS = [
   },
   {
     year: "2026",
-    at: 8.4,
     venue: "Lotus Tower Open Arena",
     crowd: "10,000+",
     date: "Saturday, 12 December 2026",
@@ -148,25 +126,35 @@ const EDITIONS = [
 
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
-/**
- * A card holds from its own cue until the next one's, cross-fading at each
- * boundary. The final card has no successor, so it holds to the end — fading
- * it out left the bottom of the section showing nothing at all.
- */
-function cardAlpha(t: number, i: number) {
-  const start = EDITIONS[i].at;
-  const next = EDITIONS[i + 1];
-  const rampIn = clamp01((t - start) / FADE);
-  const rampOut = next ? clamp01((next.at - t) / FADE) : 1;
-  return Math.min(rampIn, rampOut);
-}
-
 export default function TowerTimeline({ children }: { children: React.ReactNode }) {
+  const { config } = useTimelineConfig();
   const rootRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLElement | null)[]>([]);
+  const configRef = useRef(config);
+  configRef.current = config;
+
+  const editions = [
+    { ...EDITIONS_BASE[0], at: config.edition2023 },
+    { ...EDITIONS_BASE[1], at: config.edition2024 },
+    { ...EDITIONS_BASE[2], at: config.edition2025 },
+    { ...EDITIONS_BASE[3], at: config.edition2026 },
+  ];
+
+  function cardAlpha(t: number, i: number) {
+    const start = editions[i].at;
+    const next = editions[i + 1];
+    const fade = configRef.current.fadeDuration;
+    const rampIn = clamp01((t - start) / fade);
+    const rampOut = next ? clamp01((next.at - t) / fade) : 1;
+    return Math.min(rampIn, rampOut);
+  }
+
+  useEffect(() => {
+    ScrollTrigger.refresh();
+  }, [config.heroRunway, config.timelineHeight]);
 
   useGSAP(
     () => {
@@ -185,21 +173,9 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
 
       let target = 0;
       let current = 0;
-      /* 0 = inset hero framing, 1 = full bleed. Consumed straight, with no
-         lerp of its own — see SEEK_LERP. */
       let framingTarget = 0;
-
-      /* One-shot entrance, decayed by the ticker alongside everything else. */
       const intro = { v: 1 };
 
-      /**
-       * Chooses the `object-position` that puts the tower where we want it in
-       * the container.
-       * On mobile:
-       * - Hero (t <= 1.0): Crown is centered in the middle (50%).
-       * - Timeline (t >= 3.5): Shaft smoothly settles near the right side (74%),
-       *   giving ample space and full height for the edition cards on the left.
-       */
       let lastPan = -1;
       const pan = (t: number) => {
         const w = video.clientWidth;
@@ -222,17 +198,11 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
           }
           return;
         }
-        // Monotonic transition: starts centered at 0.50 in Hero, smoothly glides to 0.74 in Timeline
         const progress = clamp01((t - 1.0) / 2.5);
-        const targetScreen = 0.50 + (0.74 - 0.50) * progress;
+        const targetScreen = 0.50 + (configRef.current.narrowTarget - 0.50) * progress;
 
         const f = towerCentre(t) / 100;
         const x = clamp01(((targetScreen * w - f * rendered) / (w - rendered))) * 100;
-        /* Writing object-position repaints the video layer — it is not a
-           compositor property — so skip writes that would not move anything.
-           The threshold is expressed in pixels, not percent: a flat 0.25%
-           quantum is ~2.7px of pan at this size, which made the glide visibly
-           step. Below half a pixel there is nothing to see. */
         const travel = Math.abs(w - rendered);
         const minDelta = travel > 0 ? (0.5 / travel) * 100 : 0.05;
         if (lastPan < 0 || Math.abs(x - lastPan) >= minDelta) {
@@ -423,20 +393,25 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         />
       </div>
 
-      {/* Pulled up over the pinned frame: 55vh scroll runway for swift, responsive stage expansion */}
-      <div ref={heroRef} className="relative h-[55vh]" style={{ marginTop: "-100svh" }}>
+      {/* Pulled up over the pinned frame: dynamic scroll runway for stage expansion */}
+      <div
+        ref={heroRef}
+        className="relative"
+        style={{ marginTop: "-100svh", height: `${config.heroRunway}vh` }}
+      >
         <div className="h-[100svh] w-full overflow-hidden">{children}</div>
       </div>
 
       <section
         id="timeline"
         ref={timelineRef}
-        className="relative h-[500svh]"
+        className="relative"
+        style={{ height: `${config.timelineHeight}svh` }}
       >
         <div className="sticky top-0 h-[100svh] w-full overflow-hidden">
           <div className="mx-auto flex h-full w-full max-w-(--maxw) items-center px-(--gutter)">
             <div className="relative mr-auto h-full w-full max-w-[280px] sm:max-w-[340px] md:mx-0 md:ml-auto md:h-[62vh] md:w-[52%] md:max-w-[460px]">
-              {EDITIONS.map((e, i) => (
+              {editions.map((e, i) => (
                 <article
                   key={e.year}
                   ref={(el) => {
