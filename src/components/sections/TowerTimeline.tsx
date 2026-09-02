@@ -204,8 +204,10 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
           return;
         }
         const f = towerCentre(t) / 100;
-        const x = ((NARROW_TARGET * w - f * rendered) / (w - rendered)) * 100;
-        video.style.objectPosition = `${clamp01(x / 100) * 100}% 50%`;
+        const rawX = ((NARROW_TARGET * w - f * rendered) / (w - rendered)) * 100;
+        // Dampen horizontal shift so the tower stays stable in frame without overshooting to the right and swinging back
+        const dampedX = 50 + (rawX - 50) * 0.55;
+        video.style.objectPosition = `${clamp01(dampedX / 100) * 100}% 50%`;
       };
 
       const frame = (f: number) => {
