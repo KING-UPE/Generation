@@ -15,13 +15,13 @@ export interface TimelineConfig {
 
 export const DEFAULT_CONFIG: TimelineConfig = {
   heroRunway: 20, // Fast hero exit / stage expansion
-  timelineHeight: 480, // Slower, comfortable year reading pacing
+  timelineHeight: 480, // Comfortable scroll pacing
   fadeDuration: 0.45,
   narrowTarget: 0.84,
-  edition2023: 0.8,
-  edition2024: 3.8,
-  edition2025: 6.6,
-  edition2026: 8.6,
+  edition2023: 2.0, // Arrives when 2023 is reached on tower shaft
+  edition2024: 4.8, // Arrives when 2024 is reached on tower shaft
+  edition2025: 7.2, // Arrives when 2025 is reached on tower shaft
+  edition2026: 9.0, // Arrives when 2026 is reached at tower base
 };
 
 interface TunerContextType {
@@ -34,7 +34,7 @@ interface TunerContextType {
 
 const TimelineTunerContext = createContext<TunerContextType | null>(null);
 
-const STORAGE_KEY = "gen26_timeline_tuner_config_v2";
+const STORAGE_KEY = "gen26_timeline_tuner_config_v3";
 
 export function TimelineTunerProvider({ children }: { children: React.ReactNode }) {
   const [config, setConfig] = useState<TimelineConfig>(DEFAULT_CONFIG);
