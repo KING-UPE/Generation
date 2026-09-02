@@ -186,8 +186,6 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
        * screens crop little, so they keep the default framing.
        */
       const pan = (t: number) => {
-        /* The video's own box, not the stage: on narrow screens it shrinks to a
-           band, and once it is 16:9 there is nothing left to crop or pan. */
         const w = video.clientWidth;
         const h = video.clientHeight;
         const stage = video.parentElement;
@@ -202,63 +200,27 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
           video.style.objectPosition = "";
           return;
         }
+        // In hero (t <= 0.8), tower is centered (0.50). In timeline (t >= 1.6), tower shifts to the right side (0.82)
+        // so the card on the left has full vertical height!
+        const heroTarget = 0.5;
+        const timelineTarget = 0.82;
+        const targetF =
+          t <= 0.8
+            ? heroTarget
+            : heroTarget + (timelineTarget - heroTarget) * Math.min(1, (t - 0.8) / 0.8);
+
         const f = towerCentre(t) / 100;
-        const x = ((NARROW_TARGET * w - f * rendered) / (w - rendered)) * 100;
+        const x = ((targetF * w - f * rendered) / (w - rendered)) * 100;
         video.style.objectPosition = `${clamp01(x / 100) * 100}% 50%`;
       };
 
-      /**
-       * The band takes whatever height is left once the tallest card has its
-       * room. A fixed percentage cannot work: card content is a fixed pixel
-       * height, so on a short phone it eats proportionally more of the screen —
-       * 60% was fine at 812px tall and overlapped by 44px at 667px.
-       */
-      let bandPct = BAND_HEIGHT;
-      let measuredAtHeight = 0;
-      const measureBand = () => {
-        const stage = video.parentElement;
-        const h = stage?.clientHeight ?? 0;
-        if (!h || !cards.length) return;
-        let tallest = 0;
-        for (const c of cards) {
-          const kids = Array.from(c.children).filter(
-            (k) => (k as HTMLElement).offsetHeight > 0,
-          );
-          if (!kids.length) continue;
-          const rects = kids.map((k) => k.getBoundingClientRect());
-          const height =
-            Math.max(...rects.map((r) => r.bottom)) - Math.min(...rects.map((r) => r.top));
-          if (height > tallest) tallest = height;
-        }
-        if (!tallest) return;
-        const available = ((h - tallest - CARD_PAD - CARD_GAP) / h) * 100;
-        bandPct = Math.max(BAND_MIN, Math.min(BAND_HEIGHT, available));
-        measuredAtHeight = h;
-      };
-
       const frame = (f: number) => {
-        const stage = video.parentElement;
-        const w = stage?.clientWidth ?? 0;
-        const h = stage?.clientHeight ?? 0;
-
-        if (w && h && w < NARROW) {
-          /* Re-measure whenever the viewport height changes. The observer alone
-             is not enough: its callbacks arrive on the rendering step, which a
-             backgrounded tab does not run, so the band can come back stale. */
-          if (h !== measuredAtHeight) measureBand();
-          /* Ease from full-bleed to the band as the timeline takes over. */
-          video.style.top = `${(BAND_TOP * f).toFixed(2)}%`;
-          video.style.height = `${(100 + (bandPct - 100) * f).toFixed(2)}%`;
-        } else {
-          video.style.top = "";
-          video.style.height = "";
-        }
+        video.style.top = "";
+        video.style.height = "100%";
 
         const scale = FRAME_SCALE + (1 - FRAME_SCALE) * f;
         const shift = FRAME_SHIFT * (1 - f) + INTRO_RISE * intro.v;
         video.style.transform = `translateY(${shift.toFixed(2)}%) scale(${scale.toFixed(4)})`;
-        /* Opaque by the time it is halfway up, so the rise reads as movement
-           rather than a fade. */
         video.style.opacity = String(clamp01((1 - intro.v) / 0.5));
       };
 
@@ -335,10 +297,6 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
 
       gsap.to(intro, { v: 0, duration: 1.7, delay: 0.3, ease: "gen" });
 
-      measureBand();
-      const bandRO = new ResizeObserver(() => measureBand());
-      if (video.parentElement) bandRO.observe(video.parentElement);
-
       gsap.ticker.add(tick);
       frame(0);
       pan(0);
@@ -347,7 +305,6 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
       return () => {
         st.kill();
         framer.kill();
-        bandRO.disconnect();
         gsap.ticker.remove(tick);
       };
     },
@@ -356,26 +313,6 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
 
   return (
     <div ref={rootRef} className="relative">
-      {/*
-        A full-height sticky whose height is cancelled by an equal negative
-        margin: it pins for the whole hero + timeline run, costs no layout
-        space, and it stops sticking with its bottom edge exactly on the section
-        boundary — then scrolls away on its own as Vision arrives. So the tower
-        stays fully visible to the last frame and never bleeds over the next
-        section. Fading it out early did the second job but broke the first.
-
-        The height cancellation lives on the hero below, not here: sticky release
-        is measured from the *margin box*, so a negative margin on this element
-        collapsed it to nothing and it never released at all.
-
-        z-index -1 puts it beneath the starfield, which is what lets stars show
-        over the tower. The page is pure black to match the footage, so the
-        frame's own black has no visible edge.
-
-        An earlier attempt used `mix-blend-mode: screen` to knock the black out.
-        That cannot work here: `position: sticky` always establishes a stacking
-        context, so the video had no backdrop to blend against.
-      */}
       <div className="pointer-events-none sticky top-0 z-[-1] h-[100svh] overflow-hidden bg-black">
         <video
           ref={videoRef}
@@ -392,8 +329,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         />
       </div>
 
-      {/* Pulled up over the pinned frame — this is what makes the video layer
-          cost no layout height, without touching the sticky element itself. */}
+      {/* Pulled up over the pinned frame */}
       <div ref={heroRef} className="relative" style={{ marginTop: "-100svh" }}>
         {children}
       </div>
@@ -405,18 +341,17 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
       >
         <div className="sticky top-0 h-[100svh] w-full overflow-hidden">
           <div className="mx-auto flex h-full w-full max-w-(--maxw) items-center px-(--gutter)">
-            {/* `md`, not `lg`: between 768 and 1024 this was still full width,
-                so the text sat straight on top of the tower. */}
-            <div className="relative ml-auto h-full w-full md:h-[62vh] md:w-[52%]">
+            {/* On mobile, card sits on left side (mr-auto w-[85%]) with full vertical room while tower is on the right */}
+            <div className="relative mr-auto h-full w-[85%] sm:w-[75%] md:ml-auto md:mr-0 md:h-[62vh] md:w-[52%]">
               {EDITIONS.map((e, i) => (
                 <article
                   key={e.year}
                   ref={(el) => {
                     cardRefs.current[i] = el;
                   }}
-                  className="absolute inset-0 flex flex-col justify-end pb-10 opacity-0 will-change-transform md:justify-center md:pb-0"
+                  className="absolute inset-0 flex flex-col justify-center py-6 opacity-0 will-change-transform md:py-0"
                 >
-                  <span className="badge-pill mb-4 w-fit">
+                  <span className="badge-pill mb-2 sm:mb-4 w-fit">
                     {e.upcoming ? (
                       <>
                         <span
@@ -430,18 +365,18 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
                     )}
                   </span>
 
-                  <h3 className="font-display text-[clamp(3.5rem,10vw,8.5rem)] leading-[0.88] tracking-[-0.02em] text-white">
+                  <h3 className="font-display text-[clamp(3.2rem,9vw,8.5rem)] leading-[0.88] tracking-[-0.02em] text-white">
                     {e.year}
                   </h3>
 
                   <span
                     aria-hidden
-                    className="mt-6 block h-1 w-24 rounded-full"
+                    className="mt-3 sm:mt-6 block h-1 w-20 sm:w-24 rounded-full"
                     style={{ background: "var(--grad-red)" }}
                   />
 
                   {/* Highlighted Event Telemetry Matrix */}
-                  <div className="mt-8 flex flex-col gap-3 max-w-[48ch]">
+                  <div className="mt-4 sm:mt-8 flex flex-col gap-2 sm:gap-3 max-w-[48ch]">
                     {e.date && (
                       <div className="cut-card-red group relative overflow-hidden p-4 backdrop-blur-md">
                         <div className="flex items-center justify-between gap-2">
