@@ -112,6 +112,10 @@ const EDITIONS = [
     venue: "Lotus Tower Open Arena",
     crowd: "7,500+",
     sponsors: "SLIC General · Y FM",
+    sponsorLogos: [
+      { src: "/img/sponsors/slic.png", alt: "SLIC General - Sri Lanka Insurance" },
+      { src: "/img/sponsors/yfm.png", alt: "Y FM - The Original Youth Channel" },
+    ],
     photos:
       "https://www.facebook.com/media/set/?set=a.122160864974672421&type=3",
   },
@@ -470,14 +474,33 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
                     </div>
 
                     {e.sponsors && (
-                      <div className="group relative overflow-hidden rounded-xl border border-hairline bg-ink-2/70 p-3.5 backdrop-blur-md transition-all duration-300 hover:border-hairline-bold">
-                        <span className="font-mono-ui text-[10px] font-bold tracking-[0.2em] text-dim uppercase flex items-center gap-1.5">
-                          <span className="inline-block h-1 w-1 rounded-full bg-dim" />
-                          Official Partners
-                        </span>
-                        <p className="mt-1 text-xs font-semibold leading-snug text-bone-muted sm:text-sm">
-                          {e.sponsors}
-                        </p>
+                      <div className="group relative overflow-hidden rounded-xl border border-hairline-bold bg-ink-2/90 p-3.5 backdrop-blur-md transition-all duration-300 hover:border-red-hot/50">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-mono-ui text-[10px] font-bold tracking-[0.2em] text-muted uppercase flex items-center gap-1.5">
+                            <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-hot" />
+                            Official Partners & Sponsors
+                          </span>
+                          <span className="text-[11px] font-semibold text-bone">
+                            {e.sponsors}
+                          </span>
+                        </div>
+
+                        {e.sponsorLogos && e.sponsorLogos.length > 0 && (
+                          <div className="mt-3 flex flex-wrap items-center gap-2.5">
+                            {e.sponsorLogos.map((logo, idx) => (
+                              <div
+                                key={idx}
+                                className="flex h-11 items-center justify-center rounded-lg border border-hairline-bold bg-black/80 px-3 py-1.5 shadow-inner transition-all duration-300 hover:border-red-hot/50 hover:bg-black/95"
+                              >
+                                <img
+                                  src={logo.src}
+                                  alt={logo.alt}
+                                  className="h-7 w-auto max-w-[95px] object-contain"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
