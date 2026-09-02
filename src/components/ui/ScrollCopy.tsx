@@ -4,7 +4,7 @@ import { useRef } from "react";
 import { gsap, useGSAP, SplitText } from "@/lib/gsap";
 
 /* Token values mirrored from globals.css — GSAP needs resolved colors. */
-const DIM = "#9494A4";
+const DIM = "#9E9EAA";
 const BONE = "#FFFFFF";
 
 type Props = {

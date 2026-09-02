@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type ElementType } from "react";
+import React, { useRef, useState } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
 import { useTorch } from "@/lib/use-torch";
 
@@ -72,13 +72,16 @@ export default function LitTitle({
     { scope: wrapRef, dependencies: [children] },
   );
 
-  const Component = Tag as any;
-
   return (
     <div ref={wrapRef} className="relative inline-block">
-      <Component className={"font-display lit-base select-none " + className} style={{ ["--lit-w" as string]: weight + "px" }}>
-        {children}
-      </Component>
+      {React.createElement(
+        Tag,
+        {
+          className: "font-display lit-base select-none " + className,
+          style: { ["--lit-w" as string]: weight + "px" },
+        },
+        children
+      )}
 
       {/* the lit copy, revealed through a radial mask */}
       <span

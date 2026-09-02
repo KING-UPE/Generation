@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, type ElementType } from "react";
+import React, { useRef } from "react";
 import { gsap, useGSAP, SplitText } from "@/lib/gsap";
 
 type Props = {
@@ -76,11 +76,12 @@ export default function RevealText({
     { scope: ref, dependencies: [children, type, delay, stagger, start, y] },
   );
 
-  const Component = Tag as any;
-
-  return (
-    <Component ref={ref} className={className}>
-      {children}
-    </Component>
+  return React.createElement(
+    Tag,
+    {
+      ref,
+      className,
+    },
+    children
   );
 }

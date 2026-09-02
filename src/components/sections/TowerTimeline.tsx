@@ -416,34 +416,34 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
                     )}
                   </span>
 
-                  <h3 className="font-display text-[clamp(3rem,9vw,7.5rem)] leading-[0.9] tracking-[-0.02em] text-bone">
+                  <h3 className="font-display text-[clamp(3.5rem,10vw,8.5rem)] leading-[0.88] tracking-[-0.02em] text-white">
                     {e.year}
                   </h3>
 
                   <span
                     aria-hidden
-                    className="mt-6 block h-px w-20"
+                    className="mt-6 block h-1 w-24 rounded-full"
                     style={{ background: "var(--grad-red)" }}
                   />
 
-                  <dl className="mt-7 grid max-w-[42ch] grid-cols-[6rem_1fr] gap-x-5 gap-y-4 sm:grid-cols-[7.5rem_1fr] sm:gap-x-6">
+                  <dl className="mt-8 grid max-w-[46ch] grid-cols-[6.5rem_1fr] gap-x-5 gap-y-4 sm:grid-cols-[8.5rem_1fr] sm:gap-x-6">
                     {e.date ? (
                       <>
-                        <dt className="eyebrow pt-1">Date</dt>
-                        <dd className="text-[0.95rem] leading-snug text-bone md:text-base">{e.date}</dd>
+                        <dt className="eyebrow pt-1 font-bold text-red-hot">Date</dt>
+                        <dd className="text-base font-bold leading-snug text-white md:text-lg">{e.date}</dd>
                       </>
                     ) : null}
 
-                    <dt className="eyebrow pt-1">Venue</dt>
-                    <dd className="text-[0.95rem] leading-snug text-bone md:text-base">{e.venue}</dd>
+                    <dt className="eyebrow pt-1 font-bold text-muted">Venue</dt>
+                    <dd className="text-base font-bold leading-snug text-white md:text-lg">{e.venue}</dd>
 
-                    <dt className="eyebrow pt-1">Crowd</dt>
-                    <dd className="text-[0.95rem] leading-snug text-bone md:text-base">{e.crowd}</dd>
+                    <dt className="eyebrow pt-1 font-bold text-muted">Crowd</dt>
+                    <dd className="text-base font-bold leading-snug text-white md:text-lg">{e.crowd}</dd>
 
                     {e.sponsors ? (
                       <>
-                        <dt className="eyebrow pt-1">Sponsors</dt>
-                        <dd className="text-[0.95rem] leading-snug text-bone md:text-base">{e.sponsors}</dd>
+                        <dt className="eyebrow pt-1 font-bold text-muted">Sponsors</dt>
+                        <dd className="text-base font-medium leading-snug text-bone-muted md:text-lg">{e.sponsors}</dd>
                       </>
                     ) : null}
                   </dl>
@@ -454,9 +454,9 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
                       target="_blank"
                       rel="noreferrer noopener"
                       data-cursor="link"
-                      className="eyebrow tap-target mt-8 inline-flex w-fit items-center gap-2 border-b border-hairline pb-1 transition-colors duration-500 hover:border-red-hot hover:text-red-hot"
+                      className="badge-pill pointer-events-auto mt-8 inline-flex w-fit items-center gap-2 border-hairline-bold text-bone hover:border-red-hot hover:text-white"
                     >
-                      Event photos <span aria-hidden>↗</span>
+                      <span>VIEW EVENT ARCHIVE</span> <span aria-hidden>↗</span>
                     </a>
                   ) : null}
                 </article>

@@ -351,9 +351,9 @@ export default function Film() {
              where it balances the tablet across the fold. */
           className="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-full max-w-(--maxw) flex-col justify-start px-(--gutter) pt-24 lg:w-[52%] lg:justify-center lg:pt-0"
         >
-          <RevealText as="p" className="eyebrow mb-5" start="top 92%">
-            06 — Film
-          </RevealText>
+          <div className="badge-pill border-red-hot/40 bg-red-black/50 text-red-hot mb-4 w-fit">
+            ✦ OFFICIAL TRAILER // REEL
+          </div>
 
           <LitTitle
             className="text-[clamp(3.5rem,11vw,10rem)] leading-[0.9] tracking-[-0.02em]"
@@ -366,10 +366,10 @@ export default function Film() {
 
           <RevealText
             as="p"
-            className="mt-7 max-w-[34ch] text-[clamp(0.95rem,1.05vw,1.05rem)] leading-[1.9] text-muted"
+            className="mt-6 max-w-[36ch] text-lead text-bone"
             start="top 92%"
           >
-            Keep scrolling. The frame opens.
+            One stage. Pure frequency. Scroll to watch the cinematic arena unfold.
           </RevealText>
         </div>
 
