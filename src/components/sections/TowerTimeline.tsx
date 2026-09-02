@@ -196,9 +196,8 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
           }
           return;
         }
-        // In Hero (t <= 0.6s): Crown is centered in the middle (0.50).
-        // As user scrolls into Timeline (t: 0.6s -> 2.2s): Smoothly glides to the right side (0.84).
-        const progress = clamp01((t - 0.6) / 1.6);
+        // In Hero (t <= 0.8), tower is in the middle (50%). Glides smoothly to right side (84%) across timeline scroll
+        const progress = clamp01((t - 0.8) / 1.8);
         const smoothProgress = progress * progress * (3 - 2 * progress);
         const targetScreen = 0.50 + (NARROW_TARGET - 0.50) * smoothProgress;
 
