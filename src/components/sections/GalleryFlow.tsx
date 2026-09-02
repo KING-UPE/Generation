@@ -242,8 +242,13 @@ export default function GalleryFlow() {
       render();
       gsap.ticker.add(tick);
       window.addEventListener("pointermove", onMove, { passive: true });
-      const ro = new ResizeObserver(render);
+      const ro = new ResizeObserver(() => {
+        render();
+      });
       ro.observe(field);
+
+      // Refresh ScrollTrigger so all downstream offsets align with upstream sections
+      ScrollTrigger.refresh();
 
       return () => {
         st.kill();
@@ -266,7 +271,7 @@ export default function GalleryFlow() {
             50px on a phone, so narrow screens need a large multiple. */}
         <div
           ref={fieldRef}
-          className="absolute inset-0 [--gs:3] sm:[--gs:2.3] md:[--gs:1.7] lg:[--gs:1]"
+          className="absolute inset-0 gallery-field"
         >
           {ITEMS.map((it, i) => (
             <div
@@ -277,7 +282,7 @@ export default function GalleryFlow() {
               data-cursor="view"
               data-cursor-label="VIEW"
               className="absolute left-1/2 top-1/2 will-change-transform"
-              style={{ width: `calc(var(--gs) * ${it.w}vw)`, opacity: 0 }}
+              style={{ width: `calc(var(--gs, 1) * ${it.w}vw)`, opacity: 0 }}
             >
               <div
                 className="cut-shape-sm relative overflow-hidden bg-ink-2 backdrop-blur-sm"

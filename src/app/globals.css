@@ -368,6 +368,26 @@ html.lenis, html.lenis body { height: auto; }
   color: #fff;
 }
 
+/* Gallery Field responsive scaling variable */
+.gallery-field {
+  --gs: 3;
+}
+@media (min-width: 640px) {
+  .gallery-field {
+    --gs: 2.3;
+  }
+}
+@media (min-width: 768px) {
+  .gallery-field {
+    --gs: 1.7;
+  }
+}
+@media (min-width: 1024px) {
+  .gallery-field {
+    --gs: 1;
+  }
+}
+
 /* ------------------------------------------------------------------
    Reveal primitives driven by GSAP
 ------------------------------------------------------------------ */
