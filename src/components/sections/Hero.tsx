@@ -81,8 +81,8 @@ export default function Hero() {
       <Spotlight size={980} opacity={0.42} />
 
       <header className="relative z-10 mx-auto flex w-full max-w-(--maxw) items-center justify-between px-(--gutter) pt-8 md:pt-10">
-        <span className="eyebrow">{TAGLINE}</span>
-        <span className="eyebrow">Colombo · 2026</span>
+        <span className="badge-pill">{TAGLINE}</span>
+        <span className="badge-pill">Colombo · 2026</span>
       </header>
 
       <div className="relative z-10 mx-auto flex w-full max-w-(--maxw) flex-1 flex-col justify-center px-(--gutter) py-20">
@@ -138,8 +138,7 @@ export default function Hero() {
             <a
               href="#timeline"
               data-cursor="link"
-              className="cut-shape-sm group inline-flex items-center gap-3 px-7 py-4 text-sm font-semibold tracking-tight text-white"
-              style={{ background: "var(--grad-red)" }}
+              className="cut-btn group gap-3 px-8 py-4 text-sm tracking-tight text-white"
             >
               Be part of it
               <span className="transition-transform duration-500 group-hover:translate-x-1">

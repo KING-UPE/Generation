@@ -405,7 +405,7 @@ export default function Film() {
             ref={skipRef}
             type="button"
             data-cursor="link"
-            className="eyebrow tap-target cursor-pointer border-b border-hairline pb-1 transition-colors duration-500 hover:border-red-hot hover:text-red-hot"
+            className="cut-btn-outline cursor-pointer px-4 py-1.5 text-xs transition-all duration-300 hover:border-red-hot hover:text-white"
           >
             Skip
           </button>
@@ -415,7 +415,7 @@ export default function Film() {
             type="button"
             data-cursor="link"
             aria-pressed="false"
-            className="eyebrow tap-target cursor-pointer border-b border-hairline pb-1 transition-colors duration-500 hover:border-red-hot hover:text-red-hot"
+            className="cut-btn-outline cursor-pointer px-4 py-1.5 text-xs transition-all duration-300 hover:border-red-hot hover:text-white"
           >
             Sound off
           </button>

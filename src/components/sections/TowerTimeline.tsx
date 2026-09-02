@@ -416,7 +416,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
                   }}
                   className="absolute inset-0 flex flex-col justify-end pb-10 opacity-0 will-change-transform md:justify-center md:pb-0"
                 >
-                  <span className="eyebrow mb-4 flex items-center gap-3">
+                  <span className="badge-pill mb-4 w-fit">
                     {e.upcoming ? (
                       <>
                         <span
@@ -443,13 +443,13 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
                   {/* Highlighted Event Telemetry Matrix */}
                   <div className="mt-8 flex flex-col gap-3 max-w-[48ch]">
                     {e.date && (
-                      <div className="group relative overflow-hidden rounded-xl border border-red-hot/50 bg-gradient-to-r from-red-black/70 via-ink-2/90 to-ink-2/90 p-4 backdrop-blur-md transition-all duration-300 hover:border-red-hot shadow-[0_8px_28px_rgba(255,59,47,0.2)]">
+                      <div className="cut-shape-sm group relative overflow-hidden border border-red-hot/50 bg-gradient-to-r from-red-black/70 via-ink-2/95 to-ink-2/95 p-4 backdrop-blur-md transition-all duration-300 hover:border-red-hot shadow-[0_8px_28px_rgba(255,59,47,0.2)]">
                         <div className="flex items-center justify-between gap-2">
                           <span className="font-mono-ui text-[11px] font-bold tracking-[0.22em] text-red-hot uppercase flex items-center gap-2">
                             <span className="inline-block h-2 w-2 rounded-full bg-red-hot animate-ping" />
                             Confirmed Event Date
                           </span>
-                          <span className="font-mono-ui text-[10px] font-bold text-red-hot bg-red-hot/15 border border-red-hot/30 px-2.5 py-0.5 rounded-full">
+                          <span className="badge-pill border-red-hot/30 bg-red-hot/15 text-[10px] font-bold text-red-hot py-0.5">
                             COLOMBO 2026
                           </span>
                         </div>
@@ -461,7 +461,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
 
                     <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                       {/* Venue Card */}
-                      <div className="group relative overflow-hidden rounded-xl border border-hairline-bold bg-ink-2/90 p-3.5 backdrop-blur-md transition-all duration-300 hover:border-red-hot/60 hover:bg-ink-3/95">
+                      <div className="cut-shape-sm group relative overflow-hidden border border-hairline-bold bg-ink-2/95 p-3.5 backdrop-blur-md transition-all duration-300 hover:border-red-hot/60 hover:bg-ink-3/95">
                         <span className="font-mono-ui text-[10px] font-bold tracking-[0.2em] text-muted uppercase flex items-center gap-1.5">
                           <span className="inline-block h-1.5 w-1.5 rounded-full bg-dim group-hover:bg-red-hot transition-colors" />
                           Venue
@@ -472,7 +472,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
                       </div>
 
                       {/* Crowd Card */}
-                      <div className="group relative overflow-hidden rounded-xl border border-hairline-bold bg-ink-2/90 p-3.5 backdrop-blur-md transition-all duration-300 hover:border-red-hot/60 hover:bg-ink-3/95">
+                      <div className="cut-shape-sm group relative overflow-hidden border border-hairline-bold bg-ink-2/95 p-3.5 backdrop-blur-md transition-all duration-300 hover:border-red-hot/60 hover:bg-ink-3/95">
                         <span className="font-mono-ui text-[10px] font-bold tracking-[0.2em] text-muted uppercase flex items-center gap-1.5">
                           <span className="inline-block h-1.5 w-1.5 rounded-full bg-dim group-hover:bg-red-hot transition-colors" />
                           Crowd Capacity
@@ -497,9 +497,9 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
                             {e.sponsorLogos.map((logo, idx) => (
                               <div
                                 key={idx}
-                                className="group relative flex items-center gap-3 overflow-hidden rounded-xl border border-hairline-bold bg-ink-2/95 p-3 backdrop-blur-md transition-all duration-300 hover:border-red-hot/60 hover:bg-ink-3"
+                                className="cut-shape-sm group relative flex items-center gap-3 overflow-hidden border border-hairline-bold bg-ink-2/95 p-3 backdrop-blur-md transition-all duration-300 hover:border-red-hot/60 hover:bg-ink-3"
                               >
-                                <div className="flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white p-1 shadow-sm transition-transform duration-300 group-hover:scale-105">
+                                <div className="cut-shape-xs flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden bg-white p-1 shadow-sm transition-transform duration-300 group-hover:scale-105">
                                   <img
                                     src={logo.src}
                                     alt={logo.alt}
@@ -518,7 +518,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
                             ))}
                           </div>
                         ) : (
-                          <div className="rounded-xl border border-hairline bg-ink-2/80 p-3.5 backdrop-blur-md">
+                          <div className="cut-shape-sm border border-hairline bg-ink-2/80 p-3.5 backdrop-blur-md">
                             <p className="text-xs font-semibold text-bone-muted">{e.sponsors}</p>
                           </div>
                         )}
@@ -532,7 +532,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
                       target="_blank"
                       rel="noreferrer noopener"
                       data-cursor="link"
-                      className="badge-pill pointer-events-auto mt-6 inline-flex w-fit items-center gap-2 border-hairline-bold bg-ink-2/80 px-4 py-2 text-xs font-bold text-bone backdrop-blur-md transition-all duration-300 hover:border-red-hot hover:text-white hover:shadow-[0_4px_16px_rgba(255,59,47,0.3)]"
+                      className="cut-btn-outline pointer-events-auto mt-6 w-fit text-xs hover:shadow-[0_4px_16px_rgba(255,59,47,0.3)]"
                     >
                       <span>VIEW EVENT ARCHIVE</span> <span aria-hidden>↗</span>
                     </a>
