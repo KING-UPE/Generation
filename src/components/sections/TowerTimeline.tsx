@@ -60,20 +60,23 @@ const INTRO_RISE = 40;
  *
  * `pan` subtracts this from the crop to hold the tower still, so an error here
  * does not blur the motion — it moves the tower the wrong way. Every value is
- * sampled off the footage, 0.2s apart through the move; do not interpolate the
- * middle by hand. The tower holds dead centre until about t=1.35 and only then
- * goes, quickly. Guessing a straight ramp from t=1.0 instead put the reading
- * 3.6% left of the truth at t=1.7, and that alone threw the tower 57px to the
- * right and back again — the crop panned away while the tower stood still, and
- * snapped back when the real motion caught up.
+ * sampled off the footage — 0.1s apart where it accelerates, since the reading
+ * between knots is a straight line and this stretch is the one that curves. Do
+ * not interpolate the middle by hand. The tower holds dead centre until about
+ * t=1.35 and only then goes, quickly. Guessing a straight ramp from t=1.0
+ * instead put the reading 3.6% left of the truth at t=1.7, and that alone threw
+ * the tower 57px to the right and back again — the crop panned away while the
+ * tower stood still, and snapped back when the real motion caught up. Even at
+ * 0.2s spacing the corner at t=1.75 was still worth 12px of that.
  *
  * Re-measure the same way after any change to the footage: draw each frame to
  * a canvas, take the brightness-weighted mean column over pixels above ~12%
  * luminance, and read it as a % of frame width.
  */
 const TOWER_TRACK: ReadonlyArray<readonly [number, number]> = [
-  [0, 49.7], [1.0, 49.8], [1.2, 49.8], [1.4, 49.3], [1.6, 47.2], [1.8, 43.3],
-  [2.0, 38.1], [2.2, 34.3], [2.4, 30.5], [2.6, 28.1], [2.8, 26.7], [3.0, 26.0],
+  [0, 49.7], [1.0, 49.8], [1.2, 49.8], [1.3, 49.7], [1.4, 49.3], [1.5, 48.4],
+  [1.6, 47.2], [1.7, 45.7], [1.8, 43.3], [1.9, 41.2], [2.0, 38.1], [2.1, 36.3],
+  [2.2, 34.3], [2.3, 31.9], [2.4, 30.5], [2.6, 28.1], [2.8, 26.7], [3.0, 26.0],
   [3.2, 25.9], [10, 26.0],
 ];
 
