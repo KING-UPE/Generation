@@ -412,6 +412,17 @@ html.lenis, html.lenis body { height: auto; }
   100% { transform: translate(0, 0); }
 }
 
+/*
+ * The grain is a fixed, full-viewport, `mix-blend-mode` layer on a stepped
+ * animation — it forces a blended repaint of the whole screen every few frames.
+ * That is affordable on a desktop GPU and is not on a phone, where it competes
+ * with the scrubbed video for the same frame budget. At 0.055 opacity it costs
+ * more than it shows there, so narrow screens go without.
+ */
+@media (max-width: 767px) {
+  .grain-layer { display: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .grain-layer { animation: none; }
   * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }

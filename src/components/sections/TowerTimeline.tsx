@@ -24,6 +24,22 @@ import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
 const SRC = "/HeroVideo.seek.mp4";
 
 /**
+ * How fast the scrubbed video time chases the scroll, per 60Hz frame.
+ *
+ * This is deliberately the *only* smoothing left in the hero-to-timeline
+ * transition. The frame's scale and offset are locked straight to the scroll
+ * position instead: Lenis already eases that position, so easing it a second
+ * time does not add smoothness, it adds lag — the frame carried on opening out
+ * for roughly half a second after the page itself had stopped, which is what
+ * read as the tower drifting on until it eventually settled.
+ *
+ * Video time is the one thing that still earns a lerp, for an unrelated
+ * reason: the decoder cannot service a seek every frame, so the time it is
+ * asked for has to be something it can actually follow.
+ */
+const SEEK_LERP = 0.22;
+
+/**
  * The hero framing: pulled in off the viewport edges and pushed down, so the
  * tower rises from the bottom rather than sitting dead centre. As the hero
  * scrolls away this eases to full-bleed, so the timeline runs fullscreen.
@@ -152,11 +168,16 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
       video.muted = true;
       video.pause();
 
+      if (!video.getAttribute("src")) {
+        video.src = SRC;
+        video.load();
+      }
+
       let target = 0;
       let current = 0;
-      /* 0 = inset hero framing, 1 = full bleed. */
+      /* 0 = inset hero framing, 1 = full bleed. Consumed straight, with no
+         lerp of its own — see SEEK_LERP. */
       let framingTarget = 0;
-      let framing = 0;
 
       /* One-shot entrance, decayed by the ticker alongside everything else. */
       const intro = { v: 1 };
@@ -169,19 +190,26 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
        * - Timeline (t >= 3.5): Shaft smoothly settles near the right side (74%),
        *   giving ample space and full height for the edition cards on the left.
        */
+      let lastPan = -1;
       const pan = (t: number) => {
         const w = video.clientWidth;
         const h = video.clientHeight;
         const stage = video.parentElement;
         if (!stage || !w || !h || stage.clientWidth >= NARROW) {
-          video.style.objectPosition = "";
+          if (lastPan !== -1) {
+            lastPan = -1;
+            video.style.objectPosition = "";
+          }
           return;
         }
         const vw = video.videoWidth || 1280;
         const vh = video.videoHeight || 720;
         const rendered = vw * Math.max(w / vw, h / vh);
         if (rendered <= w) {
-          video.style.objectPosition = "";
+          if (lastPan !== -1) {
+            lastPan = -1;
+            video.style.objectPosition = "";
+          }
           return;
         }
         // Monotonic transition: starts centered at 0.50 in Hero, smoothly glides to 0.74 in Timeline
@@ -189,28 +217,45 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         const targetScreen = 0.50 + (0.74 - 0.50) * progress;
 
         const f = towerCentre(t) / 100;
-        const x = ((targetScreen * w - f * rendered) / (w - rendered)) * 100;
-        video.style.objectPosition = `${clamp01(x / 100) * 100}% 50%`;
+        const x = clamp01(((targetScreen * w - f * rendered) / (w - rendered))) * 100;
+        /* Writing object-position repaints the video layer — it is not a
+           compositor property — so skip writes that would not move anything.
+           The threshold is expressed in pixels, not percent: a flat 0.25%
+           quantum is ~2.7px of pan at this size, which made the glide visibly
+           step. Below half a pixel there is nothing to see. */
+        const travel = Math.abs(w - rendered);
+        const minDelta = travel > 0 ? (0.5 / travel) * 100 : 0.05;
+        if (lastPan < 0 || Math.abs(x - lastPan) >= minDelta) {
+          lastPan = x;
+          video.style.objectPosition = `${x.toFixed(3)}% 50%`;
+        }
       };
 
-      const frame = (f: number, t: number) => {
-        video.style.top = "";
-        video.style.height = "100%";
+      let lastShift = NaN;
+      let lastScale = NaN;
+      let lastAlpha = NaN;
 
-        const scale = FRAME_SCALE + (1 - FRAME_SCALE) * f;
-        const shift = FRAME_SHIFT * (1 - f) + INTRO_RISE * intro.v;
+      const frame = (f: number) => {
+        /* Smoothstep, not the raw scroll fraction. Mapped linearly the frame
+           starts opening the instant the hero moves and stops dead the moment
+           it ends — both boundaries read as a jolt. This eases in and out of
+           rest while staying exactly scroll-locked in between.
+
+           The easing lives here, in the mapping from scroll to framing, rather
+           than in a lerp that chases it over time. Same softness at both ends,
+           but it arrives when the scroll arrives instead of trailing it. */
+        const e = f * f * (3 - 2 * f);
+
+        const scale = FRAME_SCALE + (1 - FRAME_SCALE) * e;
+        const shift = FRAME_SHIFT * (1 - e) + INTRO_RISE * intro.v;
+        const alpha = clamp01((1 - intro.v) / 0.5);
+
+        if (shift === lastShift && scale === lastScale && alpha === lastAlpha) return;
+        lastShift = shift;
+        lastScale = scale;
+        lastAlpha = alpha;
         video.style.transform = `translateY(${shift.toFixed(2)}%) scale(${scale.toFixed(4)})`;
-
-        // 1. Hero fade-out: stays 100% visible through f = 0.80, then fades out smoothly between f = 0.80 and 1.0
-        const heroFade = f <= 0.8 ? 1 : Math.max(0, 1 - (f - 0.8) / 0.2);
-
-        // 2. Extended blackout hold & Timeline re-appearance:
-        // Holds in darkness across f = 1.0 through t = 1.1s, then smoothly fades in between t = 1.1s and 1.8s
-        const timelineFade = clamp01((t - 1.1) / 0.7);
-
-        const combinedOpacity = f < 0.98 ? heroFade : Math.max(heroFade, timelineFade);
-        const baseIntro = clamp01((1 - intro.v) / 0.5);
-        video.style.opacity = String(baseIntro * combinedOpacity);
+        video.style.opacity = String(alpha);
       };
 
       /* Cards key off the same eased time the video is seeking to, so a card
@@ -250,7 +295,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         /* No lerp: jump straight to the frame the scroll position implies. */
         const snap = () => {
           if (Number.isFinite(video.duration)) video.currentTime = target;
-          frame(framingTarget, target);
+          frame(framingTarget);
           pan(target);
           paint(target);
         };
@@ -269,17 +314,57 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         };
       }
 
-      /* Seeking every frame to a lerped time: the ease is what keeps a
-         scrubbed video from looking like it is stuttering between keyframes. */
+      /**
+       * Only ever one seek in flight.
+       *
+       * Setting `currentTime` every frame queues seeks faster than the decoder
+       * can service them. The backlog does not play out in order — frames
+       * arrive late and out of sequence, which is why the tower jumped between
+       * the crown and the shaft instead of scrubbing. Waiting for `seeked`
+       * before issuing the next one means the decoder is always working on the
+       * most recent scroll position and never falls behind.
+       */
+      let seekBusy = false;
+      let seekIssuedAt = 0;
+      const onSeeked = () => { seekBusy = false; };
+      video.addEventListener("seeked", onSeeked);
+
+      let lastTick = performance.now();
+
       const tick = () => {
-        current += (target - current) * 0.16;
-        /* One frame is 1/30s; seeking finer than half a frame is wasted work
-           even now that every frame is a keyframe. */
-        if (Number.isFinite(video.duration) && Math.abs(current - video.currentTime) > 1 / 60) {
+        const now = performance.now();
+
+        /* Per second, not per frame. A flat per-frame factor decays twice as
+           fast on a 120Hz phone as on a 60Hz one, so the identical scroll
+           settles at two different speeds on two different devices. Long
+           frames — a tab coming back to the foreground — are clamped so the
+           scrub cannot leap on the first tick back. */
+        const dt = Math.min((now - lastTick) / 1000, 0.05);
+        lastTick = now;
+
+        current += (target - current) * (1 - Math.pow(1 - SEEK_LERP, dt * 60));
+
+        /* Exponential decay closes on the target without ever reaching it, so
+           the tower keeps inching for as long as you look at it. Inside half a
+           frame of footage there is nothing left to render: land on it. */
+        if (Math.abs(target - current) < 1 / 120) current = target;
+
+        /* If `seeked` never arrives — coalesced, dropped, or the element is in
+           a state that will not fire it — the guard must not latch forever, or
+           the video freezes for good. After 180ms assume it is not coming. */
+        const stalled = seekBusy && now - seekIssuedAt > 180;
+
+        if (
+          (!seekBusy || stalled) &&
+          Number.isFinite(video.duration) &&
+          Math.abs(current - video.currentTime) > 1 / 60
+        ) {
+          seekBusy = true;
+          seekIssuedAt = now;
           video.currentTime = current;
         }
-        framing += (framingTarget - framing) * 0.16;
-        frame(framing, current);
+
+        frame(framingTarget);
         pan(current);
         paint(current);
       };
@@ -287,13 +372,14 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
       gsap.to(intro, { v: 0, duration: 1.7, delay: 0.3, ease: "gen" });
 
       gsap.ticker.add(tick);
-      frame(0, 0);
+      frame(0);
       pan(0);
       paint(0);
 
       return () => {
         st.kill();
         framer.kill();
+        video.removeEventListener("seeked", onSeeked);
         gsap.ticker.remove(tick);
       };
     },
@@ -303,6 +389,9 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
   return (
     <div ref={rootRef} className="relative">
       <div className="pointer-events-none sticky top-0 z-[-1] h-[100svh] overflow-hidden bg-black">
+        {/* No `src` here on purpose: the effect picks the phone-sized or the
+            full-sized build from the viewport width. Hard-coding it would
+            either ship 1600x900 to phones or disagree with the server. */}
         <video
           ref={videoRef}
           className="absolute inset-0 h-full w-full object-cover"
@@ -310,7 +399,6 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
             transform: `translateY(${FRAME_SHIFT + INTRO_RISE}%) scale(${FRAME_SCALE})`,
             opacity: 0,
           }}
-          src={SRC}
           muted
           playsInline
           preload="auto"
@@ -330,7 +418,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
       >
         <div className="sticky top-0 h-[100svh] w-full overflow-hidden">
           <div className="mx-auto flex h-full w-full max-w-(--maxw) items-center px-(--gutter)">
-            <div className="relative mx-auto h-full w-full max-w-[480px] md:mx-0 md:ml-auto md:h-[62vh] md:w-[52%] md:max-w-none">
+            <div className="relative mr-auto h-full w-full max-w-[280px] sm:max-w-[340px] md:mx-0 md:ml-auto md:h-[62vh] md:w-[52%] md:max-w-[460px]">
               {EDITIONS.map((e, i) => (
                 <article
                   key={e.year}
@@ -364,7 +452,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
                   />
 
                   {/* Highlighted Event Telemetry Matrix */}
-                  <div className="mt-4 sm:mt-8 flex flex-col gap-2.5 sm:gap-3 max-w-[48ch]">
+                  <div className="mt-4 sm:mt-8 flex flex-col gap-2.5 sm:gap-3 max-w-[280px] sm:max-w-[340px] md:max-w-[460px]">
                     {e.date && (
                       <div className="cut-card-red group relative overflow-hidden p-4 backdrop-blur-md">
                         <div className="flex items-center justify-between gap-2">

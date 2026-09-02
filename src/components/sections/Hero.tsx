@@ -50,13 +50,18 @@ export default function Hero() {
 
       if (reduced) return;
 
-      // Cinematic Scroll Transition from Hero to 2nd Section (Timeline)
+      /* Cinematic scroll transition from the hero into the timeline.
+         `scrub: 0.8` meant the wordmark took another 0.8s to catch up to a
+         scroll position Lenis had already spent a second easing — the two lags
+         run in series, so the hero was still drifting well after the page had
+         stopped. 0.25 is enough to absorb jitter between scroll events without
+         being seen as the section failing to settle. */
       const heroTl = gsap.timeline({
         scrollTrigger: {
           trigger: root,
           start: "top top",
           end: "bottom top",
-          scrub: 0.8,
+          scrub: 0.25,
         },
       });
 
