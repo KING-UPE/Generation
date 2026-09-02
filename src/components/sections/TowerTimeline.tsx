@@ -181,15 +181,29 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
           video.style.objectPosition = "";
           return;
         }
-        // Smooth continuous centroid tracking: keeps the tower body centered throughout scroll
+        // Smoothly and continuously glides from 0.50 (centered in hero) to 0.74 (near the right side in timeline)
+        const progress = clamp01(t / 2.2);
+        const smoothProgress = progress * progress * (3 - 2 * progress);
+        const targetX = 0.50 + (0.74 - 0.50) * smoothProgress;
+
         const f = towerCentre(t) / 100;
-        const x = ((NARROW_TARGET * w - f * rendered) / (w - rendered)) * 100;
+        const x = ((targetX * w - f * rendered) / (w - rendered)) * 100;
         video.style.objectPosition = `${clamp01(x / 100) * 100}% 50%`;
       };
 
       const frame = (f: number) => {
-        video.style.top = "";
-        video.style.height = "100%";
+        const stage = video.parentElement;
+        const w = stage?.clientWidth ?? 0;
+
+        if (w && w < NARROW) {
+          // On mobile, smoothly reduce height from 100% in hero down to 70% in timeline
+          const mobileHeight = 100 - 30 * f;
+          video.style.top = "0";
+          video.style.height = `${mobileHeight.toFixed(1)}%`;
+        } else {
+          video.style.top = "";
+          video.style.height = "100%";
+        }
 
         const scale = FRAME_SCALE + (1 - FRAME_SCALE) * f;
         const shift = FRAME_SHIFT * (1 - f) + INTRO_RISE * intro.v;
