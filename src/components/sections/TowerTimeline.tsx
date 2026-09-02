@@ -108,7 +108,7 @@ const EDITIONS = [
   },
   {
     year: "2025",
-    at: 7.2,
+    at: 6.9,
     venue: "Lotus Tower Open Arena",
     crowd: "7,500+",
     sponsors: "SLIC General · Y FM",
@@ -131,7 +131,7 @@ const EDITIONS = [
   },
   {
     year: "2026",
-    at: 9.2,
+    at: 8.6,
     venue: "Lotus Tower Open Arena",
     crowd: "10,000+",
     date: "Saturday, 12 December 2026",
