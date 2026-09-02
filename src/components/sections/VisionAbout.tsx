@@ -23,6 +23,7 @@ export default function VisionAbout() {
   const stickyRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const deckRef = useRef<HTMLDivElement>(null);
+  const tiltRef = useRef<HTMLDivElement>(null);
   const flipDeckRef = useRef<HTMLDivElement>(null);
   const visionTextRef = useRef<HTMLDivElement>(null);
   const aboutTextRef = useRef<HTMLDivElement>(null);
@@ -32,11 +33,12 @@ export default function VisionAbout() {
       const container = containerRef.current;
       const stage = stageRef.current;
       const deck = deckRef.current;
+      const tilt = tiltRef.current;
       const flipDeck = flipDeckRef.current;
       const visionText = visionTextRef.current;
       const aboutText = aboutTextRef.current;
 
-      if (!container || !stage || !deck || !flipDeck || !visionText || !aboutText) return;
+      if (!container || !stage || !deck || !tilt || !flipDeck || !visionText || !aboutText) return;
 
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
@@ -133,6 +135,42 @@ export default function VisionAbout() {
         },
         0.55,
       );
+
+      // 5. Interactive 3D mouse parallax tilt on hover
+      const cleanups: (() => void)[] = [];
+      if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+        const tiltX = gsap.quickTo(tilt, "rotationX", { duration: 0.6, ease: "power3" });
+        const tiltY = gsap.quickTo(tilt, "rotationY", { duration: 0.6, ease: "power3" });
+        const driftX = gsap.quickTo(tilt, "x", { duration: 0.8, ease: "power3" });
+        const driftY = gsap.quickTo(tilt, "y", { duration: 0.8, ease: "power3" });
+
+        const onMove = (e: PointerEvent) => {
+          const r = deck.getBoundingClientRect();
+          const nx = (e.clientX - r.left) / r.width - 0.5;
+          const ny = (e.clientY - r.top) / r.height - 0.5;
+          tiltY(nx * 14);
+          tiltX(-ny * 12);
+          driftX(nx * 16);
+          driftY(ny * 12);
+        };
+
+        const onLeave = () => {
+          tiltY(0);
+          tiltX(0);
+          driftX(0);
+          driftY(0);
+        };
+
+        deck.addEventListener("pointermove", onMove);
+        deck.addEventListener("pointerleave", onLeave);
+
+        cleanups.push(() => {
+          deck.removeEventListener("pointermove", onMove);
+          deck.removeEventListener("pointerleave", onLeave);
+        });
+      }
+
+      return () => cleanups.forEach((fn) => fn());
     },
     { scope: containerRef },
   );
@@ -172,47 +210,54 @@ export default function VisionAbout() {
               className="relative z-20 mx-auto aspect-[4/3] w-full max-w-[340px] sm:max-w-[380px] lg:mx-0 lg:max-w-[420px] xl:max-w-[460px]"
               style={{ perspective: 1800 }}
             >
-              {/* Unified 3D Flip Container: Flips front and back decks seamlessly */}
-              <div
-                ref={flipDeckRef}
-                className="relative h-full w-full [transform-style:preserve-3d] will-change-transform"
-              >
-                {/* ── FRONT DECK (Vision: 2 Fanned Cards) ── */}
-                <div className="absolute inset-0 [backface-visibility:hidden]">
-                  {VISION_CARDS.map((c, i) => (
-                    <div
-                      key={c.src}
-                      className="absolute inset-0"
-                      style={{
-                        transform:
-                          i === 0
-                            ? "translate(-5%, 6%) rotate(-3.5deg) scale(0.94)"
-                            : "translate(5%, -4%) rotate(3deg) scale(1)",
-                        zIndex: i,
-                      }}
-                    >
-                      <CutCard src={c.src} alt={c.alt} />
-                    </div>
-                  ))}
-                </div>
+              {/* Mouse Parallax Tilt Container */}
+              <div ref={tiltRef} className="relative h-full w-full [transform-style:preserve-3d]">
+                {/* Unified 3D Flip Container: Flips front and back decks seamlessly */}
+                <div
+                  ref={flipDeckRef}
+                  className="relative h-full w-full [transform-style:preserve-3d] will-change-transform"
+                >
+                  {/* ── FRONT DECK (Vision: 2 Fanned Cards) ── */}
+                  <div className="absolute inset-0 [backface-visibility:hidden]">
+                    {VISION_CARDS.map((c, i) => (
+                      <div
+                        key={c.src}
+                        className="group/card absolute inset-0 cursor-pointer transition-all duration-400 ease-out hover:z-30"
+                        style={{
+                          transform:
+                            i === 0
+                              ? "translate(-5%, 6%) rotate(-3.5deg) scale(0.94)"
+                              : "translate(5%, -4%) rotate(3deg) scale(1)",
+                          zIndex: i,
+                        }}
+                      >
+                        <div className="h-full w-full transition-all duration-400 ease-out group-hover/card:-translate-y-2.5 group-hover/card:scale-[1.04] group-hover/card:drop-shadow-[0_16px_36px_rgba(255,59,47,0.45)]">
+                          <CutCard src={c.src} alt={c.alt} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
 
-                {/* ── BACK DECK (About: 2 Fanned Cards, Pre-flipped 180deg) ── */}
-                <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)]">
-                  {ABOUT_CARDS.map((c, i) => (
-                    <div
-                      key={c.src}
-                      className="absolute inset-0"
-                      style={{
-                        transform:
-                          i === 0
-                            ? "translate(5%, 6%) rotate(3.5deg) scale(0.94)"
-                            : "translate(-5%, -4%) rotate(-3deg) scale(1)",
-                        zIndex: i,
-                      }}
-                    >
-                      <CutCard src={c.src} alt={c.alt} />
-                    </div>
-                  ))}
+                  {/* ── BACK DECK (About: 2 Fanned Cards, Pre-flipped 180deg) ── */}
+                  <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)]">
+                    {ABOUT_CARDS.map((c, i) => (
+                      <div
+                        key={c.src}
+                        className="group/card absolute inset-0 cursor-pointer transition-all duration-400 ease-out hover:z-30"
+                        style={{
+                          transform:
+                            i === 0
+                              ? "translate(5%, 6%) rotate(3.5deg) scale(0.94)"
+                              : "translate(-5%, -4%) rotate(-3deg) scale(1)",
+                          zIndex: i,
+                        }}
+                      >
+                        <div className="h-full w-full transition-all duration-400 ease-out group-hover/card:-translate-y-2.5 group-hover/card:scale-[1.04] group-hover/card:drop-shadow-[0_16px_36px_rgba(255,59,47,0.45)]">
+                          <CutCard src={c.src} alt={c.alt} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
