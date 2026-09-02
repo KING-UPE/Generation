@@ -1,26 +1,33 @@
-import Hero from "@/components/sections/Hero";
+﻿import Hero from "@/components/sections/Hero";
+import TowerTimeline from "@/components/sections/TowerTimeline";
 import VisionAbout from "@/components/sections/VisionAbout";
+import EventStats from "@/components/sections/EventStats";
 import Film from "@/components/sections/Film";
-import Archive from "@/components/sections/Archive";
+import GalleryFlow from "@/components/sections/GalleryFlow";
 import ScrollRail from "@/components/ui/ScrollRail";
 
 /** Sections 01–02 live upstream; this page starts at 03 by design. */
 const MARKERS = [
   { id: "hero", index: "03", label: "Hero" },
-  { id: "vision", index: "04", label: "Vision" },
-  { id: "about", index: "05", label: "About" },
-  { id: "film", index: "06", label: "Film" },
-  { id: "archive", index: "07", label: "Archive" },
+  { id: "timeline", index: "04", label: "Editions" },
+  { id: "vision", index: "05", label: "Vision" },
+  { id: "about", index: "06", label: "About" },
+  { id: "stats", index: "07", label: "Stats" },
+  { id: "film", index: "08", label: "Film" },
+  { id: "flow", index: "09", label: "Gallery" },
 ];
 
 export default function Home() {
   return (
     <>
       <ScrollRail markers={MARKERS} />
-      <Hero />
+      <TowerTimeline>
+        <Hero />
+      </TowerTimeline>
       <VisionAbout />
+      <EventStats />
       <Film />
-      <Archive />
+      <GalleryFlow />
     </>
   );
 }

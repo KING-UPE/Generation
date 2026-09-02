@@ -6,13 +6,13 @@
 ------------------------------------------------------------------ */
 :root {
   --ink:        #050507;
-  --ink-2:      #0A0A0D;
-  --ink-3:      #121217;
-  --hairline:   rgba(237, 237, 240, 0.10);
+  --ink-2:      #0C0C10;
+  --ink-3:      #14141A;
+  --hairline:   rgba(237, 237, 240, 0.14);
 
-  --bone:       #EDEDF0;
-  --muted:      #8B8B96;
-  --dim:        #5A5A64;
+  --bone:       #FFFFFF;
+  --muted:      #B8B8C6;
+  --dim:        #858596;
 
   --red-hot:    #FF3B2F;
   --red:        #E10600;
@@ -53,8 +53,13 @@ html {
   scroll-behavior: auto;
 }
 
+/*
+ * Deliberately transparent. The hero footage sits on a negative z-index so the
+ * starfield can paint over it, and an in-flow body background would cover
+ * anything behind it — the tower included.
+ */
 body {
-  background: var(--ink);
+  background: transparent;
   color: var(--bone);
   font-family: var(--font-sans), system-ui, sans-serif;
   overflow-x: clip;
@@ -81,12 +86,30 @@ html.lenis, html.lenis body { height: auto; }
 .font-display { font-family: var(--font-anton), Impact, sans-serif; font-weight: 400; }
 .font-mono-ui { font-family: var(--font-jetbrains), ui-monospace, monospace; }
 
+/*
+ * Labels sat at 10px on every screen: the vw term in the old clamp only reached
+ * 10.4px at 1440 wide, so the 0.625rem floor was doing all the work. At that
+ * size, with 0.28em tracking, "Venue" and "Crowd" were hard to read on a phone.
+ */
 .eyebrow {
   font-family: var(--font-jetbrains), ui-monospace, monospace;
-  font-size: clamp(0.625rem, 0.72vw, 0.75rem);
-  letter-spacing: 0.28em;
+  font-size: clamp(0.6875rem, 0.55vw + 0.5rem, 0.8125rem);
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--muted);
+}
+
+/*
+ * Grows the hit area of a small control without moving anything: touch targets
+ * want ~44px, but these are 20px-tall text links whose size is the design.
+ */
+.tap-target {
+  position: relative;
+}
+.tap-target::after {
+  content: "";
+  position: absolute;
+  inset: -12px -8px;
 }
 
 .h-section {

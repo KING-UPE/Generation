@@ -47,7 +47,9 @@ export default function RootLayout({
       lang="en"
       className={`${anton.variable} ${interTight.variable} ${jetbrains.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-ink text-bone">
+      {/* No background here: it is set on <html>, so the hero footage can sit on a
+          negative z-index and still be seen. */}
+      <body className="min-h-full text-bone">
         <Starfield />
         <SmoothScroll>
           <main className="relative flex min-h-full flex-col">{children}</main>

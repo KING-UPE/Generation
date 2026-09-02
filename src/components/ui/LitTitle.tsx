@@ -6,7 +6,7 @@ import { useTorch } from "@/lib/use-torch";
 
 type Props = {
   children: string;
-  as?: ElementType;
+  as?: "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "p" | "span" | "div";
   className?: string;
   /** Radius of the lit pool, in px. */
   radius?: number;
@@ -72,11 +72,13 @@ export default function LitTitle({
     { scope: wrapRef, dependencies: [children] },
   );
 
+  const Component = Tag as any;
+
   return (
     <div ref={wrapRef} className="relative inline-block">
-      <Tag className={"font-display lit-base select-none " + className} style={{ ["--lit-w" as string]: weight + "px" }}>
+      <Component className={"font-display lit-base select-none " + className} style={{ ["--lit-w" as string]: weight + "px" }}>
         {children}
-      </Tag>
+      </Component>
 
       {/* the lit copy, revealed through a radial mask */}
       <span

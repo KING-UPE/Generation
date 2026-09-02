@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRef, useState } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
@@ -50,7 +50,7 @@ export default function Hero() {
 
       gsap.to(markRef.current, {
         yPercent: -22,
-        opacity: 0.2,
+        opacity: 0.25,
         ease: "none",
         scrollTrigger: {
           trigger: root,
@@ -81,11 +81,18 @@ export default function Hero() {
       <Spotlight size={980} opacity={0.42} />
 
       <header className="relative z-10 mx-auto flex w-full max-w-(--maxw) items-center justify-between px-(--gutter) pt-8 md:pt-10">
-        <span className="eyebrow">{TAGLINE}</span>
-        <span className="eyebrow">Colombo · 2026</span>
+        <span className="eyebrow font-bold tracking-[0.28em] text-bone">
+          {TAGLINE}
+        </span>
+        <div className="flex items-center gap-3">
+          <span className="h-2 w-2 animate-ping rounded-full bg-red-hot" />
+          <span className="eyebrow font-semibold text-red-hot">
+            OCTOBER 2026 · COLOMBO
+          </span>
+        </div>
       </header>
 
-      <div className="relative z-10 mx-auto flex w-full max-w-(--maxw) flex-1 flex-col justify-center px-(--gutter) py-20">
+      <div className="relative z-10 mx-auto flex w-full max-w-(--maxw) flex-1 flex-col justify-center px-(--gutter) py-16 md:py-20">
         <div ref={markRef} className="relative will-change-transform">
           <div className="inline-flex items-start">
             <div className="relative">
@@ -129,28 +136,52 @@ export default function Hero() {
           </div>
         </div>
 
-        <div className="mt-10 flex flex-wrap items-center justify-between gap-8 md:mt-14">
-          <RevealText as="p" delay={0.95} start="top 100%" className="eyebrow">
-            The 2026 edition
-          </RevealText>
-
-          <Magnetic strength={16}>
-            <a
-              href="#vision"
-              data-cursor="link"
-              className="cut-shape-sm group inline-flex items-center gap-3 px-7 py-4 text-sm font-semibold tracking-tight text-white"
-              style={{ background: "var(--grad-red)" }}
-            >
-              Be part of it
-              <span className="transition-transform duration-500 group-hover:translate-x-1">
-                →
+        {/* Event Key Information & Quick Actions */}
+        <div className="mt-8 flex flex-col gap-6 md:mt-12 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="rounded-full border border-red-hot/40 bg-red-black/40 px-3.5 py-1 font-mono-ui text-xs font-bold text-red-hot">
+                ✦ LIVE CONCERT
               </span>
-            </a>
-          </Magnetic>
+              <span className="font-mono-ui text-xs font-semibold tracking-wider text-muted">
+                NELUM KULUNA · COLOMBO
+              </span>
+            </div>
+            <p className="max-w-[48ch] text-base font-medium leading-relaxed text-bone md:text-lg">
+              One night of uncompromising live sound and stage architecture.
+              Produced by ECheM.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-4">
+            <Magnetic strength={16}>
+              <a
+                href="#vision"
+                data-cursor="link"
+                className="cut-shape-sm group inline-flex items-center gap-3 px-8 py-4 text-sm font-bold tracking-tight text-white shadow-[0_8px_24px_rgba(225,6,0,0.3)] transition-all duration-300 hover:shadow-[0_12px_36px_rgba(255,59,47,0.45)]"
+                style={{ background: "var(--grad-red)" }}
+              >
+                Explore Vision
+                <span className="transition-transform duration-500 group-hover:translate-x-1">
+                  →
+                </span>
+              </a>
+            </Magnetic>
+
+            <Magnetic strength={12}>
+              <a
+                href="#stats"
+                data-cursor="link"
+                className="cut-shape-sm group inline-flex items-center gap-2 border border-hairline bg-ink-2/80 px-6 py-4 text-sm font-semibold text-bone backdrop-blur-md transition-colors duration-300 hover:border-red-hot hover:text-white"
+              >
+                Event Details
+              </a>
+            </Magnetic>
+          </div>
         </div>
       </div>
 
-      <div className="pointer-events-none absolute bottom-10 left-1/2 z-10 hidden -translate-x-1/2 flex-col items-center gap-3 lg:flex">
+      <div className="pointer-events-none absolute bottom-10 right-(--gutter) z-10 hidden flex-col items-center gap-3 lg:flex">
         <span
           ref={cueRef}
           className="block h-14 w-px origin-top"

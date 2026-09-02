@@ -62,7 +62,7 @@ export default function ScrollRail({ markers }: { markers: Marker[] }) {
       aria-hidden
       className="pointer-events-none fixed right-[max(1rem,2.2vw)] top-1/2 z-40 hidden -translate-y-1/2 lg:flex lg:flex-col lg:items-center lg:gap-5"
     >
-      <span className="font-mono-ui text-[10px] tracking-[0.3em] text-bone/80">
+      <span className="font-mono-ui text-[11px] tracking-[0.26em] text-bone/80">
         {current?.index}
       </span>
 
@@ -75,7 +75,7 @@ export default function ScrollRail({ markers }: { markers: Marker[] }) {
       </div>
 
       <span
-        className="font-mono-ui text-[10px] tracking-[0.3em] text-dim"
+        className="font-mono-ui text-[11px] tracking-[0.26em] text-dim"
         style={{ writingMode: "vertical-rl" }}
       >
         {current?.label}

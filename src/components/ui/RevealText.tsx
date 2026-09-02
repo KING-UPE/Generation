@@ -5,7 +5,7 @@ import { gsap, useGSAP, SplitText } from "@/lib/gsap";
 
 type Props = {
   children: React.ReactNode;
-  as?: ElementType;
+  as?: "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "p" | "span" | "div";
   className?: string;
   /** Granularity of the reveal. `chars` is for short display lines only. */
   type?: "lines" | "words" | "chars";
@@ -76,9 +76,11 @@ export default function RevealText({
     { scope: ref, dependencies: [children, type, delay, stagger, start, y] },
   );
 
+  const Component = Tag as any;
+
   return (
-    <Tag ref={ref} className={className}>
+    <Component ref={ref} className={className}>
       {children}
-    </Tag>
+    </Component>
   );
 }

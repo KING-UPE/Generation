@@ -346,7 +346,10 @@ export default function Film() {
         {/* ── left-hand title block ───────────────────────────── */}
         <div
           ref={textRef}
-          className="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-full max-w-(--maxw) flex-col justify-center px-(--gutter) lg:w-[52%]"
+          /* Top-left on a phone: centring it there leaves the top of the screen
+             empty while the device takes the side. Desktop keeps it centred,
+             where it balances the tablet across the fold. */
+          className="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-full max-w-(--maxw) flex-col justify-start px-(--gutter) pt-24 lg:w-[52%] lg:justify-center lg:pt-0"
         >
           <RevealText as="p" className="eyebrow mb-5" start="top 92%">
             06 — Film
@@ -384,7 +387,7 @@ export default function Film() {
           ref={uiRef}
           className="absolute inset-x-0 bottom-0 z-10 mx-auto flex w-full max-w-(--maxw) items-end justify-between gap-5 px-(--gutter) pb-8"
         >
-          <span ref={timeRef} className="eyebrow tabular-nums">
+          <span ref={timeRef} className="eyebrow hidden tabular-nums sm:inline">
             00:00 / 00:00
           </span>
 
@@ -402,7 +405,7 @@ export default function Film() {
             ref={skipRef}
             type="button"
             data-cursor="link"
-            className="eyebrow cursor-pointer border-b border-hairline pb-1 transition-colors duration-500 hover:border-red-hot hover:text-red-hot"
+            className="eyebrow tap-target cursor-pointer border-b border-hairline pb-1 transition-colors duration-500 hover:border-red-hot hover:text-red-hot"
           >
             Skip
           </button>
@@ -412,7 +415,7 @@ export default function Film() {
             type="button"
             data-cursor="link"
             aria-pressed="false"
-            className="eyebrow cursor-pointer border-b border-hairline pb-1 transition-colors duration-500 hover:border-red-hot hover:text-red-hot"
+            className="eyebrow tap-target cursor-pointer border-b border-hairline pb-1 transition-colors duration-500 hover:border-red-hot hover:text-red-hot"
           >
             Sound off
           </button>

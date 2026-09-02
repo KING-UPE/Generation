@@ -148,15 +148,12 @@ export default function Starfield() {
   }, []);
 
   return (
+    /*
+     * Canvas only — no backdrop. This layer sits above the hero footage, so an
+     * opaque gradient here would hide the tower. The page black comes from
+     * <html> instead.
+     */
     <div ref={wrapRef} aria-hidden className="pointer-events-none fixed inset-0 z-0">
-      {/* a breath of depth behind the stars — still essentially black */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(120% 70% at 50% 0%, #0A1018 0%, #070A0F 38%, #050507 72%)",
-        }}
-      />
       <canvas ref={canvasRef} className="absolute inset-0" />
     </div>
   );

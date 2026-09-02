@@ -11,16 +11,23 @@ type Props = {
   className?: string;
   /** Vertical drift across the scroll range, in px. */
   parallax?: number;
+  /** Flip the fan horizontally, for the mirrored panel. */
+  mirror?: boolean;
 };
 
-/** Where each card lands once the stack opens up. */
-function fanTargets(count: number) {
+/**
+ * Where each card lands once the stack opens up. `mirror` flips the fan along
+ * x, so the two panels differ even on narrow screens where the column
+ * mirroring collapses and both would otherwise look identical.
+ */
+function fanTargets(count: number, mirror: boolean) {
+  const s = mirror ? -1 : 1;
   return Array.from({ length: count }, (_, i) => {
     const t = count === 1 ? 1 : i / (count - 1);
     return {
-      xPercent: gsap.utils.interpolate(-9, 9, t),
+      xPercent: gsap.utils.interpolate(-9, 9, t) * s,
       yPercent: gsap.utils.interpolate(9, -7, t),
-      rotation: gsap.utils.interpolate(-5, 4, t),
+      rotation: gsap.utils.interpolate(-5, 4, t) * s,
       scale: gsap.utils.interpolate(0.88, 1, t),
     };
   });
@@ -31,7 +38,7 @@ function fanTargets(count: number) {
  * spread. Pointer movement tilts the whole scene, with each card drifting by a
  * different amount so the layers separate in depth.
  */
-export default function CardStack({ cards, className = "", parallax = 40 }: Props) {
+export default function CardStack({ cards, className = "", parallax = 40, mirror = false }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -43,7 +50,7 @@ export default function CardStack({ cards, className = "", parallax = 40 }: Prop
       const els = cardRefs.current.filter(Boolean) as HTMLDivElement[];
       if (!root || !scene || !els.length) return;
 
-      const targets = fanTargets(els.length);
+      const targets = fanTargets(els.length, mirror);
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
       /* stacked → fanned */
@@ -154,7 +161,7 @@ export default function CardStack({ cards, className = "", parallax = 40 }: Prop
 
       return () => cleanups.forEach((fn) => fn());
     },
-    { scope: rootRef, dependencies: [cards.length] },
+    { scope: rootRef, dependencies: [cards.length, mirror] },
   );
 
   return (
