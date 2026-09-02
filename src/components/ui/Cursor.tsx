@@ -94,11 +94,11 @@ export default function Cursor() {
   }, []);
 
   return (
-    <div aria-hidden className="pointer-events-none fixed inset-0 z-[70] hidden md:block">
+    <div aria-hidden className="pointer-events-none fixed inset-0 z-[100000] hidden md:block">
       <div
         ref={ringRef}
         className="absolute left-0 top-0 flex items-center justify-center rounded-full border"
-        style={{ width: 38, height: 38, borderColor: "rgba(237,237,240,0.35)" }}
+        style={{ width: 38, height: 38, borderColor: "rgba(255,255,255,0.45)", boxShadow: "0 0 12px rgba(255,59,47,0.35)" }}
       >
         <span
           ref={labelRef}
@@ -107,8 +107,8 @@ export default function Cursor() {
       </div>
       <div
         ref={dotRef}
-        className="absolute left-0 top-0 rounded-full bg-bone"
-        style={{ width: 6, height: 6, mixBlendMode: "difference" }}
+        className="absolute left-0 top-0 rounded-full bg-white"
+        style={{ width: 7, height: 7, boxShadow: "0 0 8px #FF3B2F, 0 0 2px #FFFFFF" }}
       />
     </div>
   );
