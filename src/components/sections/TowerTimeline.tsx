@@ -96,19 +96,19 @@ const FADE = 0.35;
 const EDITIONS = [
   {
     year: "2023",
-    at: 3,
+    at: 2.8,
     venue: "Maharagama Youth Centre",
     crowd: "2,000+",
   },
   {
     year: "2024",
-    at: 5,
+    at: 5.2,
     venue: "Viharamahadevi Open Air Theatre",
     crowd: "4,500+",
   },
   {
     year: "2025",
-    at: 6,
+    at: 7.4,
     venue: "Lotus Tower Open Arena",
     crowd: "7,500+",
     sponsors: "SLIC General · Y FM",
@@ -131,7 +131,7 @@ const EDITIONS = [
   },
   {
     year: "2026",
-    at: 8,
+    at: 9.0,
     venue: "Lotus Tower Open Arena",
     crowd: "10,000+",
     date: "Saturday, 12 December 2026",
