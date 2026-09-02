@@ -51,8 +51,8 @@ const TOWER_TRACK: ReadonlyArray<readonly [number, number]> = [
  * falls outside it entirely. Narrow screens pan to keep it in view.
  */
 const NARROW = 768;
-/** Where the tower should land on a narrow screen, as a fraction of the frame (near the right side). */
-const NARROW_TARGET = 0.68;
+/** Where the tower should land on a narrow screen, as a fraction of the frame (centered in the middle). */
+const NARROW_TARGET = 0.5;
 
 function towerCentre(t: number) {
   const p = TOWER_TRACK;
@@ -188,18 +188,8 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
       };
 
       const frame = (f: number) => {
-        const stage = video.parentElement;
-        const w = stage?.clientWidth ?? 0;
-
-        if (w && w < NARROW) {
-          // On mobile, smoothly reduce height from 100% in hero down to 70% in timeline
-          const mobileHeight = 100 - 30 * f;
-          video.style.top = "0";
-          video.style.height = `${mobileHeight.toFixed(1)}%`;
-        } else {
-          video.style.top = "";
-          video.style.height = "100%";
-        }
+        video.style.top = "";
+        video.style.height = "100%";
 
         const scale = FRAME_SCALE + (1 - FRAME_SCALE) * f;
         const shift = FRAME_SHIFT * (1 - f) + INTRO_RISE * intro.v;
