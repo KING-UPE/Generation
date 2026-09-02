@@ -1,9 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { gsap, useGSAP } from "@/lib/gsap";
+import { gsap, useGSAP, SplitText } from "@/lib/gsap";
 import LitTitle from "@/components/ui/LitTitle";
-import ScrollCopy from "@/components/ui/ScrollCopy";
 import CutCard from "@/components/ui/CutCard";
 
 const VISION_CARDS = [
@@ -27,6 +26,8 @@ export default function VisionAbout() {
   const flipDeckRef = useRef<HTMLDivElement>(null);
   const visionTextRef = useRef<HTMLDivElement>(null);
   const aboutTextRef = useRef<HTMLDivElement>(null);
+  const visionCopyRef = useRef<HTMLParagraphElement>(null);
+  const aboutCopyRef = useRef<HTMLParagraphElement>(null);
 
   const [frontHovered, setFrontHovered] = useState<number | null>(null);
   const [backHovered, setBackHovered] = useState<number | null>(null);
@@ -40,6 +41,8 @@ export default function VisionAbout() {
       const flipDeck = flipDeckRef.current;
       const visionText = visionTextRef.current;
       const aboutText = aboutTextRef.current;
+      const visionCopy = visionCopyRef.current;
+      const aboutCopy = aboutCopyRef.current;
 
       if (!container || !stage || !deck || !tilt || !flipDeck || !visionText || !aboutText) return;
 
@@ -50,6 +53,30 @@ export default function VisionAbout() {
       gsap.set(aboutText, { opacity: 0, y: 30, pointerEvents: "none" });
       gsap.set(visionText, { opacity: 1, y: 0, pointerEvents: "auto" });
       gsap.set(flipDeck, { rotationY: 0, transformOrigin: "center center" });
+
+      let visionSplit: SplitText | null = null;
+      let aboutSplit: SplitText | null = null;
+
+      try {
+        if (visionCopy) {
+          visionSplit = SplitText.create(visionCopy, {
+            type: "words",
+            wordsClass: "sc-word",
+          });
+          gsap.set(visionSplit.words, { color: "#9E9EAA" });
+        }
+        if (aboutCopy) {
+          aboutSplit = SplitText.create(aboutCopy, {
+            type: "words",
+            wordsClass: "sc-word",
+          });
+          gsap.set(aboutSplit.words, { color: "#9E9EAA" });
+        }
+      } catch {
+        // fallback to normal text color
+        if (visionCopy) gsap.set(visionCopy, { color: "#FFFFFF" });
+        if (aboutCopy) gsap.set(aboutCopy, { color: "#FFFFFF" });
+      }
 
       if (reduced) return;
 
@@ -69,6 +96,21 @@ export default function VisionAbout() {
           scrub: 1.2,
         },
       });
+
+      // 0. Vision copy illuminates word-by-word with scroll
+      if (visionSplit?.words) {
+        tl.fromTo(
+          visionSplit.words,
+          { color: "#9E9EAA" },
+          {
+            color: "#FFFFFF",
+            stagger: 0.02,
+            ease: "none",
+            duration: 0.22,
+          },
+          0.0,
+        );
+      }
 
       // 1. Fade out Vision text
       tl.to(
@@ -139,7 +181,22 @@ export default function VisionAbout() {
         0.55,
       );
 
-      // 5. Interactive 3D mouse parallax tilt on hover
+      // 5. About copy illuminates word-by-word with scroll in the About phase!
+      if (aboutSplit?.words) {
+        tl.fromTo(
+          aboutSplit.words,
+          { color: "#9E9EAA" },
+          {
+            color: "#FFFFFF",
+            stagger: 0.02,
+            ease: "none",
+            duration: 0.35,
+          },
+          0.60,
+        );
+      }
+
+      // 6. Interactive 3D mouse parallax tilt on hover
       const cleanups: (() => void)[] = [];
       if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
         const tiltX = gsap.quickTo(tilt, "rotationX", { duration: 0.6, ease: "power3" });
@@ -173,7 +230,11 @@ export default function VisionAbout() {
         });
       }
 
-      return () => cleanups.forEach((fn) => fn());
+      return () => {
+        cleanups.forEach((fn) => fn());
+        visionSplit?.revert();
+        aboutSplit?.revert();
+      };
     },
     { scope: containerRef },
   );
@@ -205,9 +266,12 @@ export default function VisionAbout() {
                   </LitTitle>
                 </div>
 
-                <ScrollCopy className="text-[clamp(0.875rem,1.05vw,1.15rem)] font-medium leading-[1.65] text-bone lg:leading-[1.85]">
+                <p
+                  ref={visionCopyRef}
+                  className="copy-justify text-[clamp(0.875rem,1.05vw,1.15rem)] font-medium leading-[1.65] text-bone-muted lg:leading-[1.85]"
+                >
                   One night where a generation shows up loud. We build the stage, the sound and the room around them, so the music is the only thing anyone leaves remembering.
-                </ScrollCopy>
+                </p>
               </div>
 
               {/* ── About Text (Fades in on same top spot on mobile, right column on desktop) ── */}
@@ -221,9 +285,12 @@ export default function VisionAbout() {
                   </LitTitle>
                 </div>
 
-                <ScrollCopy className="text-[clamp(0.875rem,1.05vw,1.15rem)] font-medium leading-[1.65] text-bone lg:leading-[1.85]">
+                <p
+                  ref={aboutCopyRef}
+                  className="copy-justify text-[clamp(0.875rem,1.05vw,1.15rem)] font-medium leading-[1.65] text-bone-muted lg:leading-[1.85]"
+                >
                   Generation is produced by ECheM. Live performance, design and sound engineering held to a single production standard, for an audience that still turns up in person.
-                </ScrollCopy>
+                </p>
               </div>
             </div>
 
