@@ -423,9 +423,9 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         />
       </div>
 
-      {/* Pulled up over the pinned frame */}
-      <div ref={heroRef} className="relative" style={{ marginTop: "-100svh" }}>
-        {children}
+      {/* Pulled up over the pinned frame: 55vh scroll runway for swift, responsive stage expansion */}
+      <div ref={heroRef} className="relative h-[55vh]" style={{ marginTop: "-100svh" }}>
+        <div className="h-[100svh] w-full overflow-hidden">{children}</div>
       </div>
 
       <section
