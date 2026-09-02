@@ -56,9 +56,19 @@ const INTRO_RISE = 40;
  * Measured off the video by taking the brightness-weighted centroid of each
  * frame: it holds at centre while the crown is on screen, then slides left and
  * settles once the shaft takes over.
+ *
+ * Sampled every 0.2s through the move, not just at its endpoints. The knots
+ * used to sit at t=1 and t=2 and the reading between them was a straight line,
+ * but the tower does not leave centre until about t=1.3 and then goes quickly:
+ * at t=1.4 the line said 45.0% when the tower was still at 49.3%. `pan` trusts
+ * this table to cancel the tower's motion, so a 4.3% error here became a 62px
+ * sideways lurch on screen — the frame panned away and the tower did not go
+ * with it. Re-measure the same way after any change to the footage.
  */
 const TOWER_TRACK: ReadonlyArray<readonly [number, number]> = [
-  [0, 49.6], [1, 49.6], [2, 38.0], [2.5, 28.9], [2.8, 26.6], [3.5, 25.7], [10, 25.8],
+  [0, 49.7], [1.2, 49.8], [1.4, 49.3], [1.6, 47.2], [1.8, 43.3], [2.0, 38.1],
+  [2.2, 34.3], [2.4, 30.5], [2.6, 28.1], [2.8, 26.7], [3.0, 26.0], [3.2, 25.9],
+  [10, 26.0],
 ];
 
 /**
@@ -247,7 +257,14 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         const e = f * f * (3 - 2 * f);
 
         const scale = FRAME_SCALE + (1 - FRAME_SCALE) * e;
-        const shift = FRAME_SHIFT * (1 - e) + INTRO_RISE * intro.v;
+        /* The entrance rise is folded into the hero's own offset rather than
+           added on top of it. Added on top, it survived `e` reaching 1: flick
+           from the hero into the timeline inside the two seconds the entrance
+           takes and the footage arrived displaced by up to a whole INTRO_RISE
+           — 40% of the viewport — then slid up into place on its own while the
+           timeline was already running. Folded in, it is gone the moment the
+           hero is, however early that happens. */
+        const shift = (FRAME_SHIFT + INTRO_RISE * intro.v) * (1 - e);
         const alpha = clamp01((1 - intro.v) / 0.5);
 
         if (shift === lastShift && scale === lastScale && alpha === lastAlpha) return;
@@ -455,13 +472,10 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
                   <div className="mt-4 sm:mt-8 flex flex-col gap-2.5 sm:gap-3 max-w-[280px] sm:max-w-[340px] md:max-w-[460px]">
                     {e.date && (
                       <div className="cut-card-red group relative overflow-hidden p-4 backdrop-blur-md">
-                        <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
                           <span className="font-mono-ui text-[11px] font-bold tracking-[0.22em] text-red-hot uppercase flex items-center gap-2">
                             <span className="inline-block h-2 w-2 rounded-full bg-red-hot animate-ping" />
                             Confirmed Event Date
-                          </span>
-                          <span className="badge-pill border-red-hot/30 bg-red-hot/20 text-[10px] font-bold text-red-hot py-0.5">
-                            COLOMBO 2026
                           </span>
                         </div>
                         <p className="mt-2 text-base font-extrabold tracking-tight text-white sm:text-lg">

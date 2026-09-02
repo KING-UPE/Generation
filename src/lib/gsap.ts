@@ -18,3 +18,8 @@ if (typeof window !== "undefined" && !registered) {
 }
 
 export { gsap, useGSAP, ScrollTrigger, SplitText, DrawSVGPlugin, CustomEase };
+
+// TEMP-VERIFY
+if (typeof window !== "undefined") {
+  (window as unknown as Record<string, unknown>).__gsap = { gsap, ScrollTrigger };
+}
