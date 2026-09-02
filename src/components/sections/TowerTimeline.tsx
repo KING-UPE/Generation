@@ -200,7 +200,13 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         const scale = FRAME_SCALE + (1 - FRAME_SCALE) * f;
         const shift = FRAME_SHIFT * (1 - f) + INTRO_RISE * intro.v;
         video.style.transform = `translateY(${shift.toFixed(2)}%) scale(${scale.toFixed(4)})`;
-        video.style.opacity = String(clamp01((1 - intro.v) / 0.5));
+
+        // Video fade-out at end of Hero, and smooth re-appearance entering 2nd Section (Timeline)
+        const transitionDip =
+          f < 0.5 ? Math.max(0, 1 - f / 0.44) : Math.min(1, (f - 0.56) / 0.44);
+
+        const baseOpacity = clamp01((1 - intro.v) / 0.5);
+        video.style.opacity = String(baseOpacity * transitionDip);
       };
 
       /* Cards key off the same eased time the video is seeking to, so a card
