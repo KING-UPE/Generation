@@ -16,7 +16,7 @@ const ABOUT_CARDS = [
   { src: "/img/crowd.svg", alt: "Crowd with hands raised" },
 ];
 
-const TITLE_SIZE = "text-[clamp(4.2rem,10.5vw,9.5rem)] leading-[0.9] tracking-[-0.025em]";
+const TITLE_SIZE = "text-[clamp(2.6rem,7.5vw,8.5rem)] leading-[0.9] tracking-[-0.025em]";
 
 export default function VisionAbout() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -75,7 +75,7 @@ export default function VisionAbout() {
         visionText,
         {
           opacity: 0,
-          y: -40,
+          y: -35,
           ease: "power2.inOut",
           duration: 0.35,
           onComplete: () => {
@@ -187,30 +187,50 @@ export default function VisionAbout() {
       {/* Sticky Fullscreen Stage */}
       <div
         ref={stickyRef}
-        className="sticky top-0 flex h-[100svh] w-full items-center justify-center overflow-hidden py-6"
+        className="sticky top-0 flex h-[100svh] w-full items-center justify-center overflow-hidden py-4 sm:py-6"
       >
         <div ref={stageRef} className="relative mx-auto w-full max-w-(--maxw) px-(--gutter)">
-          <div className="relative flex flex-col justify-between gap-10 lg:min-h-[480px] lg:flex-row lg:items-center">
-            {/* ── LEFT COLUMN: Vision Text (Fades out) ────────────────── */}
-            <div
-              ref={visionTextRef}
-              className="relative z-10 flex w-full flex-col gap-7 md:gap-9 lg:max-w-[500px] xl:max-w-[560px]"
-            >
-              <div>
-                <LitTitle className={TITLE_SIZE} radius={340} weight={1.9}>
-                  Vision
-                </LitTitle>
+          {/* Main Grid: stacks vertically on mobile, 2-columns on desktop */}
+          <div className="relative flex flex-col justify-center gap-6 sm:gap-8 lg:min-h-[480px] lg:grid lg:grid-cols-12 lg:items-center lg:gap-10">
+            {/* ── MOBILE TEXT STACK CONTAINER / DESKTOP VISION COLUMN ── */}
+            <div className="relative w-full min-h-[170px] sm:min-h-[190px] lg:contents">
+              {/* ── Vision Text ── */}
+              <div
+                ref={visionTextRef}
+                className="relative z-10 flex w-full flex-col gap-3 sm:gap-4 md:gap-6 lg:max-w-[500px] xl:max-w-[560px] lg:col-span-5 lg:col-start-1"
+              >
+                <div>
+                  <LitTitle className={TITLE_SIZE} radius={340} weight={1.9}>
+                    Vision
+                  </LitTitle>
+                </div>
+
+                <ScrollCopy className="text-[clamp(0.875rem,1.05vw,1.15rem)] font-medium leading-[1.65] text-bone lg:leading-[1.85]">
+                  One night where a generation shows up loud. We build the stage, the sound and the room around them, so the music is the only thing anyone leaves remembering.
+                </ScrollCopy>
               </div>
 
-              <ScrollCopy className="text-[clamp(0.95rem,1.15vw,1.15rem)] font-medium leading-[1.85] text-bone">
-                One night where a generation shows up loud. We build the stage, the sound and the room around them, so the music is the only thing anyone leaves remembering.
-              </ScrollCopy>
+              {/* ── About Text (Fades in on same top spot on mobile, right column on desktop) ── */}
+              <div
+                ref={aboutTextRef}
+                className="pointer-events-none absolute inset-0 z-10 flex w-full flex-col gap-3 sm:gap-4 md:gap-6 lg:static lg:max-w-[500px] xl:max-w-[560px] lg:col-span-5 lg:col-start-8"
+              >
+                <div>
+                  <LitTitle className={TITLE_SIZE} radius={340} weight={1.9}>
+                    About
+                  </LitTitle>
+                </div>
+
+                <ScrollCopy className="text-[clamp(0.875rem,1.05vw,1.15rem)] font-medium leading-[1.65] text-bone lg:leading-[1.85]">
+                  Generation is produced by ECheM. Live performance, design and sound engineering held to a single production standard, for an audience that still turns up in person.
+                </ScrollCopy>
+              </div>
             </div>
 
-            {/* ── CARD STACK DECK: Flips & travels in 3D across scroll ── */}
+            {/* ── CARD STACK DECK: Flips in 3D across scroll ── */}
             <div
               ref={deckRef}
-              className="relative z-20 mx-auto aspect-[4/3] w-full max-w-[340px] sm:max-w-[380px] lg:mx-0 lg:max-w-[420px] xl:max-w-[460px]"
+              className="relative z-20 mx-auto aspect-[4/3] w-full max-w-[270px] sm:max-w-[320px] lg:mx-0 lg:max-w-[420px] xl:max-w-[460px] lg:col-span-7 lg:col-start-6"
               style={{ perspective: 1800 }}
             >
               {/* Mouse Parallax Tilt Container */}
@@ -321,22 +341,6 @@ export default function VisionAbout() {
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* ── RIGHT COLUMN: About Text (Fades in) ────────────────── */}
-            <div
-              ref={aboutTextRef}
-              className="pointer-events-none absolute right-0 top-1/2 z-10 flex w-full -translate-y-1/2 flex-col gap-7 md:gap-9 px-(--gutter) lg:max-w-[500px] lg:px-0 xl:max-w-[560px]"
-            >
-              <div>
-                <LitTitle className={TITLE_SIZE} radius={340} weight={1.9}>
-                  About
-                </LitTitle>
-              </div>
-
-              <ScrollCopy className="text-[clamp(0.95rem,1.15vw,1.15rem)] font-medium leading-[1.85] text-bone">
-                Generation is produced by ECheM. Live performance, design and sound engineering held to a single production standard, for an audience that still turns up in person.
-              </ScrollCopy>
             </div>
           </div>
         </div>
