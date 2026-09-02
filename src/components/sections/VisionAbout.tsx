@@ -156,9 +156,6 @@ export default function VisionAbout() {
               className="relative z-10 flex w-full flex-col gap-5 lg:max-w-[480px] xl:max-w-[540px]"
             >
               <div>
-                <span className="badge-pill mb-3 w-fit">
-                  05 — THE MANIFEST
-                </span>
                 <LitTitle className={TITLE_SIZE} radius={320} weight={1.9}>
                   Vision
                 </LitTitle>
@@ -167,15 +164,6 @@ export default function VisionAbout() {
               <ScrollCopy className="text-[clamp(0.95rem,1.15vw,1.15rem)] font-medium leading-[1.8] text-bone">
                 One night where a generation shows up loud. We build the stage, the sound and the room around them, so the music is the only thing anyone leaves remembering.
               </ScrollCopy>
-
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="badge-pill border-red-hot/40 bg-red-black/50 text-red-hot font-bold">
-                  ✦ COLOMBO EXCLUSIVE
-                </span>
-                <span className="badge-pill">
-                  LIVE INSTRUMENTATION & BASS
-                </span>
-              </div>
             </div>
 
             {/* ── CARD STACK DECK: Flips & travels in 3D across scroll ── */}
@@ -235,9 +223,6 @@ export default function VisionAbout() {
               className="pointer-events-none absolute right-0 top-1/2 z-10 flex w-full -translate-y-1/2 flex-col gap-5 px-(--gutter) lg:max-w-[480px] lg:px-0 xl:max-w-[540px]"
             >
               <div>
-                <span className="badge-pill mb-3 w-fit">
-                  06 — THE PRODUCTION HOUSE
-                </span>
                 <LitTitle className={TITLE_SIZE} radius={320} weight={1.9}>
                   About
                 </LitTitle>
@@ -246,15 +231,6 @@ export default function VisionAbout() {
               <ScrollCopy className="text-[clamp(0.95rem,1.15vw,1.15rem)] font-medium leading-[1.8] text-bone">
                 Generation is produced by ECheM. Live performance, design and sound engineering held to a single production standard, for an audience that still turns up in person.
               </ScrollCopy>
-
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="badge-pill border-red-hot/40 bg-red-black/50 text-red-hot font-bold">
-                  ✦ PRODUCED BY ECHEM
-                </span>
-                <span className="badge-pill">
-                  360° HYBRID AUDIO STANDARD
-                </span>
-              </div>
             </div>
           </div>
         </div>
