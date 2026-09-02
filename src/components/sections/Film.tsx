@@ -209,53 +209,34 @@ export default function Film() {
       gsap.set(video, { scale: 1.12 });
       gsap.set(uiRef.current, { opacity: 0 });
 
-      /* The open runs on its own clock, not on the scrollbar: a nudge past the
-         pin starts it and it carries itself to fullscreen. */
-      const open = gsap.timeline({ paused: true });
-
-      open
-        /* the title clears out first */
-        .to(textRef.current, { opacity: 0, y: -70, duration: 0.4, ease: "power2.in" }, 0)
-        /* then the device opens out and the framing settles */
-        .to(stage, { "--fp": 0, duration: 1.0, ease: "power3.inOut" }, 0.06)
-        .to(video, { scale: 1, duration: 1.0, ease: "power3.inOut" }, 0.06)
-        /* the tablet body has nothing left to frame */
-        .to(chromeRef.current, { opacity: 0, duration: 0.34, ease: "power2.out" }, 0.74)
-        .to(uiRef.current, { opacity: 1, duration: 0.34 }, 0.98);
-
-      const opener = ScrollTrigger.create({
-        trigger: section,
-        start: `top+=${OPEN_AFTER} top`,
-        end: "bottom bottom",
-        onEnter: () => {
-          open.play();
-          if (!finished) {
-            void video.play().catch(() => {});
-          }
+      // Bidirectional Scrubbed Timeline:
+      // Scrolling down: seamlessly expands tablet to fullscreen
+      // Scrolling up: seamlessly shrinks fullscreen back down into small tablet frame!
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: section,
+          start: "top top",
+          end: "bottom bottom",
+          scrub: 1.2,
+          onUpdate: (self) => {
+            if (self.progress > 0.12 && video.paused && !finished) {
+              void video.play().catch(() => {});
+            } else if (self.progress <= 0.04 && !video.paused) {
+              video.pause();
+            }
+          },
         },
       });
 
-      /**
-       * Closing deliberately uses a different line from opening. Reversing at
-       * the same +140 mark let the scroll settling either side of it toggle the
-       * timeline, which stranded the tablet half-open.
-       */
-      const closer = ScrollTrigger.create({
-        trigger: section,
-        start: `top+=${CLOSE_BEFORE} top`,
-        end: "bottom bottom",
-        onLeaveBack: () => {
-          open.reverse();
-          video.pause();
-          video.currentTime = 0;
-          finished = false;
-          showEndCard(false);
-        },
-      });
+      tl.to(textRef.current, { opacity: 0, y: -60, duration: 0.35, ease: "power2.inOut" }, 0)
+        .to(stage, { "--fp": 0, duration: 0.5, ease: "power2.inOut" }, 0)
+        .to(video, { scale: 1, duration: 0.5, ease: "power2.inOut" }, 0)
+        .to(chromeRef.current, { opacity: 0, duration: 0.3, ease: "power2.out" }, 0.12)
+        .to(uiRef.current, { opacity: 1, duration: 0.3, ease: "power2.out" }, 0.35)
+        .to({}, { duration: 0.5 }); // dwell in fullscreen
 
       return () => {
-        opener.kill();
-        closer.kill();
+        tl.kill();
         teardown();
       };
     },
@@ -263,7 +244,7 @@ export default function Film() {
   );
 
   return (
-    <section id="film" ref={sectionRef as React.RefObject<HTMLElement>} className="relative h-[170vh]">
+    <section id="film" ref={sectionRef as React.RefObject<HTMLElement>} className="relative h-[220vh]">
       <div
         ref={stageRef}
         className="sticky top-0 h-[100svh] w-full overflow-hidden"
