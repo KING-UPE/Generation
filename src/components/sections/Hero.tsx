@@ -19,8 +19,10 @@ const MARK_SIZE =
 
 export default function Hero() {
   const rootRef = useRef<HTMLElement>(null);
-  const torchRef = useRef<HTMLSpanElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
   const markRef = useRef<HTMLDivElement>(null);
+  const footerRef = useRef<HTMLDivElement>(null);
+  const torchRef = useRef<HTMLSpanElement>(null);
   const cueRef = useRef<HTMLSpanElement>(null);
   const [torchActive, setTorchActive] = useState(false);
 
@@ -48,10 +50,8 @@ export default function Hero() {
 
       if (reduced) return;
 
-      gsap.to(markRef.current, {
-        yPercent: -22,
-        opacity: 0.25,
-        ease: "none",
+      // Cinematic Scroll Transition from Hero to 2nd Section (Timeline)
+      const heroTl = gsap.timeline({
         scrollTrigger: {
           trigger: root,
           start: "top top",
@@ -59,6 +59,23 @@ export default function Hero() {
           scrub: 0.8,
         },
       });
+
+      heroTl
+        .to(headerRef.current, { opacity: 0, y: -25, ease: "power2.inOut", duration: 0.3 }, 0)
+        .to(footerRef.current, { opacity: 0, y: 30, ease: "power2.inOut", duration: 0.35 }, 0)
+        .to(cueRef.current, { opacity: 0, scaleY: 0, ease: "power2.inOut", duration: 0.2 }, 0)
+        .to(
+          markRef.current,
+          {
+            y: -70,
+            opacity: 0,
+            scale: 1.04,
+            filter: "blur(8px)",
+            ease: "power2.inOut",
+            duration: 0.6,
+          },
+          0.05,
+        );
 
       gsap.to(cueRef.current, {
         scaleY: 0.15,
@@ -80,7 +97,10 @@ export default function Hero() {
     >
       <Spotlight size={980} opacity={0.42} />
 
-      <header className="relative z-10 mx-auto flex w-full max-w-(--maxw) items-center justify-between px-(--gutter) pt-8 md:pt-10">
+      <header
+        ref={headerRef}
+        className="relative z-10 mx-auto flex w-full max-w-(--maxw) items-center justify-between px-(--gutter) pt-8 md:pt-10 will-change-transform"
+      >
         <span className="badge-pill">{TAGLINE}</span>
         <span className="badge-pill">Colombo · 2026</span>
       </header>
@@ -129,7 +149,10 @@ export default function Hero() {
           </div>
         </div>
 
-        <div className="mt-10 flex flex-wrap items-center justify-between gap-8 md:mt-14">
+        <div
+          ref={footerRef}
+          className="mt-10 flex flex-wrap items-center justify-between gap-8 md:mt-14 will-change-transform"
+        >
           <RevealText as="p" delay={0.95} start="top 100%" className="eyebrow">
             The 2026 edition
           </RevealText>
