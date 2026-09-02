@@ -133,7 +133,7 @@ const EDITIONS = [
     year: "2026",
     at: 8,
     venue: "Lotus Tower Open Arena",
-    crowd: "10,000+ expected",
+    crowd: "10,000+",
     date: "Saturday, 12 December 2026",
     upcoming: true,
   },
@@ -461,23 +461,23 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
 
                     <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                       {/* Venue Card */}
-                      <div className="cut-card group relative overflow-hidden p-3.5 backdrop-blur-md">
+                      <div className="cut-card group relative flex flex-col justify-between overflow-hidden p-3.5 backdrop-blur-md">
                         <span className="font-mono-ui text-[10px] font-bold tracking-[0.2em] text-muted uppercase flex items-center gap-1.5">
                           <span className="inline-block h-1.5 w-1.5 rounded-full bg-dim group-hover:bg-red-hot transition-colors" />
                           Venue
                         </span>
-                        <p className="mt-1 text-sm font-bold leading-snug text-bone group-hover:text-white transition-colors sm:text-base">
+                        <p className="mt-2 text-sm font-bold leading-snug text-bone group-hover:text-white transition-colors sm:text-base">
                           {e.venue}
                         </p>
                       </div>
 
                       {/* Crowd Card */}
-                      <div className="cut-card group relative overflow-hidden p-3.5 backdrop-blur-md">
+                      <div className="cut-card group relative flex flex-col justify-between overflow-hidden p-3.5 backdrop-blur-md">
                         <span className="font-mono-ui text-[10px] font-bold tracking-[0.2em] text-muted uppercase flex items-center gap-1.5">
                           <span className="inline-block h-1.5 w-1.5 rounded-full bg-dim group-hover:bg-red-hot transition-colors" />
-                          Crowd Capacity
+                          {e.upcoming ? "Expected Crowd" : "Recorded Crowd"}
                         </span>
-                        <p className="mt-1 text-sm font-extrabold leading-snug text-white sm:text-base">
+                        <p className="font-display mt-1 text-2xl font-normal leading-none tracking-tight text-white sm:text-3xl">
                           {e.crowd}
                         </p>
                       </div>
