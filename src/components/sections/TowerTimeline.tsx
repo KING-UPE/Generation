@@ -538,19 +538,19 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         const targetClamped = Math.max(0, Math.min(maxT, target));
 
         // When in the musical show section at the bottom of the tower:
-        // Play the concert footage actively so it is alive and never stuck!
+        // Play the concert footage through to the end and hold on the final frame (no repeated looping)
         const isShowSection = targetClamped >= SHOW_T - 0.15;
 
         if (isShowSection) {
-          if (video.paused) {
-            video.play().catch(() => {});
+          if (video.currentTime >= maxT) {
+            if (!video.paused) video.pause();
+            current = maxT;
+          } else {
+            if (video.paused) {
+              video.play().catch(() => {});
+            }
+            current = Math.min(maxT, video.currentTime);
           }
-
-          // Loop concert footage between SHOW_T and maxT
-          if (video.currentTime >= maxT || video.currentTime < SHOW_T - 0.4) {
-            video.currentTime = SHOW_T;
-          }
-          current = video.currentTime;
         } else {
           // In the tower timeline: pause and scrub smoothly
           if (!video.paused) {
