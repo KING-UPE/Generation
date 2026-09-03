@@ -16,7 +16,7 @@ const ABOUT_CARDS = [
   { src: "/img/crowd.svg", alt: "Crowd with hands raised" },
 ];
 
-const TITLE_SIZE = "text-[clamp(2.6rem,7.5vw,8.5rem)] leading-[0.9] tracking-[-0.025em]";
+const TITLE_SIZE = "text-[clamp(3.8rem,11.5vw,9.5rem)] leading-[0.88] tracking-[-0.02em]";
 
 export default function VisionAbout() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -252,19 +252,19 @@ export default function VisionAbout() {
           {/* Main Grid: stacks vertically on mobile, 2-columns on desktop */}
           <div className="relative flex flex-col justify-center gap-8 sm:gap-10 lg:min-h-[480px] lg:grid lg:grid-cols-12 lg:items-center lg:gap-10">
             {/* ── MOBILE TEXT STACK CONTAINER / DESKTOP VISION COLUMN ── */}
-            <div className="relative w-full min-h-[180px] sm:min-h-[200px] lg:contents">
+            <div className="relative w-full min-h-[200px] sm:min-h-[230px] lg:contents">
               {/* ── Vision Text ── */}
               <div
                 ref={visionTextRef}
                 className="relative z-10 flex w-full flex-col gap-3 sm:gap-4 md:gap-6 lg:max-w-[500px] xl:max-w-[560px] lg:col-span-5 lg:col-start-1 lg:row-start-1"
               >
                 <div>
-                  <LitTitle className={TITLE_SIZE} radius={340} weight={1.9}>
+                  <LitTitle className={TITLE_SIZE} radius={340} weight={2.2}>
                     Vision
                   </LitTitle>
                 </div>
 
-                <ScrollCopy className="text-[clamp(0.875rem,1.05vw,1.15rem)] font-medium leading-[1.65] text-bone lg:leading-[1.85]">
+                <ScrollCopy className="text-[clamp(0.95rem,1.2vw,1.18rem)] font-medium leading-[1.65] text-bone lg:leading-[1.85]">
                   One night where a generation shows up loud. We build the stage, the sound and the room around them, so the music is the only thing anyone leaves remembering.
                 </ScrollCopy>
               </div>
@@ -280,7 +280,7 @@ export default function VisionAbout() {
                     start={revealAt(0.5 / 0.95)}
                     className={TITLE_SIZE}
                     radius={340}
-                    weight={1.9}
+                    weight={2.2}
                   >
                     About
                   </LitTitle>
@@ -290,7 +290,7 @@ export default function VisionAbout() {
                   trigger={containerRef}
                   start={revealAt(0.55 / 0.95)}
                   end={revealAt(0.95)}
-                  className="text-[clamp(0.875rem,1.05vw,1.15rem)] font-medium leading-[1.65] text-bone lg:leading-[1.85]"
+                  className="text-[clamp(0.95rem,1.2vw,1.18rem)] font-medium leading-[1.65] text-bone lg:leading-[1.85]"
                 >
                   Generation is produced by ECheM. Live performance, design and sound engineering held to a single production standard, for an audience that still turns up in person.
                 </ScrollCopy>
