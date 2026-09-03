@@ -96,8 +96,38 @@ export default function Film() {
       video.muted = true;
       video.playbackRate = RATE_SILENT;
 
+      let finished = false;
+      let locked = false;
+      let scrollBoost = 0;
+
       const baseRate = () => (video.muted ? RATE_SILENT : RATE_SOUND);
       let currentRate = RATE_SILENT;
+
+      const showEndCard = (on: boolean) => {
+        if (endRef.current) {
+          gsap.to(endRef.current, {
+            opacity: on ? 1 : 0,
+            y: on ? 0 : 12,
+            duration: on ? 0.7 : 0.25,
+            ease: "power2.out",
+            overwrite: "auto",
+          });
+        }
+      };
+
+      const unlock = () => {
+        if (!locked) return;
+        locked = false;
+        smoothScroll.current?.start();
+      };
+
+      const lock = () => {
+        if (reduced || finished || locked) return;
+        const lenis = smoothScroll.current;
+        if (!lenis) return;
+        locked = true;
+        lenis.stop();
+      };
 
       const onTime = () => {
         const d = video.duration || 1;
@@ -106,7 +136,10 @@ export default function Film() {
       };
 
       const onEnded = () => {
-        // Continuous looping playback so video is always alive
+        finished = true;
+        unlock();
+        showEndCard(true);
+        // Seamlessly loop or hold video
         video.currentTime = 0;
         void video.play().catch(() => {});
       };
@@ -114,6 +147,45 @@ export default function Film() {
       video.addEventListener("timeupdate", onTime);
       video.addEventListener("loadedmetadata", onTime);
       video.addEventListener("ended", onEnded);
+
+      /* While locked in first-time view:
+         - Scrolling DOWN boosts video playback speed
+         - Scrolling UP or hitting Escape unlocks upward navigation
+         - Clicking Skip instantly unlocks */
+      const onWheel = (e: WheelEvent) => {
+        if (locked) {
+          if (e.deltaY > 0) {
+            scrollBoost = Math.min(3.5, scrollBoost + Math.abs(e.deltaY) * 0.008);
+          } else if (e.deltaY < -20) {
+            unlock();
+          }
+        }
+      };
+
+      let touchY = 0;
+      const onTouchStart = (e: TouchEvent) => {
+        touchY = e.touches[0]?.clientY ?? 0;
+      };
+      const onTouchMove = (e: TouchEvent) => {
+        if (locked) {
+          const dy = touchY - (e.touches[0]?.clientY ?? 0);
+          if (dy > 0) {
+            scrollBoost = Math.min(3.5, scrollBoost + dy * 0.02);
+          } else if (dy < -20) {
+            unlock();
+          }
+        }
+      };
+
+      const onKey = (e: KeyboardEvent) => {
+        if (!locked) return;
+        if (["Escape", "ArrowUp", "PageUp", "Home"].includes(e.key)) unlock();
+      };
+
+      window.addEventListener("wheel", onWheel, { passive: true });
+      window.addEventListener("touchstart", onTouchStart, { passive: true });
+      window.addEventListener("touchmove", onTouchMove, { passive: true });
+      window.addEventListener("keydown", onKey);
 
       const onSound = () => {
         video.muted = !video.muted;
@@ -127,15 +199,14 @@ export default function Film() {
       soundRef.current?.addEventListener("click", onSound);
 
       const onSkip = () => {
-        if (Number.isFinite(video.duration) && video.duration > 0) {
-          video.currentTime = Math.min(video.currentTime + 10, video.duration - 0.5);
-        }
+        onEnded();
       };
       skipRef.current?.addEventListener("click", onSkip);
 
       /* Dynamic Video Playback Controller:
-         - When scrolling: accelerates video playback speed proportional to scroll velocity
-         - When scroll stops: smoothly eases back to normal average speed and keeps playing! */
+         - Plays automatically while in view
+         - When scrolling: accelerates proportional to scroll velocity / wheel boost
+         - When scroll stops: smoothly returns to normal average speed and keeps playing! */
       const tick = () => {
         const rect = section.getBoundingClientRect();
         const inView = rect.bottom > -100 && rect.top < window.innerHeight + 100;
@@ -145,12 +216,15 @@ export default function Film() {
             void video.play().catch(() => {});
           }
 
-          // Active scroll velocity accelerates video, stops return to baseRate
-          const vel = Math.abs(scrollState.velocity);
-          const targetSpeed = baseRate() + Math.min(3.2, vel * 1.5);
+          // Decay manual wheel/touch boost
+          scrollBoost *= 0.88;
 
-          currentRate += (targetSpeed - currentRate) * 0.12;
-          video.playbackRate = Math.max(0.6, Math.min(4.0, currentRate));
+          // Combine real scroll velocity with active wheel boost
+          const vel = Math.abs(scrollState.velocity) + scrollBoost;
+          const targetSpeed = baseRate() + Math.min(3.5, vel * 1.5);
+
+          currentRate += (targetSpeed - currentRate) * 0.14;
+          video.playbackRate = Math.max(0.6, Math.min(4.5, currentRate));
         } else {
           if (!video.paused) {
             video.pause();
@@ -161,13 +235,20 @@ export default function Film() {
       gsap.ticker.add(tick);
 
       const teardown = () => {
+        unlock();
         gsap.ticker.remove(tick);
+        window.removeEventListener("wheel", onWheel);
+        window.removeEventListener("touchstart", onTouchStart);
+        window.removeEventListener("touchmove", onTouchMove);
+        window.removeEventListener("keydown", onKey);
         video.removeEventListener("timeupdate", onTime);
         video.removeEventListener("loadedmetadata", onTime);
         video.removeEventListener("ended", onEnded);
         soundRef.current?.removeEventListener("click", onSound);
         skipRef.current?.removeEventListener("click", onSkip);
       };
+
+      gsap.set(endRef.current, { opacity: 0, y: 12 });
 
       if (reduced) {
         gsap.set(stage, { "--fp": 0 });
@@ -180,13 +261,19 @@ export default function Film() {
       gsap.set(video, { scale: 1.12 });
       gsap.set(uiRef.current, { opacity: 0 });
 
-      // Bidirectional Scrubbed Timeline for tablet expansion:
+      // Bidirectional Scrubbed Timeline:
+      // Locks downward scroll on first full expansion until video ends
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: section,
           start: "top top",
           end: "bottom bottom",
           scrub: 0.8,
+          onUpdate: (self) => {
+            if (self.progress >= 0.72 && !finished && !locked) {
+              lock();
+            }
+          },
         },
       });
 
