@@ -4,8 +4,8 @@ import { useEffect, useState, useRef } from "react";
 import { gsap } from "@/lib/gsap";
 import { smoothScroll } from "@/lib/smooth-scroll";
 
-const VIDEO_SRC = "/HeroVideo.seek.mp4";
-const ESTIMATED_SIZE = 2713449; // ~2.7 MB
+const VIDEO_SRC = "/Tower.seek.mp4";
+const ESTIMATED_SIZE = 4167318; // ~4.1 MB
 
 export default function Preloader({ onComplete }: { onComplete?: () => void }) {
   const [progress, setProgress] = useState(0);
@@ -18,6 +18,7 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
   const barRef = useRef<HTMLDivElement>(null);
   const percentRef = useRef<HTMLSpanElement>(null);
   const progressVal = useRef(0);
+  const towerReadyRef = useRef(false);
 
   useEffect(() => {
     // Lock scrolling while preloader is active
@@ -26,6 +27,16 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
 
     let isCancelled = false;
     let actualLoaded = 0;
+
+    // Check if DOM video element is ready
+    if (typeof window !== "undefined" && (window as any).__TOWER_READY) {
+      towerReadyRef.current = true;
+    }
+
+    const onTowerReady = () => {
+      towerReadyRef.current = true;
+    };
+    window.addEventListener("tower:ready", onTowerReady, { once: true });
 
     // 1. Fetch the video footage with real-time stream tracking
     const downloadVideo = async () => {
@@ -57,15 +68,17 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
     // 2. Fallback timer: ensure preloader never gets stuck regardless of network conditions
     const fallbackTimer = setTimeout(() => {
       actualLoaded = 100;
-    }, 6000);
+      towerReadyRef.current = true;
+    }, 7000);
 
     // 3. Smooth animation ticker for progress counter
     const tick = () => {
       if (isCancelled) return;
 
-      // Smoothly ease progress towards actualLoaded
-      const delta = (actualLoaded - progressVal.current) * 0.12;
-      progressVal.current += Math.max(0.4, delta);
+      // Cap at 95% until the DOM video is actually decoded and ready to render
+      const maxTarget = towerReadyRef.current ? 100 : Math.min(95, actualLoaded);
+      const delta = (maxTarget - progressVal.current) * 0.12;
+      progressVal.current += Math.max(0.35, delta);
 
       if (progressVal.current >= 100) {
         progressVal.current = 100;
@@ -82,9 +95,11 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
       } else if (p < 60) {
         setStatusText("BUFFERING LOTUS TOWER FOOTAGE");
       } else if (p < 85) {
-        setStatusText("CACHING 300 INTRA-FRAME KEYFRAMES");
+        setStatusText("DECODING 300 INTRA-FRAME KEYFRAMES");
+      } else if (p < 99) {
+        setStatusText("SYNCHRONIZING 3D TOWER STAGE");
       } else {
-        setStatusText("CALIBRATING 3D TIMELINE MATRIX");
+        setStatusText("GENERATION 26 · ALL SYSTEMS READY");
       }
 
       requestAnimationFrame(tick);
@@ -94,6 +109,7 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
 
     return () => {
       isCancelled = true;
+      window.removeEventListener("tower:ready", onTowerReady);
       clearTimeout(fallbackTimer);
     };
   }, []);

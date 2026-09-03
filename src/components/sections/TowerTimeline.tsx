@@ -254,9 +254,24 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
       video.muted = true;
       video.pause();
 
+      const markReady = () => {
+        if (typeof window !== "undefined") {
+          (window as any).__TOWER_READY = true;
+          window.dispatchEvent(new CustomEvent("tower:ready"));
+        }
+      };
+
       if (!video.getAttribute("src")) {
         video.src = SRC;
         video.load();
+      }
+
+      if (video.readyState >= 2) {
+        markReady();
+      } else {
+        video.addEventListener("canplay", markReady, { once: true });
+        video.addEventListener("loadeddata", markReady, { once: true });
+        video.addEventListener("loadedmetadata", markReady, { once: true });
       }
 
       let target = 0;
@@ -521,16 +536,15 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
       const startIntro = () => {
         gsap.to(intro, {
           v: 0,
-          duration: 1.8,
-          delay: 0.1,
+          duration: 2.0,
           ease: "power3.out",
+          overwrite: "auto",
         });
       };
 
-      // Start the rise as soon as the preloader opens
+      // Start the rise as soon as the preloader begins lifting
       window.addEventListener("preloader:opening", startIntro, { once: true });
       window.addEventListener("preloader:complete", startIntro, { once: true });
-      const fallbackIntro = setTimeout(startIntro, 3500);
 
       gsap.ticker.add(tick);
       frame(0, offset(0));
@@ -540,7 +554,6 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
       return () => {
         window.removeEventListener("preloader:opening", startIntro);
         window.removeEventListener("preloader:complete", startIntro);
-        clearTimeout(fallbackIntro);
         st.kill();
         shower.kill();
         framer.kill();
@@ -559,11 +572,9 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         ref={stageRef}
         className="pointer-events-none sticky top-0 z-[-1] h-[100svh] overflow-hidden bg-black"
       >
-        {/* No `src` here on purpose: the effect sets it once the element is
-            mounted, so the poster-less first paint is a black box rather than
-            a half-loaded frame. */}
         <video
           ref={videoRef}
+          src={SRC}
           className="absolute inset-0 h-full w-full object-cover"
           style={{
             transform: `translateY(${FRAME_SHIFT + INTRO_RISE}%) scale(${FRAME_SCALE})`,
