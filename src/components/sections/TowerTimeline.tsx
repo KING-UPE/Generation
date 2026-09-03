@@ -499,38 +499,19 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
 
       /**
        * Only ever one seek in flight.
-       *
-       * Setting `currentTime` every frame queues seeks faster than the decoder
-       * can service them. The backlog does not play out in order — frames
-       * arrive late and out of sequence, which is why the tower jumped between
-       * the crown and the shaft instead of scrubbing. Waiting for `seeked`
-       * before issuing the next one means the decoder is always working on the
-       * most recent scroll position and never falls behind.
        */
       let seekBusy = false;
       let seekIssuedAt = 0;
+      let lastSeekIssuedTime = -1;
       const onSeeked = () => { seekBusy = false; };
       video.addEventListener("seeked", onSeeked);
-
-      // Mobile touch-gesture video unlock
-      const unlockTowerVideo = () => {
-        if (video.paused && target >= SHOW_T - 0.2) {
-          video.play().catch(() => {});
-        }
-      };
-      window.addEventListener("touchstart", unlockTowerVideo, { passive: true });
-      window.addEventListener("pointerdown", unlockTowerVideo, { passive: true });
 
       let lastTick = performance.now();
 
       const tick = () => {
         const now = performance.now();
 
-        /* Per second, not per frame. A flat per-frame factor decays twice as
-           fast on a 120Hz phone as on a 60Hz one, so the identical scroll
-           settles at two different speeds on two different devices. Long
-           frames — a tab coming back to the foreground — are clamped so the
-           scrub cannot leap on the first tick back. */
+        /* Per second, not per frame. */
         const dt = Math.min((now - lastTick) / 1000, 0.05);
         lastTick = now;
 
@@ -543,13 +524,16 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
 
         const stalled = seekBusy && now - seekIssuedAt > 180;
 
+        // Compare against lastSeekIssuedTime (requested time) rather than video.currentTime (decoder rounded time)
+        // to prevent infinite oscillation/flickering between adjacent keyframes when stopped
         if (
           (!seekBusy || stalled) &&
           Number.isFinite(video.duration) &&
-          Math.abs(current - video.currentTime) > 1 / 60
+          Math.abs(current - lastSeekIssuedTime) > 0.02
         ) {
           seekBusy = true;
           seekIssuedAt = now;
+          lastSeekIssuedTime = current;
           video.currentTime = Math.max(0, Math.min(maxT, current));
         }
 
@@ -579,8 +563,6 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
       return () => {
         window.removeEventListener("preloader:opening", startIntro);
         window.removeEventListener("preloader:complete", startIntro);
-        window.removeEventListener("touchstart", unlockTowerVideo);
-        window.removeEventListener("pointerdown", unlockTowerVideo);
         st.kill();
         shower.kill();
         framer.kill();
@@ -608,7 +590,6 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
             opacity: 0,
           }}
           muted
-          autoPlay
           playsInline
           preload="auto"
           aria-hidden
