@@ -112,7 +112,11 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
         onComplete: () => {
           setIsDone(true);
           document.body.style.overflow = "";
-          if (smoothScroll.current) smoothScroll.current.start();
+          window.scrollTo(0, 0);
+          if (smoothScroll.current) {
+            smoothScroll.current.scrollTo(0, { immediate: true });
+            smoothScroll.current.start();
+          }
           window.dispatchEvent(new CustomEvent("preloader:complete"));
           onComplete?.();
         },

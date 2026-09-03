@@ -8,6 +8,13 @@ import { smoothScroll } from "@/lib/smooth-scroll";
 
 export default function SmoothScroll({ children }: { children: React.ReactNode }) {
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      if ("scrollRestoration" in history) {
+        history.scrollRestoration = "manual";
+      }
+      window.scrollTo(0, 0);
+    }
+
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     const lenis = new Lenis({
@@ -17,6 +24,8 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
       touchMultiplier: 1.6,
       wheelMultiplier: 1,
     });
+
+    lenis.scrollTo(0, { immediate: true });
 
     lenis.on("scroll", (inst: Lenis) => {
       scrollState.velocity = inst.velocity;
