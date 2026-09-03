@@ -11,7 +11,17 @@ type Props = {
   children: React.ReactNode;
   className?: string;
   /** Scrub range as a share of the viewport. Larger = slower illumination. */
-  end?: string;
+  end?: gsap.plugins.ScrollTriggerInstanceVars["end"];
+  /**
+   * Where the illumination begins. Defaults to this paragraph entering the
+   * viewport, which is right whenever the paragraph is visible as it arrives.
+   * A block that is revealed later by something else — faded in part-way
+   * through a pinned section, say — has to say so, or it lights up behind its
+   * own hidden state and is already finished by the time anyone sees it.
+   */
+  start?: gsap.plugins.ScrollTriggerInstanceVars["start"];
+  /** Read the scroll position off this element instead of the paragraph. */
+  trigger?: React.RefObject<HTMLElement | null>;
 };
 
 /**
@@ -22,7 +32,9 @@ type Props = {
 export default function ScrollCopy({
   children,
   className = "",
+  start = "top 78%",
   end = "bottom 62%",
+  trigger,
 }: Props) {
   const ref = useRef<HTMLParagraphElement>(null);
 
@@ -49,8 +61,8 @@ export default function ScrollCopy({
               ease: "none",
               stagger: 0.9,
               scrollTrigger: {
-                trigger: el,
-                start: "top 78%",
+                trigger: trigger?.current ?? el,
+                start,
                 end,
                 scrub: 0.6,
               },
@@ -71,7 +83,7 @@ export default function ScrollCopy({
         }
       };
     },
-    { scope: ref, dependencies: [children, end] },
+    { scope: ref, dependencies: [children, start, end] },
   );
 
   return (

@@ -19,9 +19,29 @@ import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
  * lag. Re-cut after any change to the footage — a standard export will do the
  * same thing:
  *
- *   ffmpeg -i HeroVideo.mp4 -an -vf "scale=1600:-2,fps=30" -c:v libx264 -g 1 -crf 26 -preset slow -movflags +faststart HeroVideo.seek.mp4
+ *   ffmpeg -i new.mp4 -an \
+ *     -vf "scale=1600:-2,fps=30,colorlevels=rimin=0.028:gimin=0.028:bimin=0.028" \
+ *     -c:v libx264 -g 1 -crf 25 -preset slow -pix_fmt yuv420p \
+ *     -color_range tv -colorspace bt709 -color_primaries bt709 -color_trc bt709 \
+ *     -movflags +faststart Tower.seek.mp4
+ *
+ * Cut from new.mp4 (1920x1080, 2 keyframes in 300 — unscrubbable as delivered).
+ * 1600x900, 4.0MB, 3.4ms median seek.
+ *
+ * The `colorlevels` pass is not a look, it is a fix, and it must survive any
+ * re-encode. The footage is a night sky, and a night sky is not black: the sky
+ * measured luma 17-21 where limited-range black is 16, so it rendered 1-6 above
+ * zero against a page at #000. The frame is slid sideways to park the tower,
+ * which puts its edge in the middle of the screen — and a hard step from 6 to 0
+ * at that edge is plainly visible as two different blacks. Crushing the floor
+ * so the sky lands on 16 makes the video's background and the page's the same
+ * colour, and there is no edge left to see. It also cut a megabyte, because
+ * true black costs almost nothing to encode.
+ *
+ * The colour tags matter for the same reason: the first cut dropped them and
+ * left the browser guessing how to expand the range.
  */
-const SRC = "/HeroVideo.seek.mp4";
+const SRC = "/Tower.seek.mp4";
 
 /**
  * How fast the scrubbed video time chases the scroll, per 60Hz frame.
@@ -51,62 +71,120 @@ const FRAME_SHIFT = 10; // % of viewport height
  *  viewport height. It rises into frame with the rest of the hero. */
 const INTRO_RISE = 40;
 
+const NARROW = 768;
+
 /**
- * Where the tower's centre sits across the footage, as a % of frame width.
- * Measured off the video by taking the brightness-weighted centroid of each
- * frame: it holds at centre while the crown is on screen, then slides left and
- * settles once the shaft takes over.
+ * This footage holds the tower dead centre. Measured off every frame from t=0
+ * to t=8.2, the brightness-weighted centroid sits at 49.8-49.9% of frame width
+ * and never leaves — a spread of a tenth of a percent.
  *
- * `pan` subtracts this from the crop to hold the tower still, so an error here
- * does not blur the motion — it moves the tower the wrong way. Every value is
- * sampled off the footage — 0.1s apart where it accelerates, since the reading
- * between knots is a straight line and this stretch is the one that curves. Do
- * not interpolate the middle by hand. The tower holds dead centre until about
- * t=1.35 and only then goes, quickly. Guessing a straight ramp from t=1.0
- * instead put the reading 3.6% left of the truth at t=1.7, and that alone threw
+ * That deletes a whole mechanism. The previous footage craned sideways, so the
+ * crop had to be panned frame by frame off a measured table just to hold the
+ * tower still, and every error in that table threw it across the screen. Here
+ * there is nothing to cancel: the tower is where the frame says it is, and the
+ * only reason to move it is that the cards need the space.
  */
-const TOWER_TRACK: ReadonlyArray<readonly [number, number]> = [
-  [0, 49.6], [0.2, 49.6], [0.4, 49.6], [0.6, 49.6], [0.8, 49.6],
-  [1.0, 49.6], [1.2, 48.9], [1.4, 46.8], [1.6, 43.5], [1.8, 39.8],
-  [2.0, 36.6],
-  [2.2, 34.3], [2.4, 30.5], [2.6, 28.1], [2.8, 26.7], [3.0, 26.0], [3.2, 25.9],
-  [10, 26.0],
+
+/** Where the tower should sit, as a fraction of screen width, while the
+ *  editions are reading. Cards are left of it on phones and right of it from
+ *  `md` up, so it moves the other way on each. */
+const TOWER_PARK_NARROW = 0.78;
+const TOWER_PARK_WIDE = 0.28;
+
+/** The placement is a function of video time, not of scroll stage, so it can
+ *  never disagree with the footage underneath it. Out by 8.5 matters: past
+ *  that the concert fills the frame edge to edge, and an offset frame would
+ *  show a black bar where the crowd should be. */
+const PARK_IN = [0.8, 2.0] as const;
+const PARK_OUT = [7.4, 8.5] as const;
+
+/** Where the tower sequence ends and the concert takes the frame. The lower
+ *  band of the image goes from ~2,200 lit pixels to 3,400 at t=8.4 and 10,600
+ *  by t=8.8; 8.2 is the last moment that is still unambiguously the tower. */
+const SHOW_T = 8.2;
+
+/**
+ * Where the last card clears — earlier than SHOW_T, deliberately.
+ *
+ * Fading 2026 against SHOW_T kept it on screen through the drop to the base,
+ * so it was still sitting there while the shot had visibly moved on. Gone by
+ * 7.75 leaves a clean beat of nothing but footage between the last card and
+ * the stage arriving.
+ */
+const CARDS_END = 7.75;
+
+/**
+ * Scroll position to video time across the editions.
+ *
+ * The footage does not move at a constant rate, so mapping scroll to it
+ * linearly does not either. Measured frame-to-frame difference through this
+ * stretch runs 3.5-6 while the labels change, but drops to 0.65-0.9 from
+ * t=6.0 to t=7.2: the camera holds for over a second while GENERATION 26 sits
+ * still. Linearly that hold cost 450px of scrolling against a frozen picture,
+ * which reads as the page having stopped responding to you.
+ *
+ * These knots spend scroll on what is actually happening. The hold still
+ * passes and the 2026 card is still up long enough to read, but it costs a
+ * twentieth of the scroll rather than a seventh. The rate either side of it is
+ * deliberately equal — 7.4 vs 7.5 seconds of footage per unit of scroll — so
+ * the only speed change is through the part where nothing is moving anyway.
+ */
+const EDITION_MAP: ReadonlyArray<readonly [number, number]> = [
+  [0, 0], [0.81, 6.0], [0.86, 7.15], [1, SHOW_T],
 ];
 
-const NARROW = 768;
-const NARROW_TARGET = 0.84;
-
-function towerCentre(t: number) {
-  const p = TOWER_TRACK;
-  if (t <= p[0][0]) return p[0][1];
-  for (let i = 1; i < p.length; i++) {
-    if (t <= p[i][0]) {
-      const [t0, x0] = p[i - 1];
-      const [t1, x1] = p[i];
-      return x0 + ((x1 - x0) * (t - t0)) / (t1 - t0);
+function editionTime(p: number) {
+  const k = EDITION_MAP;
+  if (p <= k[0][0]) return k[0][1];
+  for (let i = 1; i < k.length; i++) {
+    if (p <= k[i][0]) {
+      const [p0, t0] = k[i - 1];
+      const [p1, t1] = k[i];
+      return t0 + ((t1 - t0) * (p - p0)) / (p1 - p0);
     }
   }
-  return p[p.length - 1][1];
+  return k[k.length - 1][1];
 }
 
+/** On a phone the frame is cropped to its middle quarter, which is fine for a
+ *  vertical tower and useless for a wide stage. Through the reveal the box
+ *  eases open; the bars it opens are black on a black page. Wide screens
+ *  already match the footage and are left alone. */
+const SHOW_FIT = [8.2, 9.0] as const;
+
+/**
+ * How much of the screen the stage gets on a phone, as a fraction of viewport
+ * height. 1 is full bleed — the stage fills the viewport like every other
+ * section, and `object-cover` crops the sides to do it.
+ *
+ * The trade runs one way: on a phone the only way to show more of the frame's
+ * width is to give up height. At 1 the central stage fills the screen and the
+ * outer LED screens and the far crowd are cropped away; at 0.37 the whole
+ * width is nearly there but the band is a third of the screen. Full bleed is
+ * the call here — turn this down if the crop ever costs too much.
+ */
+const SHOW_BAND = 1;
+
 const FADE = 0.45;
+
+const smoothstep = (v: number) => v * v * (3 - 2 * v);
 
 const EDITIONS = [
   {
     year: "2023",
-    at: 2.0,
+    at: 1.3,
     venue: "Maharagama Youth Centre",
     crowd: "2,000+",
   },
   {
     year: "2024",
-    at: 4.8,
+    at: 3.0,
     venue: "Viharamahadevi Open Air Theatre",
     crowd: "4,500+",
   },
   {
     year: "2025",
-    at: 7.2,
+    at: 4.3,
     venue: "Lotus Tower Open Arena",
     crowd: "7,500+",
     sponsors: "SLIC General · Y FM",
@@ -129,7 +207,7 @@ const EDITIONS = [
   },
   {
     year: "2026",
-    at: 9.0,
+    at: 5.7,
     venue: "Lotus Tower Open Arena",
     crowd: "10,000+",
     date: "Saturday, 12 December 2026",
@@ -142,8 +220,18 @@ const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 function cardAlpha(t: number, i: number) {
   const start = EDITIONS[i].at;
   const next = EDITIONS[i + 1];
-  const rampIn = clamp01((t - start) / FADE);
-  const rampOut = next ? clamp01((next.at - t) / FADE) : 1;
+  /* Cross-fades straddle the cue rather than meeting at it. Ramping one card
+     out over the window *before* its successor's cue, and the successor in
+     over the window after, left both at zero at the cue itself — a blink of
+     empty frame at every handover. Centred, the outgoing card is at 0.5
+     exactly where the incoming one is and the pair sums to 1 throughout.
+
+     The last card has no successor to cross with, so it clears by CARDS_END,
+     before the drop to the base rather than during it. */
+  const rampIn = clamp01((t - (start - FADE / 2)) / FADE);
+  const rampOut = next
+    ? clamp01((next.at + FADE / 2 - t) / FADE)
+    : clamp01((CARDS_END - t) / FADE);
   return Math.min(rampIn, rampOut);
 }
 
@@ -152,6 +240,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
   const videoRef = useRef<HTMLVideoElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
+  const showRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLElement | null)[]>([]);
 
   useGSAP(
@@ -174,48 +263,70 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
       let framingTarget = 0;
       const intro = { v: 1 };
 
-      let lastPan = -1;
-      const pan = (t: number) => {
-        const w = video.clientWidth;
-        const h = video.clientHeight;
+      /**
+       * How far the frame is offset sideways, as a % of its own width, so the
+       * tower stands clear of the cards.
+       *
+       * This slides the whole element rather than the crop. It can, because
+       * everything around the tower in this footage is night sky and the stage
+       * behind it is black: the strip the element uncovers is the same colour
+       * as the strip it covers, so there is no seam to see. That also makes it
+       * a compositor-only transform, where panning the crop was a repaint of
+       * the video layer every frame.
+       *
+       * Off by PARK_OUT, because from t=8.5 the concert reaches both edges and
+       * an offset frame would show black where the crowd is.
+       */
+      const offset = (t: number) => {
         const stage = video.parentElement;
-        if (!stage || !w || !h || stage.clientWidth >= NARROW) {
-          if (lastPan !== -1) {
-            lastPan = -1;
-            video.style.objectPosition = "";
-          }
-          return;
-        }
-        const vw = video.videoWidth || 1280;
-        const vh = video.videoHeight || 720;
-        const rendered = vw * Math.max(w / vw, h / vh);
-        if (rendered <= w) {
-          if (lastPan !== -1) {
-            lastPan = -1;
-            video.style.objectPosition = "";
-          }
-          return;
-        }
-        // In Hero (t <= 0.8), tower is in the middle (50%). Glides smoothly to right side (84%) across timeline scroll
-        const progress = clamp01((t - 0.8) / 1.8);
-        const smoothProgress = progress * progress * (3 - 2 * progress);
-        const targetScreen = 0.50 + (NARROW_TARGET - 0.50) * smoothProgress;
+        const wide = !stage || stage.clientWidth >= NARROW;
+        const park = wide ? TOWER_PARK_WIDE : TOWER_PARK_NARROW;
+        const inP = smoothstep(clamp01((t - PARK_IN[0]) / (PARK_IN[1] - PARK_IN[0])));
+        const outP = smoothstep(clamp01((t - PARK_OUT[0]) / (PARK_OUT[1] - PARK_OUT[0])));
+        return (park - 0.5) * 100 * (inP - outP);
+      };
 
-        const f = towerCentre(t) / 100;
-        const x = clamp01(((targetScreen * w - f * rendered) / (w - rendered))) * 100;
-        const travel = Math.abs(w - rendered);
-        const minDelta = travel > 0 ? (0.5 / travel) * 100 : 0.05;
-        if (lastPan < 0 || Math.abs(x - lastPan) >= minDelta) {
-          lastPan = x;
-          video.style.objectPosition = `${x.toFixed(3)}% 50%`;
-        }
+      /**
+       * Narrow screens crop this 16:9 frame to their middle quarter. A tower is
+       * vertical and survives that; a stage is not. Through the reveal the box
+       * eases down to the footage's own aspect, at which point `object-cover`
+       * has nothing left to crop and the full width is on screen.
+       *
+       * Height, not transform: `object-fit` resolves against the layout box, so
+       * scaling the element magnifies the crop it already made instead of
+       * widening it. Absolutely positioned, so nothing else reflows.
+       */
+      let lastH = -1;
+      const fit = (t: number) => {
+        const stage = video.parentElement;
+        if (!stage) return;
+        const sw = stage.clientWidth;
+        const sh = stage.clientHeight;
+        if (!sw || !sh) return;
+
+        const full = sw >= NARROW ? 0 : smoothstep(
+          clamp01((t - SHOW_FIT[0]) / (SHOW_FIT[1] - SHOW_FIT[0])),
+        );
+        /* Never tighter than the frame's own aspect — that is the point at
+           which `object-cover` has nothing left to crop — and never taller
+           than the stage itself. Between those, SHOW_BAND decides. So a wide
+           phone opens to the full frame and a tall one trades a little width
+           for a stage worth looking at. */
+        const frameH = (sw * (video.videoHeight || 900)) / (video.videoWidth || 1600);
+        const band = Math.min(Math.max(frameH, sh * SHOW_BAND), sh);
+        const h = sh + (band - sh) * full;
+        if (lastH >= 0 && Math.abs(h - lastH) < 0.5) return;
+        lastH = h;
+        video.style.height = `${h.toFixed(1)}px`;
+        video.style.top = `${((sh - h) / 2).toFixed(1)}px`;
       };
 
       let lastShift = NaN;
       let lastScale = NaN;
       let lastAlpha = NaN;
+      let lastX = NaN;
 
-      const frame = (f: number) => {
+      const frame = (f: number, x: number) => {
         /* Smoothstep, not the raw scroll fraction. Mapped linearly the frame
            starts opening the instant the hero moves and stops dead the moment
            it ends — both boundaries read as a jolt. This eases in and out of
@@ -237,11 +348,16 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         const shift = (FRAME_SHIFT + INTRO_RISE * intro.v) * (1 - e);
         const alpha = clamp01((1 - intro.v) / 0.5);
 
-        if (shift === lastShift && scale === lastScale && alpha === lastAlpha) return;
+        if (
+          shift === lastShift && scale === lastScale &&
+          alpha === lastAlpha && x === lastX
+        ) return;
         lastShift = shift;
         lastScale = scale;
         lastAlpha = alpha;
-        video.style.transform = `translateY(${shift.toFixed(2)}%) scale(${scale.toFixed(4)})`;
+        lastX = x;
+        video.style.transform =
+          `translate(${x.toFixed(2)}%, ${shift.toFixed(2)}%) scale(${scale.toFixed(4)})`;
         video.style.opacity = String(alpha);
       };
 
@@ -256,13 +372,27 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         });
       };
 
+      /* Two sections share one strip of footage, and they must agree at the
+         seam or the frame jumps as the second takes over: the editions run to
+         SHOW_T, the showcase starts there. Both read `duration` at call time
+         rather than closing over it, since neither is guaranteed to have it on
+         the first update. */
+      const dur = () => video.duration || 10;
+      const setEditions = (p: number) => { target = editionTime(p); };
+      const setShowcase = (p: number) => { target = SHOW_T + p * (dur() - SHOW_T); };
+
       const st = ScrollTrigger.create({
         trigger: timeline,
         start: "top top",
         end: "bottom bottom",
-        onUpdate: (self) => {
-          target = self.progress * (video.duration || 10);
-        },
+        onUpdate: (self) => setEditions(self.progress),
+      });
+
+      const shower = ScrollTrigger.create({
+        trigger: showRef.current ?? timeline,
+        start: "top top",
+        end: "bottom bottom",
+        onUpdate: (self) => setShowcase(self.progress),
       });
 
       /* Opens out across the hero's exit, so it is already full bleed by the
@@ -282,12 +412,16 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         /* No lerp: jump straight to the frame the scroll position implies. */
         const snap = () => {
           if (Number.isFinite(video.duration)) video.currentTime = target;
-          frame(framingTarget);
-          pan(target);
+          frame(framingTarget, offset(target));
+          fit(target);
           paint(target);
         };
         st.vars.onUpdate = (self: { progress: number }) => {
-          target = self.progress * (video.duration || 10);
+          setEditions(self.progress);
+          snap();
+        };
+        shower.vars.onUpdate = (self: { progress: number }) => {
+          setShowcase(self.progress);
           snap();
         };
         framer.vars.onUpdate = (self: { progress: number }) => {
@@ -297,6 +431,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         snap();
         return () => {
           st.kill();
+          shower.kill();
           framer.kill();
         };
       }
@@ -351,20 +486,21 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
           video.currentTime = current;
         }
 
-        frame(framingTarget);
-        pan(current);
+        frame(framingTarget, offset(current));
+        fit(current);
         paint(current);
       };
 
       gsap.to(intro, { v: 0, duration: 1.7, delay: 0.3, ease: "gen" });
 
       gsap.ticker.add(tick);
-      frame(0);
-      pan(0);
+      frame(0, offset(0));
+      fit(0);
       paint(0);
 
       return () => {
         st.kill();
+        shower.kill();
         framer.kill();
         video.removeEventListener("seeked", onSeeked);
         gsap.ticker.remove(tick);
@@ -376,9 +512,9 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
   return (
     <div ref={rootRef} className="relative">
       <div className="pointer-events-none sticky top-0 z-[-1] h-[100svh] overflow-hidden bg-black">
-        {/* No `src` here on purpose: the effect picks the phone-sized or the
-            full-sized build from the viewport width. Hard-coding it would
-            either ship 1600x900 to phones or disagree with the server. */}
+        {/* No `src` here on purpose: the effect sets it once the element is
+            mounted, so the poster-less first paint is a black box rather than
+            a half-loaded frame. */}
         <video
           ref={videoRef}
           className="absolute inset-0 h-full w-full object-cover"
@@ -542,6 +678,25 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
           </div>
         </div>
       </section>
+
+      {/* The stage. Same pinned frame, same strip of footage — it just carries
+          on past where the editions stop, so the camera reaching the base and
+          the section changing are one movement rather than two.
+
+          Deliberately empty. This section is scroll runway and nothing else:
+          it exists so the trigger above has a range to map t=SHOW_T..duration
+          onto, and the footage plays over it with no overlay at all.
+
+          Pulled up by one viewport so it takes over exactly as the editions
+          release — a sticky child lets go a viewport before its section ends,
+          and without this there was a full screen of scrolling between the
+          last card leaving and the stage arriving, footage frozen throughout. */}
+      <section
+        id="showcase"
+        ref={showRef}
+        className="relative h-[240svh]"
+        style={{ marginTop: "-100svh" }}
+      />
     </div>
   );
 }

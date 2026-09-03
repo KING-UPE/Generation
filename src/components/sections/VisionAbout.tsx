@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
 import LitTitle from "@/components/ui/LitTitle";
 import ScrollCopy from "@/components/ui/ScrollCopy";
@@ -31,6 +31,51 @@ export default function VisionAbout() {
   const [frontHovered, setFrontHovered] = useState<number | null>(null);
   const [backHovered, setBackHovered] = useState<number | null>(null);
 
+  /**
+   * Which layout we are in, as state rather than a one-off read.
+   *
+   * The deck's flight across the stage is the desktop half of this animation,
+   * and it was gated on a `matchMedia` evaluated once while the effect built
+   * the timeline. Cross 1024px afterwards — rotate a tablet, drag a window
+   * wider, or simply have the effect run before the layout had settled — and
+   * the tween was never added at all. Nothing threw and everything else still
+   * ran, so the deck just sat there while the text swapped around it.
+   *
+   * Held in state and listed as a dependency, so useGSAP tears the timeline
+   * down and rebuilds it for the layout actually on screen. `null` until the
+   * first read, so nothing is built against a guessed breakpoint.
+   */
+  const [isDesktop, setIsDesktop] = useState<boolean | null>(null);
+
+  /**
+   * Scroll positions where the About block is actually on screen.
+   *
+   * Its copy and title used to trigger off their own position like any other
+   * text, which is wrong here: the block sits at the top of a pinned section
+   * from the moment that section arrives, but is held at opacity 0 until the
+   * deck flips more than halfway through. Measured, the word-by-word
+   * illumination ran 4853-5104 while the reveal did not begin until 5761 —
+   * finished 657px before anyone could see a word of it.
+   *
+   * Read off the container at refresh time rather than hard-coded, so the
+   * fractions stay tied to the timeline positions above (the About fade sits
+   * at 0.55-0.90 of a 0.95-long timeline) and survive a change of section
+   * height.
+   */
+  const revealAt = (fraction: number) => () => {
+    const el = containerRef.current;
+    if (!el) return 0;
+    return el.offsetTop + (el.offsetHeight - window.innerHeight) * fraction;
+  };
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const sync = () => setIsDesktop(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+
   useGSAP(
     () => {
       const container = containerRef.current;
@@ -43,8 +88,8 @@ export default function VisionAbout() {
 
       if (!container || !stage || !deck || !tilt || !flipDeck || !visionText || !aboutText) return;
 
+      if (isDesktop === null) return;
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
 
       // Initial state
       gsap.set(aboutText, { opacity: 0, y: 30, pointerEvents: "none" });
@@ -53,12 +98,26 @@ export default function VisionAbout() {
 
       if (reduced) return;
 
-      // Calculate travel distance from right column to left column on desktop
+      /**
+       * How far the deck slides to reach the left column.
+       *
+       * It has to be the deck's own offset inside the grid — the distance from
+       * where it sits to the grid's left edge, which is exactly where the
+       * Vision copy starts. The old reading was the stage's width minus the
+       * deck's, which is a different and much larger number: it carried the
+       * deck past the left edge entirely and a third of the card ended up off
+       * the side of the screen.
+       *
+       * Measured off the live boxes at refresh, with any x already applied
+       * subtracted back out, so re-running at a new width re-measures rather
+       * than compounding.
+       */
       const travelDist = () => {
         if (!isDesktop) return 0;
-        const stageWidth = stage.offsetWidth;
-        const deckWidth = deck.offsetWidth;
-        return -(stageWidth - deckWidth);
+        const grid = deck.parentElement;
+        if (!grid) return 0;
+        const applied = (gsap.getProperty(deck, "x") as number) || 0;
+        return -(deck.getBoundingClientRect().left - applied - grid.getBoundingClientRect().left);
       };
 
       const tl = gsap.timeline({
@@ -175,7 +234,7 @@ export default function VisionAbout() {
 
       return () => cleanups.forEach((fn) => fn());
     },
-    { scope: containerRef },
+    { scope: containerRef, dependencies: [isDesktop] },
   );
 
   return (
@@ -191,13 +250,13 @@ export default function VisionAbout() {
       >
         <div ref={stageRef} className="relative mx-auto w-full max-w-(--maxw) px-(--gutter)">
           {/* Main Grid: stacks vertically on mobile, 2-columns on desktop */}
-          <div className="relative flex flex-col justify-center gap-6 sm:gap-8 lg:min-h-[480px] lg:grid lg:grid-cols-12 lg:items-center lg:gap-10">
+          <div className="relative flex flex-col justify-center gap-8 sm:gap-10 lg:min-h-[480px] lg:grid lg:grid-cols-12 lg:items-center lg:gap-10">
             {/* ── MOBILE TEXT STACK CONTAINER / DESKTOP VISION COLUMN ── */}
-            <div className="relative w-full min-h-[170px] sm:min-h-[190px] lg:contents">
+            <div className="relative w-full min-h-[180px] sm:min-h-[200px] lg:contents">
               {/* ── Vision Text ── */}
               <div
                 ref={visionTextRef}
-                className="relative z-10 flex w-full flex-col gap-3 sm:gap-4 md:gap-6 lg:max-w-[500px] xl:max-w-[560px] lg:col-span-5 lg:col-start-1"
+                className="relative z-10 flex w-full flex-col gap-3 sm:gap-4 md:gap-6 lg:max-w-[500px] xl:max-w-[560px] lg:col-span-5 lg:col-start-1 lg:row-start-1"
               >
                 <div>
                   <LitTitle className={TITLE_SIZE} radius={340} weight={1.9}>
@@ -213,15 +272,26 @@ export default function VisionAbout() {
               {/* ── About Text (Fades in on same top spot on mobile, right column on desktop) ── */}
               <div
                 ref={aboutTextRef}
-                className="pointer-events-none absolute inset-0 z-10 flex w-full flex-col gap-3 sm:gap-4 md:gap-6 lg:static lg:max-w-[500px] xl:max-w-[560px] lg:col-span-5 lg:col-start-8"
+                className="pointer-events-none absolute inset-0 z-10 flex w-full flex-col gap-3 sm:gap-4 md:gap-6 lg:static lg:max-w-[500px] xl:max-w-[560px] lg:col-span-5 lg:col-start-8 lg:row-start-1"
               >
                 <div>
-                  <LitTitle className={TITLE_SIZE} radius={340} weight={1.9}>
+                  <LitTitle
+                    trigger={containerRef}
+                    start={revealAt(0.5 / 0.95)}
+                    className={TITLE_SIZE}
+                    radius={340}
+                    weight={1.9}
+                  >
                     About
                   </LitTitle>
                 </div>
 
-                <ScrollCopy className="text-[clamp(0.875rem,1.05vw,1.15rem)] font-medium leading-[1.65] text-bone lg:leading-[1.85]">
+                <ScrollCopy
+                  trigger={containerRef}
+                  start={revealAt(0.55 / 0.95)}
+                  end={revealAt(0.95)}
+                  className="text-[clamp(0.875rem,1.05vw,1.15rem)] font-medium leading-[1.65] text-bone lg:leading-[1.85]"
+                >
                   Generation is produced by ECheM. Live performance, design and sound engineering held to a single production standard, for an audience that still turns up in person.
                 </ScrollCopy>
               </div>
@@ -230,7 +300,7 @@ export default function VisionAbout() {
             {/* ── CARD STACK DECK: Flips in 3D across scroll ── */}
             <div
               ref={deckRef}
-              className="relative z-20 mx-auto aspect-[4/3] w-full max-w-[270px] sm:max-w-[320px] lg:mx-0 lg:max-w-[420px] xl:max-w-[460px] lg:col-span-7 lg:col-start-6"
+              className="relative z-20 mx-auto aspect-[4/3] w-full max-w-[270px] sm:max-w-[320px] mt-4 sm:mt-6 lg:mt-0 lg:ml-auto lg:mr-0 lg:max-w-[420px] xl:max-w-[460px] lg:col-span-7 lg:col-start-6 lg:row-start-1"
               style={{ perspective: 1800 }}
             >
               {/* Mouse Parallax Tilt Container */}

@@ -12,7 +12,9 @@ type Props = {
   radius?: number;
   /** Stroke weight, in px. */
   weight?: number;
-  start?: string;
+  start?: gsap.plugins.ScrollTriggerInstanceVars["start"];
+  /** Read the scroll position off this element instead of the title itself. */
+  trigger?: React.RefObject<HTMLElement | null>;
 };
 
 /**
@@ -27,6 +29,7 @@ export default function LitTitle({
   radius = 260,
   weight = 1.6,
   start = "top 84%",
+  trigger,
 }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const glowRef = useRef<HTMLSpanElement>(null);
@@ -54,7 +57,7 @@ export default function LitTitle({
       }
 
       const tl = gsap.timeline({
-        scrollTrigger: { trigger: wrap, start, once: true },
+        scrollTrigger: { trigger: trigger?.current ?? wrap, start, once: true },
         onComplete: () => setTorchActive(true),
       });
 
@@ -69,7 +72,7 @@ export default function LitTitle({
         0.25,
       );
     },
-    { scope: wrapRef, dependencies: [children] },
+    { scope: wrapRef, dependencies: [children, start] },
   );
 
   return (
