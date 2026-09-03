@@ -240,6 +240,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
   const videoRef = useRef<HTMLVideoElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const showRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLElement | null)[]>([]);
 
@@ -406,6 +407,30 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         },
       });
 
+      /**
+       * The frame fades as it leaves, rather than simply scrolling away.
+       *
+       * Its sticky box is a viewport tall and sits at the end of this section,
+       * so it spends a full screen of scrolling travelling upward — and Vision
+       * is scrolling in underneath it for that whole stretch. Measured at
+       * 1280x800 the two were both on screen from 4720 to 5520: nearly 700px
+       * with the tower still behind the Vision title. The scrub is finished by
+       * then, so there is nothing left to see in it.
+       *
+       * Runs from where the showcase releases to where the section ends, which
+       * is exactly the span it is drifting through.
+       */
+      const exit = gsap.to(stageRef.current ?? video, {
+        opacity: 0,
+        ease: "none",
+        scrollTrigger: {
+          trigger: rootRef.current ?? timeline,
+          start: "bottom bottom",
+          end: "bottom top",
+          scrub: true,
+        },
+      });
+
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       if (reduced) {
         intro.v = 0;
@@ -433,6 +458,8 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
           st.kill();
           shower.kill();
           framer.kill();
+          exit.scrollTrigger?.kill();
+          exit.kill();
         };
       }
 
@@ -502,6 +529,8 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         st.kill();
         shower.kill();
         framer.kill();
+        exit.scrollTrigger?.kill();
+        exit.kill();
         video.removeEventListener("seeked", onSeeked);
         gsap.ticker.remove(tick);
       };
@@ -511,7 +540,10 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
 
   return (
     <div ref={rootRef} className="relative">
-      <div className="pointer-events-none sticky top-0 z-[-1] h-[100svh] overflow-hidden bg-black">
+      <div
+        ref={stageRef}
+        className="pointer-events-none sticky top-0 z-[-1] h-[100svh] overflow-hidden bg-black"
+      >
         {/* No `src` here on purpose: the effect sets it once the element is
             mounted, so the poster-less first paint is a black box rather than
             a half-loaded frame. */}

@@ -298,13 +298,13 @@ export default function GalleryFlow() {
           ))}
         </div>
 
-        <div
+        <header
           ref={chromeRef}
-          className="pointer-events-none absolute inset-x-0 top-0 z-[200] mx-auto flex w-full max-w-(--maxw) items-center justify-between px-(--gutter) pt-10"
+          className="pointer-events-none absolute inset-x-0 top-0 z-[200] mx-auto flex w-full max-w-(--maxw) items-center justify-between px-(--gutter) pt-8 md:pt-10"
         >
-          <span className="badge-pill border-hairline-bold text-bone">08 — GALLERY ARCHIVE</span>
-          <span className="badge-pill border-red-hot/30 bg-red-hot/10 text-red-hot">✦ SCROLL FLY-THROUGH</span>
-        </div>
+          <span className="badge-pill whitespace-nowrap">Archive · Gallery</span>
+          <span className="badge-pill whitespace-nowrap">Past Editions</span>
+        </header>
 
         {/* the field hands over to black */}
         <div

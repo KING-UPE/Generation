@@ -76,11 +76,11 @@ export default function LitTitle({
   );
 
   return (
-    <div ref={wrapRef} className="relative inline-block m-0 p-0">
+    <div ref={wrapRef} className="relative inline-block">
       {React.createElement(
         Tag,
         {
-          className: "font-display lit-base block select-none m-0 p-0 " + className,
+          className: "font-display lit-base select-none " + className,
           style: { ["--lit-w" as string]: weight + "px" },
         },
         children
@@ -90,7 +90,7 @@ export default function LitTitle({
       <span
         ref={glowRef}
         aria-hidden
-        className={"font-display lit-glow pointer-events-none absolute inset-0 block select-none m-0 p-0 " + className}
+        className={"font-display lit-glow pointer-events-none absolute inset-0 select-none " + className}
         style={{ ["--lit-w" as string]: weight + "px", ["--lit-r" as string]: radius + "px" }}
       >
         {children}
