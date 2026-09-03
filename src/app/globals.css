@@ -437,8 +437,17 @@ html.lenis, html.lenis body { height: auto; }
 ------------------------------------------------------------------ */
 .lit-base,
 .lit-glow {
+  display: block;
+  margin: 0;
+  padding: 0;
   color: transparent;
   -webkit-text-fill-color: transparent;
+  line-height: inherit;
+  letter-spacing: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  box-sizing: border-box;
 }
 
 .lit-base {
@@ -446,7 +455,7 @@ html.lenis, html.lenis body { height: auto; }
 }
 
 .lit-glow {
-  -webkit-text-stroke: var(--lit-w, 1.6px) var(--red-hot);
+  -webkit-text-stroke: var(--lit-w, 1.4px) var(--red-hot);
   -webkit-mask-image: radial-gradient(
     circle var(--lit-r, 260px) at var(--mx, 50%) var(--my, 50%),
     #000 0%, #000 30%, transparent 74%
