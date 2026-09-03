@@ -4,6 +4,7 @@ import VisionAbout from "@/components/sections/VisionAbout";
 import Film from "@/components/sections/Film";
 import GalleryFlow from "@/components/sections/GalleryFlow";
 import ScrollRail from "@/components/ui/ScrollRail";
+import Preloader from "@/components/ui/Preloader";
 
 /** Sections 01–02 live upstream; this page starts at 03 by design. */
 const MARKERS = [
@@ -18,6 +19,7 @@ const MARKERS = [
 export default function Home() {
   return (
     <>
+      <Preloader />
       <ScrollRail markers={MARKERS} />
       <TowerTimeline>
         <Hero />
