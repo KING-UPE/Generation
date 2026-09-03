@@ -266,13 +266,25 @@ export default function Film() {
       // Bidirectional Scrubbed Timeline:
       // In small tablet screen (progress <= 0.05): stays on first frame (currentTime 0)
       // On expansion: plays and accelerates with scroll
-      // Locks downward scroll on first full expansion until video ends
+      // Always locks downward scroll whenever meeting the video until it totally ends
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: section,
           start: "top top",
           end: "bottom bottom",
           scrub: 0.8,
+          onEnter: () => {
+            if (video.currentTime < (video.duration || 1) - 0.5) {
+              finished = false;
+            }
+          },
+          onLeaveBack: () => {
+            video.pause();
+            video.currentTime = 0;
+            finished = false;
+            showEndCard(false);
+            unlock();
+          },
           onUpdate: (self) => {
             if (self.progress <= 0.05) {
               // In small tablet preview: pause and stay on first frame
@@ -280,11 +292,13 @@ export default function Film() {
               video.currentTime = 0;
               finished = false;
               showEndCard(false);
+              unlock();
             } else if (self.progress > 0.08 && !finished && video.paused) {
               void video.play().catch(() => {});
             }
 
-            if (self.progress >= 0.72 && !finished && !locked) {
+            // Always lock when going down into the full video until it totally ends
+            if (self.progress >= 0.70 && !finished && !locked) {
               lock();
             }
           },
