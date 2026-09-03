@@ -537,47 +537,20 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         const maxT = safeMax();
         const targetClamped = Math.max(0, Math.min(maxT, target));
 
-        // When in the musical show section at the bottom of the tower:
-        // Play the concert footage through to the end and hold on the final frame (no repeated looping)
-        const isShowSection = targetClamped >= SHOW_T - 0.15;
+        // Always smoothly interpolate current towards targetClamped with zero pause on rewind
+        current += (targetClamped - current) * (1 - Math.pow(1 - SEEK_LERP, dt * 60));
+        if (Math.abs(targetClamped - current) < 1 / 120) current = targetClamped;
 
-        if (isShowSection) {
-          if (video.currentTime >= maxT) {
-            if (!video.paused) video.pause();
-            current = maxT;
-          } else {
-            if (video.paused) {
-              video.play().catch(() => {});
-            }
-            current = Math.min(maxT, video.currentTime);
-          }
-        } else {
-          // In the tower timeline: pause and scrub smoothly
-          if (!video.paused) {
-            video.pause();
-          }
+        const stalled = seekBusy && now - seekIssuedAt > 180;
 
-          current += (targetClamped - current) * (1 - Math.pow(1 - SEEK_LERP, dt * 60));
-
-          /* Exponential decay closes on the target without ever reaching it, so
-             the tower keeps inching for as long as you look at it. Inside half a
-             frame of footage there is nothing left to render: land on it. */
-          if (Math.abs(targetClamped - current) < 1 / 120) current = targetClamped;
-
-          /* If `seeked` never arrives — coalesced, dropped, or the element is in
-             a state that will not fire it — the guard must not latch forever, or
-             the video freezes for good. After 180ms assume it is not coming. */
-          const stalled = seekBusy && now - seekIssuedAt > 180;
-
-          if (
-            (!seekBusy || stalled) &&
-            Number.isFinite(video.duration) &&
-            Math.abs(current - video.currentTime) > 1 / 60
-          ) {
-            seekBusy = true;
-            seekIssuedAt = now;
-            video.currentTime = Math.max(0, Math.min(maxT, current));
-          }
+        if (
+          (!seekBusy || stalled) &&
+          Number.isFinite(video.duration) &&
+          Math.abs(current - video.currentTime) > 1 / 60
+        ) {
+          seekBusy = true;
+          seekIssuedAt = now;
+          video.currentTime = Math.max(0, Math.min(maxT, current));
         }
 
         frame(framingTarget, offset(current));
@@ -807,7 +780,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
       <section
         id="showcase"
         ref={showRef}
-        className="relative h-[240svh]"
+        className="relative h-[140svh]"
         style={{ marginTop: "-100svh" }}
       />
     </div>

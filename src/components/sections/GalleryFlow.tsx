@@ -24,7 +24,7 @@ const SLOTS = [
 const RATIOS = ["4 / 3", "3 / 4", "1 / 1", "3 / 4", "4 / 3"];
 
 /** How many full passes of the field the fly-through covers. */
-const CYCLES = 1.4;
+const CYCLES = 1.05;
 /**
  * Scale at the far end of the tunnel, and at the near end as it passes you.
  *
@@ -54,12 +54,9 @@ const NARROW = 768;
  * z keeps advancing by one more turn so every print finishes the pass it is
  * mid-way through and then does not respawn. Only once the field is genuinely
  * empty does the close begin.
- *
- * Fading the whole field out at FLOW_END was wrong — prints vanished mid-flight
- * instead of completing, so the last image never actually landed.
  */
-const FLOW_END = 0.55;
-const DRAIN_END = 0.78;
+const FLOW_END = 0.65;
+const DRAIN_END = 0.85;
 
 /**
  * The field is laid out by construction rather than randomly.
@@ -227,8 +224,8 @@ export default function GalleryFlow() {
       }
 
       const tick = () => {
-        z += (targetZ - z) * 0.09;
-        p += (targetP - p) * 0.09;
+        z += (targetZ - z) * 0.07;
+        p += (targetP - p) * 0.07;
         mouse.x += (mouse.tx - mouse.x) * 0.06;
         mouse.y += (mouse.ty - mouse.y) * 0.06;
         render();
@@ -264,7 +261,7 @@ export default function GalleryFlow() {
     <section
       id="flow"
       ref={sectionRef as React.RefObject<HTMLElement>}
-      className="relative h-[280vh]"
+      className="relative h-[400vh]"
     >
       <div className="sticky top-0 h-[100svh] w-full overflow-hidden">
         {/* `--gs` scales every print together: at 13-21vw a print is barely
