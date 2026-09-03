@@ -93,12 +93,17 @@ export default function Film() {
 
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+      video.defaultMuted = true;
       video.muted = true;
+      video.playsInline = true;
+      video.setAttribute("playsinline", "true");
+      video.setAttribute("webkit-playsinline", "true");
       video.playbackRate = RATE_SILENT;
 
       let finished = false;
       let locked = false;
       let scrollBoost = 0;
+      let lockSafetyTimer: ReturnType<typeof setTimeout> | undefined;
 
       const baseRate = () => (video.muted ? RATE_SILENT : RATE_SOUND);
       let currentRate = RATE_SILENT;
@@ -116,6 +121,7 @@ export default function Film() {
       };
 
       const unlock = () => {
+        if (lockSafetyTimer) clearTimeout(lockSafetyTimer);
         if (!locked) return;
         locked = false;
         smoothScroll.current?.start();
@@ -127,6 +133,14 @@ export default function Film() {
         if (!lenis) return;
         locked = true;
         lenis.stop();
+
+        // Safety fallback: if video is blocked by mobile autoplay restrictions, unlock after 3.5s
+        if (lockSafetyTimer) clearTimeout(lockSafetyTimer);
+        lockSafetyTimer = setTimeout(() => {
+          if (locked && (video.paused || video.readyState < 2)) {
+            unlock();
+          }
+        }, 3500);
       };
 
       const onTime = () => {
@@ -146,7 +160,18 @@ export default function Film() {
       video.addEventListener("loadedmetadata", onTime);
       video.addEventListener("ended", onEnded);
 
-      /* While locked in first-time view:
+      // Touch / pointer interaction unlock for mobile browsers
+      const tryUserPlay = () => {
+        const rect = section.getBoundingClientRect();
+        const inSection = rect.bottom > 0 && rect.top < window.innerHeight;
+        if (inSection && !finished && video.paused) {
+          video.play().catch(() => {});
+        }
+      };
+      window.addEventListener("touchstart", tryUserPlay, { passive: true });
+      window.addEventListener("pointerdown", tryUserPlay, { passive: true });
+
+      /* While locked in view:
          - Scrolling DOWN boosts video playback speed
          - Scrolling UP or hitting Escape unlocks upward navigation
          - Clicking Skip instantly unlocks */
@@ -163,6 +188,7 @@ export default function Film() {
       let touchY = 0;
       const onTouchStart = (e: TouchEvent) => {
         touchY = e.touches[0]?.clientY ?? 0;
+        tryUserPlay();
       };
       const onTouchMove = (e: TouchEvent) => {
         if (locked) {
@@ -214,7 +240,7 @@ export default function Film() {
         const inView = rect.bottom > -100 && rect.top < window.innerHeight + 100;
 
         if (inView && !finished) {
-          if (video.paused && tl.scrollTrigger && tl.scrollTrigger.progress > 0.08) {
+          if (video.paused && tl.scrollTrigger && tl.scrollTrigger.progress > 0.05) {
             void video.play().catch(() => {});
           }
 
@@ -223,10 +249,12 @@ export default function Film() {
 
           // Combine real scroll velocity with active wheel boost
           const vel = Math.abs(scrollState.velocity) + scrollBoost;
-          const targetSpeed = baseRate() + Math.min(3.5, vel * 1.5);
+          const targetSpeed = baseRate() + Math.min(3.0, vel * 1.5);
 
           currentRate += (targetSpeed - currentRate) * 0.14;
-          video.playbackRate = Math.max(0.6, Math.min(4.5, currentRate));
+          if (!video.paused && video.readyState >= 2) {
+            video.playbackRate = Math.max(0.6, Math.min(4.0, currentRate));
+          }
         } else if (!inView) {
           if (!video.paused) {
             video.pause();
@@ -238,9 +266,12 @@ export default function Film() {
 
       const teardown = () => {
         unlock();
+        if (lockSafetyTimer) clearTimeout(lockSafetyTimer);
         gsap.ticker.remove(tick);
         window.removeEventListener("wheel", onWheel);
         window.removeEventListener("touchstart", onTouchStart);
+        window.removeEventListener("touchstart", tryUserPlay);
+        window.removeEventListener("pointerdown", tryUserPlay);
         window.removeEventListener("touchmove", onTouchMove);
         window.removeEventListener("keydown", onKey);
         video.removeEventListener("timeupdate", onTime);
@@ -362,8 +393,9 @@ export default function Film() {
             className="absolute inset-0 h-full w-full object-cover will-change-transform"
             src={SRC}
             muted
+            autoPlay
             playsInline
-            preload="metadata"
+            preload="auto"
           />
           <div className="pointer-events-none absolute inset-0 bg-black/25" />
         </div>

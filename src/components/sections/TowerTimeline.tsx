@@ -390,12 +390,27 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
 
       /* Two sections share one strip of footage, and they must agree at the
          seam or the frame jumps as the second takes over: the editions run to
-         SHOW_T, the showcase starts there. Both read `duration` at call time
-         rather than closing over it, since neither is guaranteed to have it on
-         the first update. */
+         SHOW_T, the showcase starts there.
+         We clamp target strictly below duration to prevent EOF 'ended' events
+         which cause mobile browsers to snap the video back to frame 0 (the top). */
       const dur = () => video.duration || 10;
-      const setEditions = (p: number) => { target = editionTime(p); };
-      const setShowcase = (p: number) => { target = SHOW_T + p * (dur() - SHOW_T); };
+      const safeMax = () => Math.min(dur() - 0.15, 9.85);
+
+      let inShowcaseMode = false;
+
+      const setEditions = (p: number) => {
+        if (inShowcaseMode) return;
+        target = Math.max(0, Math.min(SHOW_T, editionTime(p)));
+      };
+
+      const setShowcase = (p: number) => {
+        if (p > 0.01) {
+          inShowcaseMode = true;
+          target = SHOW_T + p * (safeMax() - SHOW_T);
+        } else {
+          inShowcaseMode = false;
+        }
+      };
 
       const st = ScrollTrigger.create({
         trigger: timeline,
@@ -409,6 +424,10 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         start: "top top",
         end: "bottom bottom",
         onUpdate: (self) => setShowcase(self.progress),
+        onLeaveBack: () => {
+          inShowcaseMode = false;
+          target = SHOW_T;
+        },
       });
 
       /* Opens out across the hero's exit, so it is already full bleed by the
@@ -493,6 +512,15 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
       const onSeeked = () => { seekBusy = false; };
       video.addEventListener("seeked", onSeeked);
 
+      // Mobile touch-gesture video unlock
+      const unlockTowerVideo = () => {
+        if (video.paused && target >= SHOW_T - 0.2) {
+          video.play().catch(() => {});
+        }
+      };
+      window.addEventListener("touchstart", unlockTowerVideo, { passive: true });
+      window.addEventListener("pointerdown", unlockTowerVideo, { passive: true });
+
       let lastTick = performance.now();
 
       const tick = () => {
@@ -506,26 +534,50 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         const dt = Math.min((now - lastTick) / 1000, 0.05);
         lastTick = now;
 
-        current += (target - current) * (1 - Math.pow(1 - SEEK_LERP, dt * 60));
+        const maxT = safeMax();
+        const targetClamped = Math.max(0, Math.min(maxT, target));
 
-        /* Exponential decay closes on the target without ever reaching it, so
-           the tower keeps inching for as long as you look at it. Inside half a
-           frame of footage there is nothing left to render: land on it. */
-        if (Math.abs(target - current) < 1 / 120) current = target;
+        // When in the musical show section at the bottom of the tower:
+        // Play the concert footage actively so it is alive and never stuck!
+        const isShowSection = targetClamped >= SHOW_T - 0.15;
 
-        /* If `seeked` never arrives — coalesced, dropped, or the element is in
-           a state that will not fire it — the guard must not latch forever, or
-           the video freezes for good. After 180ms assume it is not coming. */
-        const stalled = seekBusy && now - seekIssuedAt > 180;
+        if (isShowSection) {
+          if (video.paused) {
+            video.play().catch(() => {});
+          }
 
-        if (
-          (!seekBusy || stalled) &&
-          Number.isFinite(video.duration) &&
-          Math.abs(current - video.currentTime) > 1 / 60
-        ) {
-          seekBusy = true;
-          seekIssuedAt = now;
-          video.currentTime = current;
+          // Loop concert footage between SHOW_T and maxT
+          if (video.currentTime >= maxT || video.currentTime < SHOW_T - 0.4) {
+            video.currentTime = SHOW_T;
+          }
+          current = video.currentTime;
+        } else {
+          // In the tower timeline: pause and scrub smoothly
+          if (!video.paused) {
+            video.pause();
+          }
+
+          current += (targetClamped - current) * (1 - Math.pow(1 - SEEK_LERP, dt * 60));
+
+          /* Exponential decay closes on the target without ever reaching it, so
+             the tower keeps inching for as long as you look at it. Inside half a
+             frame of footage there is nothing left to render: land on it. */
+          if (Math.abs(targetClamped - current) < 1 / 120) current = targetClamped;
+
+          /* If `seeked` never arrives — coalesced, dropped, or the element is in
+             a state that will not fire it — the guard must not latch forever, or
+             the video freezes for good. After 180ms assume it is not coming. */
+          const stalled = seekBusy && now - seekIssuedAt > 180;
+
+          if (
+            (!seekBusy || stalled) &&
+            Number.isFinite(video.duration) &&
+            Math.abs(current - video.currentTime) > 1 / 60
+          ) {
+            seekBusy = true;
+            seekIssuedAt = now;
+            video.currentTime = Math.max(0, Math.min(maxT, current));
+          }
         }
 
         frame(framingTarget, offset(current));
@@ -554,6 +606,8 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
       return () => {
         window.removeEventListener("preloader:opening", startIntro);
         window.removeEventListener("preloader:complete", startIntro);
+        window.removeEventListener("touchstart", unlockTowerVideo);
+        window.removeEventListener("pointerdown", unlockTowerVideo);
         st.kill();
         shower.kill();
         framer.kill();
@@ -581,6 +635,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
             opacity: 0,
           }}
           muted
+          autoPlay
           playsInline
           preload="auto"
           aria-hidden
