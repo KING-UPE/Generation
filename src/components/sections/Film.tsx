@@ -5,6 +5,7 @@ import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
 import LitTitle from "@/components/ui/LitTitle";
 import RevealText from "@/components/ui/RevealText";
 import { smoothScroll } from "@/lib/smooth-scroll";
+import { scrollState } from "@/lib/scroll-state";
 
 const SRC = "/Video.mp4";
 
@@ -95,59 +96,8 @@ export default function Film() {
       video.muted = true;
       video.playbackRate = RATE_SILENT;
 
-      /* Once it has run to the end it stays ended: scrolling back into the
-         open frame must not silently restart it. Only rewinding to the closed
-         tablet clears this. */
-      let finished = false;
-
-      /**
-       * The page is held still while the film runs and released when it ends —
-       * which is what the "Scroll to continue" card is announcing.
-       *
-       * Three things can always let a reader out: scrolling up, Escape, and the
-       * Skip control. A watchdog releases the lock if playback never actually
-       * starts, so a stalled download can never strand anyone.
-       */
-      let locked = false;
-      let watchdog = 0;
-
-      const unlock = () => {
-        window.clearTimeout(watchdog);
-        if (!locked) return;
-        locked = false;
-        smoothScroll.current?.start();
-      };
-
-      const lock = () => {
-        /* No Lenis means reduced-motion: never freeze the page for that reader. */
-        const lenis = smoothScroll.current;
-        if (!lenis || locked) return;
-        locked = true;
-        lenis.stop();
-
-        const startedAt = video.currentTime;
-        window.clearTimeout(watchdog);
-        watchdog = window.setTimeout(() => {
-          if (video.paused || video.currentTime === startedAt) unlock();
-        }, 4000);
-      };
-
-      const showEndCard = (on: boolean) =>
-        gsap.to(endRef.current, {
-          opacity: on ? 1 : 0,
-          y: on ? 0 : 12,
-          duration: on ? 0.7 : 0.25,
-          ease: "gen",
-          overwrite: "auto",
-        });
-
-      const onEnded = () => {
-        finished = true;
-        video.pause();
-        unlock();
-        showEndCard(true);
-      };
-      const onPlaying = () => showEndCard(false);
+      const baseRate = () => (video.muted ? RATE_SILENT : RATE_SOUND);
+      let currentRate = RATE_SILENT;
 
       const onTime = () => {
         const d = video.duration || 1;
@@ -155,37 +105,20 @@ export default function Film() {
         if (timeRef.current) timeRef.current.textContent = fmt(video.currentTime) + " / " + fmt(d);
       };
 
-      /* Scrolling up, Escape, or clicking Skip releases the lock so user is never trapped upward */
-      const onWheel = (e: WheelEvent) => {
-        if (locked && e.deltaY < 0) unlock();
-      };
-      let touchY = 0;
-      const onTouchStart = (e: TouchEvent) => {
-        touchY = e.touches[0]?.clientY ?? 0;
-      };
-      const onTouchMove = (e: TouchEvent) => {
-        if (locked && (e.touches[0]?.clientY ?? 0) - touchY > 14) unlock();
-      };
-      const onKey = (e: KeyboardEvent) => {
-        if (!locked) return;
-        if (["Escape", "ArrowUp", "PageUp", "Home"].includes(e.key)) unlock();
+      const onEnded = () => {
+        // Continuous looping playback so video is always alive
+        video.currentTime = 0;
+        void video.play().catch(() => {});
       };
 
-      window.addEventListener("wheel", onWheel, { passive: true });
-      window.addEventListener("touchstart", onTouchStart, { passive: true });
-      window.addEventListener("touchmove", onTouchMove, { passive: true });
-      window.addEventListener("keydown", onKey);
-
-      video.addEventListener("error", unlock);
-      video.addEventListener("stalled", unlock);
-      video.addEventListener("ended", onEnded);
-      video.addEventListener("playing", onPlaying);
       video.addEventListener("timeupdate", onTime);
       video.addEventListener("loadedmetadata", onTime);
+      video.addEventListener("ended", onEnded);
 
       const onSound = () => {
         video.muted = !video.muted;
-        video.playbackRate = video.muted ? RATE_SILENT : RATE_SOUND;
+        currentRate = baseRate();
+        video.playbackRate = currentRate;
         if (soundRef.current) {
           soundRef.current.textContent = video.muted ? "Sound off" : "Sound on";
           soundRef.current.setAttribute("aria-pressed", String(!video.muted));
@@ -195,46 +128,46 @@ export default function Film() {
 
       const onSkip = () => {
         if (Number.isFinite(video.duration) && video.duration > 0) {
-          video.currentTime = video.duration;
+          video.currentTime = Math.min(video.currentTime + 10, video.duration - 0.5);
         }
-        onEnded();
       };
       skipRef.current?.addEventListener("click", onSkip);
 
-      /* Leaving the section entirely always parks it. */
-      const visibility = ScrollTrigger.create({
-        trigger: section,
-        start: "top bottom",
-        end: "bottom top",
-        onLeave: () => {
-          unlock();
-          video.pause();
-        },
-        onLeaveBack: () => {
-          unlock();
-          video.pause();
-          showEndCard(false);
-        },
-      });
+      /* Dynamic Video Playback Controller:
+         - When scrolling: accelerates video playback speed proportional to scroll velocity
+         - When scroll stops: smoothly eases back to normal average speed and keeps playing! */
+      const tick = () => {
+        const rect = section.getBoundingClientRect();
+        const inView = rect.bottom > -100 && rect.top < window.innerHeight + 100;
+
+        if (inView) {
+          if (video.paused) {
+            void video.play().catch(() => {});
+          }
+
+          // Active scroll velocity accelerates video, stops return to baseRate
+          const vel = Math.abs(scrollState.velocity);
+          const targetSpeed = baseRate() + Math.min(3.2, vel * 1.5);
+
+          currentRate += (targetSpeed - currentRate) * 0.12;
+          video.playbackRate = Math.max(0.6, Math.min(4.0, currentRate));
+        } else {
+          if (!video.paused) {
+            video.pause();
+          }
+        }
+      };
+
+      gsap.ticker.add(tick);
 
       const teardown = () => {
-        unlock();
-        visibility.kill();
-        window.removeEventListener("wheel", onWheel);
-        window.removeEventListener("touchstart", onTouchStart);
-        window.removeEventListener("touchmove", onTouchMove);
-        window.removeEventListener("keydown", onKey);
-        video.removeEventListener("error", unlock);
-        video.removeEventListener("stalled", unlock);
-        video.removeEventListener("ended", onEnded);
-        video.removeEventListener("playing", onPlaying);
+        gsap.ticker.remove(tick);
         video.removeEventListener("timeupdate", onTime);
         video.removeEventListener("loadedmetadata", onTime);
+        video.removeEventListener("ended", onEnded);
         soundRef.current?.removeEventListener("click", onSound);
         skipRef.current?.removeEventListener("click", onSkip);
       };
-
-      gsap.set(endRef.current, { opacity: 0, y: 12 });
 
       if (reduced) {
         gsap.set(stage, { "--fp": 0 });
@@ -247,27 +180,13 @@ export default function Film() {
       gsap.set(video, { scale: 1.12 });
       gsap.set(uiRef.current, { opacity: 0 });
 
-      // Bidirectional Scrubbed Timeline:
-      // Scrolling down: seamlessly expands tablet to fullscreen across 0 -> 0.85
-      // Scrolling up: immediately starts shrinking back down into small tablet frame!
+      // Bidirectional Scrubbed Timeline for tablet expansion:
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: section,
           start: "top top",
           end: "bottom bottom",
           scrub: 0.8,
-          onUpdate: (self) => {
-            if (self.progress > 0.08 && video.paused && !finished) {
-              void video.play().catch(() => {});
-            } else if (self.progress <= 0.03 && !video.paused) {
-              video.pause();
-            }
-
-            // Lock scroll on first full expansion until video finishes playing
-            if (self.progress >= 0.72 && !finished && !locked) {
-              lock();
-            }
-          },
         },
       });
 
