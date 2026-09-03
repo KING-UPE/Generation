@@ -137,11 +137,9 @@ export default function Film() {
 
       const onEnded = () => {
         finished = true;
+        video.pause();
         unlock();
         showEndCard(true);
-        // Seamlessly loop or hold video
-        video.currentTime = 0;
-        void video.play().catch(() => {});
       };
 
       video.addEventListener("timeupdate", onTime);
@@ -199,20 +197,24 @@ export default function Film() {
       soundRef.current?.addEventListener("click", onSound);
 
       const onSkip = () => {
+        if (Number.isFinite(video.duration) && video.duration > 0) {
+          video.currentTime = video.duration;
+        }
         onEnded();
       };
       skipRef.current?.addEventListener("click", onSkip);
 
       /* Dynamic Video Playback Controller:
-         - Plays automatically while in view
+         - Plays automatically while in view and not finished
          - When scrolling: accelerates proportional to scroll velocity / wheel boost
-         - When scroll stops: smoothly returns to normal average speed and keeps playing! */
+         - When scroll stops: smoothly returns to normal average speed and keeps playing!
+         - When finished: stays held on the end frame! */
       const tick = () => {
         const rect = section.getBoundingClientRect();
         const inView = rect.bottom > -100 && rect.top < window.innerHeight + 100;
 
-        if (inView) {
-          if (video.paused) {
+        if (inView && !finished) {
+          if (video.paused && tl.scrollTrigger && tl.scrollTrigger.progress > 0.08) {
             void video.play().catch(() => {});
           }
 
@@ -225,7 +227,7 @@ export default function Film() {
 
           currentRate += (targetSpeed - currentRate) * 0.14;
           video.playbackRate = Math.max(0.6, Math.min(4.5, currentRate));
-        } else {
+        } else if (!inView) {
           if (!video.paused) {
             video.pause();
           }
@@ -262,6 +264,8 @@ export default function Film() {
       gsap.set(uiRef.current, { opacity: 0 });
 
       // Bidirectional Scrubbed Timeline:
+      // In small tablet screen (progress <= 0.05): stays on first frame (currentTime 0)
+      // On expansion: plays and accelerates with scroll
       // Locks downward scroll on first full expansion until video ends
       const tl = gsap.timeline({
         scrollTrigger: {
@@ -270,6 +274,16 @@ export default function Film() {
           end: "bottom bottom",
           scrub: 0.8,
           onUpdate: (self) => {
+            if (self.progress <= 0.05) {
+              // In small tablet preview: pause and stay on first frame
+              video.pause();
+              video.currentTime = 0;
+              finished = false;
+              showEndCard(false);
+            } else if (self.progress > 0.08 && !finished && video.paused) {
+              void video.play().catch(() => {});
+            }
+
             if (self.progress >= 0.72 && !finished && !locked) {
               lock();
             }
