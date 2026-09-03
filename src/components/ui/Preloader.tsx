@@ -113,6 +113,7 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
           setIsDone(true);
           document.body.style.overflow = "";
           if (smoothScroll.current) smoothScroll.current.start();
+          window.dispatchEvent(new CustomEvent("preloader:complete"));
           onComplete?.();
         },
       });
@@ -140,6 +141,9 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
             yPercent: -100,
             duration: 0.85,
             ease: "power4.inOut",
+            onStart: () => {
+              window.dispatchEvent(new CustomEvent("preloader:opening"));
+            },
           },
           0.3,
         );

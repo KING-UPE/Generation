@@ -69,7 +69,7 @@ const FRAME_SHIFT = 10; // % of viewport height
 
 /** How far below its resting place the tower starts on first load, in % of
  *  viewport height. It rises into frame with the rest of the hero. */
-const INTRO_RISE = 40;
+const INTRO_RISE = 60;
 
 const NARROW = 768;
 
@@ -518,7 +518,19 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         paint(current);
       };
 
-      gsap.to(intro, { v: 0, duration: 1.7, delay: 0.3, ease: "gen" });
+      const startIntro = () => {
+        gsap.to(intro, {
+          v: 0,
+          duration: 1.8,
+          delay: 0.1,
+          ease: "power3.out",
+        });
+      };
+
+      // Start the rise as soon as the preloader opens
+      window.addEventListener("preloader:opening", startIntro, { once: true });
+      window.addEventListener("preloader:complete", startIntro, { once: true });
+      const fallbackIntro = setTimeout(startIntro, 3500);
 
       gsap.ticker.add(tick);
       frame(0, offset(0));
@@ -526,6 +538,9 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
       paint(0);
 
       return () => {
+        window.removeEventListener("preloader:opening", startIntro);
+        window.removeEventListener("preloader:complete", startIntro);
+        clearTimeout(fallbackIntro);
         st.kill();
         shower.kill();
         framer.kill();
