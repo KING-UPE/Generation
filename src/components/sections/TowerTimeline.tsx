@@ -285,7 +285,7 @@ function cardAlpha(t: number, i: number) {
 export default function TowerTimeline({ children }: { children: React.ReactNode }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const videoBRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -296,7 +296,6 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
   useGSAP(
     () => {
       const video = videoRef.current;
-      const videoB = videoBRef.current;
       const box = boxRef.current;
       const timeline = timelineRef.current;
       const cards = cardRefs.current.filter(Boolean) as HTMLElement[];
@@ -558,57 +557,63 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
       }
 
       /**
-       * Two layers, cross-faded, so the picture never cuts between frames.
+       * One decoder, cross-faded against a snapshot of the frame it just left.
        *
-       * A scrubbed video can only ever show frames that exist, and scrolling
-       * slowly means seeing few of them per second — which is what reads as
-       * "playing frame by frame". More frames only makes the steps smaller;
-       * they are still steps. The way out is to stop showing one frame at a
-       * time: hold frame N on the lower layer, frame N+1 on the upper one, and
-       * fade the upper one up as the scroll crosses the gap between them. The
-       * image then dissolves continuously, at any scroll speed, and the blend
-       * reads as motion blur rather than as a cut.
+       * A scrubbed video can only show frames that exist, and scrolling slowly
+       * means seeing few of them per second — which is what reads as playing
+       * frame by frame. More frames only makes the steps smaller; they are
+       * still steps. The way out is to stop showing one frame at a time: hold
+       * frame N underneath, frame N+1 on top, and fade the top one up across
+       * the gap. The picture then dissolves continuously at any scroll speed.
        *
-       * Only the layer that falls behind ever seeks. Crossing a frame boundary
-       * hands the upper layer's frame down to the lower one and seeks the
-       * other, so this still costs one seek per frame, not two.
+       * The obvious way to do that is two <video> elements, and it works, but
+       * it is unaffordable: they fetch independently, so the network showed
+       * two full 200s for the same 12.5MB file — 25MB on a phone — and two
+       * decoders running at once, which mobile browsers ration hard.
+       *
+       * A canvas holding the previous frame does the same job for one download
+       * and one decoder. Before the video leaves frame N it is painted into
+       * the canvas, then seeks to N+1 and fades up over it. `object-fit:cover`
+       * applies to a canvas exactly as it does to a video, so both layers crop
+       * identically without reimplementing the fit maths.
        */
-      type Layer = {
-        el: HTMLVideoElement;
-        frame: number;    // frame index it has been asked for, -1 = nothing yet
-        ready: boolean;   // has the decoder confirmed that frame
-        busy: boolean;
-        issued: number;
-      };
-      const layerOf = (el: HTMLVideoElement): Layer =>
-        ({ el, frame: -1, ready: false, busy: false, issued: 0 });
+      const canvas = canvasRef.current;
+      const ctx = canvas ? canvas.getContext("2d") : null;
 
-      const layerA = layerOf(video);
-      const layerB = videoB ? layerOf(videoB) : null;
-      let lo = layerA;
-      let hi = layerB ?? layerA;
+      let videoFrame = -1;      // frame index the video was last asked for
+      let videoReady = false;   // has the decoder confirmed it
+      let canvasFrame = -1;     // frame index painted into the canvas
+      let seekBusy = false;
+      let seekIssuedAt = 0;
 
-      const onSeekedFor = (L: Layer) => () => { L.busy = false; L.ready = true; };
-      const handlerA = onSeekedFor(layerA);
-      video.addEventListener("seeked", handlerA);
-      const handlerB = layerB ? onSeekedFor(layerB) : null;
-      if (layerB && handlerB) layerB.el.addEventListener("seeked", handlerB);
+      const onSeeked = () => { seekBusy = false; videoReady = true; };
+      video.addEventListener("seeked", onSeeked);
 
-      const seekLayer = (L: Layer, frameIdx: number, maxT: number, now: number) => {
-        if (L.frame === frameIdx) return;
-        /* Same stall release as before: if `seeked` never lands the guard must
-           not latch, or that layer freezes for good. */
-        const stalled = L.busy && now - L.issued > 180;
-        if (L.busy && !stalled) return;
-        if (!Number.isFinite(L.el.duration)) return;
-        L.frame = frameIdx;
-        L.ready = false;
-        L.busy = true;
-        L.issued = now;
+      const seekToFrame = (frameIdx: number, maxT: number, now: number) => {
+        if (videoFrame === frameIdx) return;
+        /* Stall release: if `seeked` never lands the guard must not latch, or
+           the video freezes for good. */
+        const stalled = seekBusy && now - seekIssuedAt > 180;
+        if (seekBusy && !stalled) return;
+        if (!Number.isFinite(video.duration)) return;
+        videoFrame = frameIdx;
+        videoReady = false;
+        seekBusy = true;
+        seekIssuedAt = now;
         /* Aim at the middle of the frame, not its edge — landing exactly on a
            boundary is a coin toss between the two frames either side of it. */
         const t = (frameIdx + 0.5) / SOURCE_FPS;
-        L.el.currentTime = Math.max(0, Math.min(maxT, t));
+        video.currentTime = Math.max(0, Math.min(maxT, t));
+      };
+
+      const snapshot = () => {
+        if (!canvas || !ctx || !video.videoWidth) return false;
+        if (canvas.width !== video.videoWidth) {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+        }
+        ctx.drawImage(video, 0, 0);
+        return true;
       };
 
       let lastTick = performance.now();
@@ -634,23 +639,29 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         const i = Math.max(0, Math.floor(f));
         const frac = f - i;
 
-        if (layerB) {
-          if (lo.frame !== i) {
-            /* Moving forward a frame: the upper layer already holds it, so
-               swap roles instead of seeking. Only a jump needs a real seek. */
-            if (hi.frame === i) { const t = lo; lo = hi; hi = t; }
-            else seekLayer(lo, i, maxT, now);
-          }
-          seekLayer(hi, i + 1, maxT, now);
+        /* Scrolling forward, the video is already sitting on the frame that
+           just became `i` — snapshot it before asking for the next one, and
+           the whole cycle costs one seek per frame rather than two. */
+        if (canvas && videoReady && videoFrame === i && canvasFrame !== i) {
+          if (snapshot()) canvasFrame = i;
+        }
 
-          /* Only blend toward a frame the decoder has actually produced —
-             fading up a layer still showing something else would smear two
-             unrelated moments together. */
-          const blend = hi.ready && hi.frame === i + 1 ? frac : 0;
-          lo.el.style.opacity = "1";
-          hi.el.style.opacity = blend.toFixed(3);
+        if (canvas && canvasFrame === i) {
+          /* The canvas holds the base; the video chases the next frame and
+             fades up over it. Only blend toward a frame the decoder has
+             actually produced — fading up something still showing a different
+             moment would smear two unrelated frames together. */
+          seekToFrame(i + 1, maxT, now);
+          const blend = videoReady && videoFrame === i + 1 ? frac : 0;
+          canvas.style.opacity = "1";
+          video.style.opacity = blend.toFixed(3);
         } else {
-          seekLayer(lo, i, maxT, now);
+          /* No usable base — a jump, a reversal, or the very first frame.
+             Show the real frame directly and let the next tick start blending
+             once it has been snapshotted. */
+          seekToFrame(i, maxT, now);
+          if (canvas) canvas.style.opacity = "0";
+          video.style.opacity = "1";
         }
 
         frame(framingTarget, offset(current));
@@ -684,8 +695,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         framer.kill();
         exit.scrollTrigger?.kill();
         exit.kill();
-        video.removeEventListener("seeked", handlerA);
-        if (layerB && handlerB) layerB.el.removeEventListener("seeked", handlerB);
+        video.removeEventListener("seeked", onSeeked);
         gsap.ticker.remove(tick);
       };
     },
@@ -709,23 +719,21 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
             opacity: 0,
           }}
         >
+          {/* The frame the video just left, painted here so it can be faded
+              across instead of cut. A canvas rather than a second <video>:
+              same blend, one download, one decoder. `object-fit: cover`
+              applies to a canvas exactly as to a video, so the two crop
+              identically without duplicating the fit maths. */}
+          <canvas
+            ref={canvasRef}
+            className="absolute inset-0 h-full w-full object-cover"
+            style={{ opacity: 0 }}
+            aria-hidden
+          />
           <video
             ref={videoRef}
             src={SRC}
             className="absolute inset-0 h-full w-full object-cover"
-            muted
-            playsInline
-            preload="auto"
-            aria-hidden
-          />
-          {/* The in-between. Holds the next frame and fades up across the gap,
-              so the picture dissolves from one frame to the next instead of
-              cutting. Same file, so it is one download. */}
-          <video
-            ref={videoBRef}
-            src={SRC}
-            className="absolute inset-0 h-full w-full object-cover"
-            style={{ opacity: 0 }}
             muted
             playsInline
             preload="auto"
