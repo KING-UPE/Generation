@@ -589,11 +589,30 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
       const onSeeked = () => { seekBusy = false; videoReady = true; };
       video.addEventListener("seeked", onSeeked);
 
+      /** Is this moment already downloaded? A seek inside a buffered range is a
+       *  decode and lands in milliseconds; one outside it is a network fetch. */
+      const isBuffered = (t: number) => {
+        const b = video.buffered;
+        for (let i = 0; i < b.length; i++) {
+          if (t >= b.start(i) && t <= b.end(i)) return true;
+        }
+        return false;
+      };
+
       const seekToFrame = (frameIdx: number, maxT: number, now: number) => {
         if (videoFrame === frameIdx) return;
         /* Stall release: if `seeked` never lands the guard must not latch, or
-           the video freezes for good. */
-        const stalled = seekBusy && now - seekIssuedAt > 180;
+           the video freezes for good.
+         *
+         * The wait has to depend on what the seek actually has to do. At a flat
+         * 180ms — fine for a decode — a phone seeking into an unbuffered part
+         * of a 12MB file never finished one: the round trip takes longer than
+         * that, so every 180ms the in-flight seek was abandoned and replaced.
+         * Nothing ever landed and the video sat on frame 0 for the whole page,
+         * which looked like the footage was missing rather than still loading.
+         * Give a fetch room to complete; keep the decode case tight. */
+        const wantsNetwork = !isBuffered((frameIdx + 0.5) / SOURCE_FPS);
+        const stalled = seekBusy && now - seekIssuedAt > (wantsNetwork ? 2500 : 180);
         if (seekBusy && !stalled) return;
         if (!Number.isFinite(video.duration)) return;
         videoFrame = frameIdx;

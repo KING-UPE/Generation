@@ -5,7 +5,22 @@ import { gsap } from "@/lib/gsap";
 import { smoothScroll } from "@/lib/smooth-scroll";
 
 const VIDEO_SRC = "/Tower.seek.mp4";
-const ESTIMATED_SIZE = 4167318; // ~4.1 MB
+/* Only used if the server withholds content-length; the real size is read from
+   the response. Kept roughly honest so the bar is not wildly wrong when it is
+   needed. */
+const ESTIMATED_SIZE = 13_096_081; // ~12.5 MB
+
+/**
+ * How long to wait for the footage before letting the page through anyway.
+ *
+ * This was 7s, chosen when the file was 4MB. At 12.5MB a phone rarely finishes
+ * in that, so the preloader handed over a video that had barely started
+ * downloading — and the scrub then sat on frame 0, which reads as the footage
+ * being missing rather than still arriving. Long enough now that a mid-range
+ * mobile connection can realistically get there, and still bounded so nobody
+ * is ever trapped behind it.
+ */
+const LOAD_TIMEOUT_MS = 25000;
 
 export default function Preloader({ onComplete }: { onComplete?: () => void }) {
   const [progress, setProgress] = useState(0);
@@ -69,7 +84,7 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
     const fallbackTimer = setTimeout(() => {
       actualLoaded = 100;
       towerReadyRef.current = true;
-    }, 7000);
+    }, LOAD_TIMEOUT_MS);
 
     // 3. Smooth animation ticker for progress counter
     const tick = () => {
@@ -95,7 +110,7 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
       } else if (p < 60) {
         setStatusText("BUFFERING LOTUS TOWER FOOTAGE");
       } else if (p < 85) {
-        setStatusText("DECODING 300 INTRA-FRAME KEYFRAMES");
+        setStatusText("DECODING 1200 INTRA-FRAME KEYFRAMES");
       } else if (p < 99) {
         setStatusText("SYNCHRONIZING 3D TOWER STAGE");
       } else {
