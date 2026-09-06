@@ -4,42 +4,49 @@ import { useRef } from "react";
 import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
 
 /**
- * The seek-optimised build, not the original.
+ * The seek-optimised build of the RIFE footage.
  *
- * The source has exactly one keyframe in 300 frames, so every seek decodes from
- * the top of the file — that was the scrubbing lag. This build is all-intra:
- * 300 of 300 keyframes, so a seek costs a single frame. Measured seek latency
- * went from a ~534ms median to 3.3ms.
+ * Source: new-4x-RIFE-RIFE3.1-120fps.mp4 — the original 10s clip put through
+ * RIFE 3.1 neural frame interpolation at 4x and retimed to half speed, giving
+ * 20s at 60fps. 1200 frames where the original had 300.
  *
- * 1600x900, 2.6MB — smaller than the 5MB source despite being all-intra,
- * because mostly-black footage compresses better as stills than as motion.
+ * That frame count is the whole point. Every animation here is scroll-scrubbed,
+ * so what you see is frames per *second of scrolling*, and that depends on how
+ * fast the reader moves. At 300 frames across this runway a slow reading pace
+ * showed about 14fps and the picture visibly landed on each frame. At 1200 it
+ * is four times that, which is past the point where the eye stops resolving
+ * individual frames.
  *
- * Named `.seek` rather than `.scrub`: HeroVideo.scrub.mp4 was twice replaced by
- * a normally-encoded file (26 of 300 keyframes), which silently reinstated the
- * lag. Re-cut after any change to the footage — a standard export will do the
- * same thing:
+ * RIFE beat both ffmpeg interpolators. Measured as edge energy, its synthesised
+ * frames sit 6.0% off the real ones — against 6.8% for `minterpolate` mci and
+ * 44% for mci's `blend` mode, which averages neighbours into ghosts and made
+ * the file pulse sharp/soft at 30Hz. Do not re-interpolate with `blend`.
  *
- *   ffmpeg -i new.mp4 -an \
- *     -vf "scale=1600:-2,fps=30,colorlevels=rimin=0.028:gimin=0.028:bimin=0.028" \
- *     -c:v libx264 -g 1 -crf 25 -preset slow -pix_fmt yuv420p \
- *     -color_range tv -colorspace bt709 -color_primaries bt709 -color_trc bt709 \
- *     -movflags +faststart Tower.seek.mp4
+ * The pipeline below still has to run over whatever the interpolator produces,
+ * and every part of it is a fix rather than a preference:
  *
- * Cut from new.mp4 (1920x1080, 2 keyframes in 300 — unscrubbable as delivered).
- * 1600x900, 4.0MB, 3.4ms median seek.
+ *   ffmpeg -i new-4x-RIFE-RIFE3.1-120fps.mp4 -an  *     -vf "scale=1600:-2,colorlevels=rimin=0.028:gimin=0.028:bimin=0.028"  *     -c:v libx264 -g 1 -crf 25 -preset slow -pix_fmt yuv420p  *     -color_range tv -colorspace bt709 -color_primaries bt709 -color_trc bt709  *     -movflags +faststart Tower.seek.mp4
  *
- * The `colorlevels` pass is not a look, it is a fix, and it must survive any
- * re-encode. The footage is a night sky, and a night sky is not black: the sky
- * measured luma 17-21 where limited-range black is 16, so it rendered 1-6 above
- * zero against a page at #000. The frame is slid sideways to park the tower,
- * which puts its edge in the middle of the screen — and a hard step from 6 to 0
- * at that edge is plainly visible as two different blacks. Crushing the floor
- * so the sky lands on 16 makes the video's background and the page's the same
- * colour, and there is no edge left to see. It also cut a megabyte, because
- * true black costs almost nothing to encode.
+ * `-g 1` makes it all-intra — every frame a keyframe. Verified on this build:
+ * 1197 keyframes of 1197 frames. Without it a seek decodes from the previous
+ * keyframe and scrubbing collapses; the original measured a ~534ms median seek
+ * against ~3ms here.
  *
- * The colour tags matter for the same reason: the first cut dropped them and
- * left the browser guessing how to expand the range.
+ * `colorlevels` crushes the black floor. A night sky is not black: this source
+ * measured luma 17-21 where limited-range black is 16, so it rendered a few
+ * levels above zero against a page at #000. The frame slides sideways to park
+ * the tower, which puts its edge mid-screen, and a hard step from 6 to 0 there
+ * is plainly visible as two different blacks. After the pass the sky sits on 16
+ * and the seam is gone.
+ *
+ * The colour tags matter for the same reason — an untagged file leaves the
+ * browser guessing how to expand the range.
+ *
+ * 1600x900, 60fps, 20s, 12.5MB. The size is the cost of the frame count; crf 27
+ * gives 10.5MB and crf 28 gives 9.5MB if it ever needs to come down.
+ *
+ * Every time constant below is in seconds of THIS file. Change the footage
+ * length and they all have to move with it.
  */
 const SRC = "/Tower.seek.mp4";
 
@@ -60,6 +67,41 @@ const SRC = "/Tower.seek.mp4";
 const SEEK_LERP = 0.22;
 
 /**
+ * How tall the editions section is, in svh — which is really "how much scroll
+ * the footage is stretched across", and therefore the single biggest control
+ * over whether the scrub looks like motion or like a slideshow.
+ *
+ * The video holds 597 frames. Spread over the old 480svh the sequence spanned
+ * 3360px, or 5.6px per frame — and what you see is frames per *second*, which
+ * depends on how fast you scroll:
+ *
+ *     600 px/s -> 5.6s -> 107 fps    fine
+ *     150 px/s -> 22s  ->  27 fps    acceptable
+ *      80 px/s -> 42s  ->  14 fps    visibly frame by frame
+ *
+ * Reading pace is the slow end, which is exactly where it fell apart. The two
+ * ways out are more frames or less scroll. More frames is the expensive one:
+ * 120fps doubles the count and takes the file from 6.4MB to 10.4MB, and still
+ * only reaches ~28fps at 80px/s. Less scroll costs nothing and helps just as
+ * much, so this is the lever to pull first.
+ *
+ * At 340 the sequence spans 2240px and 3.75px per frame — half again as many
+ * frames per second at every scroll speed, and roughly 480px of scroll per
+ * edition card, which is still enough to read one. Turn it down further for
+ * more smoothness at the cost of dwell time; the cue times are all in video
+ * seconds, so they follow this automatically and nothing needs re-timing.
+ */
+const EDITIONS_RUNWAY = 340;
+
+/**
+ * Frame rate of the encode above. The cross-fade divides video time into
+ * frames with it, so it has to match the file: read it off `ffmpeg -i`, and
+ * change it here the moment the encode changes, or the two layers will hold
+ * frames that are not actually adjacent.
+ */
+const SOURCE_FPS = 60;
+
+/**
  * The hero framing: pulled in off the viewport edges and pushed down, so the
  * tower rises from the bottom rather than sitting dead centre. As the hero
  * scrolls away this eases to full-bleed, so the timeline runs fullscreen.
@@ -75,7 +117,8 @@ const NARROW = 768;
 
 /**
  * This footage holds the tower dead centre. Measured off every frame from t=0
- * to t=8.2, the brightness-weighted centroid sits at 49.8-49.9% of frame width
+ * through the whole tower sequence, the brightness-weighted centroid sits at
+ * 49.8-49.9% of frame width
  * and never leaves — a spread of a tenth of a percent.
  *
  * That deletes a whole mechanism. The previous footage craned sideways, so the
@@ -95,13 +138,13 @@ const TOWER_PARK_WIDE = 0.28;
  *  never disagree with the footage underneath it. Out by 8.5 matters: past
  *  that the concert fills the frame edge to edge, and an offset frame would
  *  show a black bar where the crowd should be. */
-const PARK_IN = [0.8, 2.0] as const;
-const PARK_OUT = [7.4, 8.5] as const;
+const PARK_IN = [1.6, 4.0] as const;
+const PARK_OUT = [14.8, 17.0] as const;
 
 /** Where the tower sequence ends and the concert takes the frame. The lower
  *  band of the image goes from ~2,200 lit pixels to 3,400 at t=8.4 and 10,600
  *  by t=8.8; 8.2 is the last moment that is still unambiguously the tower. */
-const SHOW_T = 8.2;
+const SHOW_T = 16.4;
 
 /**
  * Where the last card clears — earlier than SHOW_T, deliberately.
@@ -111,7 +154,7 @@ const SHOW_T = 8.2;
  * 7.75 leaves a clean beat of nothing but footage between the last card and
  * the stage arriving.
  */
-const CARDS_END = 7.75;
+const CARDS_END = 15.5;
 
 /**
  * Scroll position to video time across the editions.
@@ -130,7 +173,7 @@ const CARDS_END = 7.75;
  * the only speed change is through the part where nothing is moving anyway.
  */
 const EDITION_MAP: ReadonlyArray<readonly [number, number]> = [
-  [0, 0], [0.81, 6.0], [0.86, 7.15], [1, SHOW_T],
+  [0, 0], [0.81, 12.0], [0.86, 14.3], [1, SHOW_T],
 ];
 
 function editionTime(p: number) {
@@ -150,7 +193,7 @@ function editionTime(p: number) {
  *  vertical tower and useless for a wide stage. Through the reveal the box
  *  eases open; the bars it opens are black on a black page. Wide screens
  *  already match the footage and are left alone. */
-const SHOW_FIT = [8.2, 9.0] as const;
+const SHOW_FIT = [16.4, 18.0] as const;
 
 /**
  * How much of the screen the stage gets on a phone, as a fraction of viewport
@@ -165,26 +208,30 @@ const SHOW_FIT = [8.2, 9.0] as const;
  */
 const SHOW_BAND = 1;
 
-const FADE = 0.45;
+/** Cross-fade between edition cards, in seconds of video. Doubled along with
+ *  every other time constant when the footage went from 10s to 20s — left at
+ *  0.45 it would still work, but cover half the scroll it used to and so read
+ *  as twice as abrupt. */
+const FADE = 0.9;
 
 const smoothstep = (v: number) => v * v * (3 - 2 * v);
 
 const EDITIONS = [
   {
     year: "2023",
-    at: 1.3,
+    at: 2.6,
     venue: "Maharagama Youth Centre",
     crowd: "2,000+",
   },
   {
     year: "2024",
-    at: 3.0,
+    at: 6.0,
     venue: "Viharamahadevi Open Air Theatre",
     crowd: "4,500+",
   },
   {
     year: "2025",
-    at: 4.3,
+    at: 8.6,
     venue: "Lotus Tower Open Arena",
     crowd: "7,500+",
     sponsors: "SLIC General · Y FM",
@@ -207,7 +254,7 @@ const EDITIONS = [
   },
   {
     year: "2026",
-    at: 5.7,
+    at: 11.4,
     venue: "Lotus Tower Open Arena",
     crowd: "10,000+",
     date: "Saturday, 12 December 2026",
@@ -238,6 +285,8 @@ function cardAlpha(t: number, i: number) {
 export default function TowerTimeline({ children }: { children: React.ReactNode }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const videoBRef = useRef<HTMLVideoElement>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -247,6 +296,8 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
   useGSAP(
     () => {
       const video = videoRef.current;
+      const videoB = videoBRef.current;
+      const box = boxRef.current;
       const timeline = timelineRef.current;
       const cards = cardRefs.current.filter(Boolean) as HTMLElement[];
       if (!video || !timeline) return;
@@ -333,8 +384,9 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         const h = sh + (band - sh) * full;
         if (lastH >= 0 && Math.abs(h - lastH) < 0.5) return;
         lastH = h;
-        video.style.height = `${h.toFixed(1)}px`;
-        video.style.top = `${((sh - h) / 2).toFixed(1)}px`;
+        const target = box ?? video;
+        target.style.height = `${h.toFixed(1)}px`;
+        target.style.top = `${((sh - h) / 2).toFixed(1)}px`;
       };
 
       let lastShift = NaN;
@@ -372,9 +424,10 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         lastScale = scale;
         lastAlpha = alpha;
         lastX = x;
-        video.style.transform =
+        const target = box ?? video;
+        target.style.transform =
           `translate(${x.toFixed(2)}%, ${shift.toFixed(2)}%) scale(${scale.toFixed(4)})`;
-        video.style.opacity = String(alpha);
+        target.style.opacity = String(alpha);
       };
 
       /* Cards key off the same eased time the video is seeking to, so a card
@@ -394,7 +447,14 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
          We clamp target strictly below duration to prevent EOF 'ended' events
          which cause mobile browsers to snap the video back to frame 0 (the top). */
       const dur = () => video.duration || 10;
-      const safeMax = () => Math.min(dur() - 0.15, 9.85);
+      /* Relative to the file's own length, never an absolute second. This was
+         `Math.min(dur() - 0.15, 9.85)`, and the 9.85 was the old ten-second
+         cut's near-end written down as a number. Against a twenty-second file
+         it pinned video time at 9.85 forever, so everything past it — the 2026
+         card and the whole concert — was simply unreachable, with no error to
+         say so. Anything compared against video time has to be derived from
+         `duration`. */
+      const safeMax = () => Math.max(0, dur() - 0.15);
 
       let inShowcaseMode = false;
 
@@ -498,13 +558,58 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
       }
 
       /**
-       * Only ever one seek in flight.
+       * Two layers, cross-faded, so the picture never cuts between frames.
+       *
+       * A scrubbed video can only ever show frames that exist, and scrolling
+       * slowly means seeing few of them per second — which is what reads as
+       * "playing frame by frame". More frames only makes the steps smaller;
+       * they are still steps. The way out is to stop showing one frame at a
+       * time: hold frame N on the lower layer, frame N+1 on the upper one, and
+       * fade the upper one up as the scroll crosses the gap between them. The
+       * image then dissolves continuously, at any scroll speed, and the blend
+       * reads as motion blur rather than as a cut.
+       *
+       * Only the layer that falls behind ever seeks. Crossing a frame boundary
+       * hands the upper layer's frame down to the lower one and seeks the
+       * other, so this still costs one seek per frame, not two.
        */
-      let seekBusy = false;
-      let seekIssuedAt = 0;
-      let lastSeekIssuedTime = -1;
-      const onSeeked = () => { seekBusy = false; };
-      video.addEventListener("seeked", onSeeked);
+      type Layer = {
+        el: HTMLVideoElement;
+        frame: number;    // frame index it has been asked for, -1 = nothing yet
+        ready: boolean;   // has the decoder confirmed that frame
+        busy: boolean;
+        issued: number;
+      };
+      const layerOf = (el: HTMLVideoElement): Layer =>
+        ({ el, frame: -1, ready: false, busy: false, issued: 0 });
+
+      const layerA = layerOf(video);
+      const layerB = videoB ? layerOf(videoB) : null;
+      let lo = layerA;
+      let hi = layerB ?? layerA;
+
+      const onSeekedFor = (L: Layer) => () => { L.busy = false; L.ready = true; };
+      const handlerA = onSeekedFor(layerA);
+      video.addEventListener("seeked", handlerA);
+      const handlerB = layerB ? onSeekedFor(layerB) : null;
+      if (layerB && handlerB) layerB.el.addEventListener("seeked", handlerB);
+
+      const seekLayer = (L: Layer, frameIdx: number, maxT: number, now: number) => {
+        if (L.frame === frameIdx) return;
+        /* Same stall release as before: if `seeked` never lands the guard must
+           not latch, or that layer freezes for good. */
+        const stalled = L.busy && now - L.issued > 180;
+        if (L.busy && !stalled) return;
+        if (!Number.isFinite(L.el.duration)) return;
+        L.frame = frameIdx;
+        L.ready = false;
+        L.busy = true;
+        L.issued = now;
+        /* Aim at the middle of the frame, not its edge — landing exactly on a
+           boundary is a coin toss between the two frames either side of it. */
+        const t = (frameIdx + 0.5) / SOURCE_FPS;
+        L.el.currentTime = Math.max(0, Math.min(maxT, t));
+      };
 
       let lastTick = performance.now();
 
@@ -522,19 +627,30 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         current += (targetClamped - current) * (1 - Math.pow(1 - SEEK_LERP, dt * 60));
         if (Math.abs(targetClamped - current) < 1 / 120) current = targetClamped;
 
-        const stalled = seekBusy && now - seekIssuedAt > 180;
+        /* Where we are between two frames. `i` is the frame behind us, `frac`
+           how far past it we have travelled — which is exactly the opacity the
+           next frame should be showing at. */
+        const f = current * SOURCE_FPS;
+        const i = Math.max(0, Math.floor(f));
+        const frac = f - i;
 
-        // Compare against lastSeekIssuedTime (requested time) rather than video.currentTime (decoder rounded time)
-        // to prevent infinite oscillation/flickering between adjacent keyframes when stopped
-        if (
-          (!seekBusy || stalled) &&
-          Number.isFinite(video.duration) &&
-          Math.abs(current - lastSeekIssuedTime) > 0.02
-        ) {
-          seekBusy = true;
-          seekIssuedAt = now;
-          lastSeekIssuedTime = current;
-          video.currentTime = Math.max(0, Math.min(maxT, current));
+        if (layerB) {
+          if (lo.frame !== i) {
+            /* Moving forward a frame: the upper layer already holds it, so
+               swap roles instead of seeking. Only a jump needs a real seek. */
+            if (hi.frame === i) { const t = lo; lo = hi; hi = t; }
+            else seekLayer(lo, i, maxT, now);
+          }
+          seekLayer(hi, i + 1, maxT, now);
+
+          /* Only blend toward a frame the decoder has actually produced —
+             fading up a layer still showing something else would smear two
+             unrelated moments together. */
+          const blend = hi.ready && hi.frame === i + 1 ? frac : 0;
+          lo.el.style.opacity = "1";
+          hi.el.style.opacity = blend.toFixed(3);
+        } else {
+          seekLayer(lo, i, maxT, now);
         }
 
         frame(framingTarget, offset(current));
@@ -568,7 +684,8 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         framer.kill();
         exit.scrollTrigger?.kill();
         exit.kill();
-        video.removeEventListener("seeked", onSeeked);
+        video.removeEventListener("seeked", handlerA);
+        if (layerB && handlerB) layerB.el.removeEventListener("seeked", handlerB);
         gsap.ticker.remove(tick);
       };
     },
@@ -581,19 +698,40 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         ref={stageRef}
         className="pointer-events-none sticky top-0 z-[-1] h-[100svh] overflow-hidden bg-black"
       >
-        <video
-          ref={videoRef}
-          src={SRC}
-          className="absolute inset-0 h-full w-full object-cover"
+        {/* One box carries the framing — transform, height, offset — so those
+            are written once, and the two layers inside it differ only in
+            opacity, which the compositor blends for free. */}
+        <div
+          ref={boxRef}
+          className="absolute inset-0"
           style={{
             transform: `translateY(${FRAME_SHIFT + INTRO_RISE}%) scale(${FRAME_SCALE})`,
             opacity: 0,
           }}
-          muted
-          playsInline
-          preload="auto"
-          aria-hidden
-        />
+        >
+          <video
+            ref={videoRef}
+            src={SRC}
+            className="absolute inset-0 h-full w-full object-cover"
+            muted
+            playsInline
+            preload="auto"
+            aria-hidden
+          />
+          {/* The in-between. Holds the next frame and fades up across the gap,
+              so the picture dissolves from one frame to the next instead of
+              cutting. Same file, so it is one download. */}
+          <video
+            ref={videoBRef}
+            src={SRC}
+            className="absolute inset-0 h-full w-full object-cover"
+            style={{ opacity: 0 }}
+            muted
+            playsInline
+            preload="auto"
+            aria-hidden
+          />
+        </div>
       </div>
 
       {/* Pulled up over the pinned frame: 20vh scroll runway for swift, responsive stage expansion */}
@@ -608,7 +746,8 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
       <section
         id="timeline"
         ref={timelineRef}
-        className="relative h-[480svh]"
+        className="relative"
+        style={{ height: `${EDITIONS_RUNWAY}svh` }}
       >
         <div className="sticky top-0 h-[100svh] w-full overflow-hidden">
           <div className="mx-auto flex h-full w-full max-w-(--maxw) items-center px-(--gutter)">
