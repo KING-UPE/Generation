@@ -33,6 +33,14 @@ type Props = {
    * 375px screen, so the clamp starts well above what the viewport asks for.
    */
   size?: string;
+  /**
+   * `row` sets the mark beside the number; `stack` puts it above.
+   *
+   * The stack is for the cards, where the number has to clear the card fanned
+   * in front of it — side by side, mark plus six figures is wider than the
+   * strip of card left showing.
+   */
+  layout?: "row" | "stack";
   className?: string;
 };
 
@@ -53,6 +61,7 @@ export default function CountFigure({
   suffix = "+",
   label,
   size = "clamp(2.5rem, 3.6vw, 2.9rem)",
+  layout = "row",
   className = "",
 }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -89,7 +98,13 @@ export default function CountFigure({
     <div ref={rootRef} className={className}>
       {/* inline-flex, so a centred column centres the whole pair as one block
           while the number and its label stay ranged left against the mark */}
-      <div className="inline-flex items-center gap-3.5 text-left md:gap-5">
+      <div
+        className={
+          layout === "stack"
+            ? "flex flex-col items-start gap-4 text-left"
+            : "inline-flex items-center gap-3.5 text-left md:gap-5"
+        }
+      >
         {icon ? (
           <span
             className="inline-flex shrink-0 items-center justify-center text-red-hot"
