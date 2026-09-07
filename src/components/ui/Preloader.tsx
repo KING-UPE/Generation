@@ -38,6 +38,7 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
   const percentRef = useRef<HTMLSpanElement>(null);
   const progressVal = useRef(0);
   const towerReadyRef = useRef(false);
+  const announcedRef = useRef(false);
 
   useEffect(() => {
     // Lock scrolling while preloader is active
@@ -212,6 +213,16 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
     if (!isReady || isDone) return;
 
     setStatusText("GENERATION 26 · ALL SYSTEMS READY");
+
+    /* Tell the page to start its entrance now, while the panel still covers
+       it. Everything it needs is already decoded — that is what being at 100
+       means — so the only thing left is the fade-in, and running that here
+       buys it the 450ms hold plus the 300ms before the panel moves. Announced
+       once: this effect also re-runs if `onComplete` changes identity. */
+    if (!announcedRef.current) {
+      announcedRef.current = true;
+      window.dispatchEvent(new CustomEvent("preloader:ready"));
+    }
 
     const timer = setTimeout(() => {
       const container = containerRef.current;

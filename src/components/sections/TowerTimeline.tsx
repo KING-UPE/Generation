@@ -831,7 +831,29 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         paint(current);
       };
 
+      /**
+       * The entrance plays behind the loader, not across its exit.
+       *
+       * `frame()` fades the tower in from `intro.v`, and alpha only reaches 1
+       * once `intro.v` has fallen to 0.5 — about 0.41s into the 2s ease. Tied
+       * to `preloader:opening`, that clock started on the same frame the
+       * panel began its 0.85s slide, so the fade played out across the first
+       * half of the reveal and the page was uncovered with the tower still
+       * transparent. It read as the page arriving without it.
+       *
+       * `preloader:ready` fires when the bar reaches 100, a further 0.75s
+       * before the panel moves, so the tower is fully opaque by the time
+       * anything is uncovered. The later two remain as fallbacks for anyone
+       * arriving without a preloader at all.
+       *
+       * Guarded because more than one of these will fire in a normal load, and
+       * re-entering would restart a 2s tween from wherever the first had got
+       * to — stretching the entrance rather than leaving it alone.
+       */
+      let introStarted = false;
       const startIntro = () => {
+        if (introStarted) return;
+        introStarted = true;
         gsap.to(intro, {
           v: 0,
           duration: 2.0,
@@ -840,7 +862,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         });
       };
 
-      // Start the rise as soon as the preloader begins lifting
+      window.addEventListener("preloader:ready", startIntro, { once: true });
       window.addEventListener("preloader:opening", startIntro, { once: true });
       window.addEventListener("preloader:complete", startIntro, { once: true });
 
