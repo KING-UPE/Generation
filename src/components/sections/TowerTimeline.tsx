@@ -924,6 +924,23 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         const dt = Math.min((now - lastTick) / 1000, 0.05);
         lastTick = now;
 
+        /*
+         * Above the section the tower belongs at the top of its footage, and
+         * that is re-asserted here every frame rather than left to a callback.
+         *
+         * `onLeaveBack` was the only thing resetting it, so any return to the
+         * top that does not deliver one — a route change back from /auditions,
+         * a refresh landing mid-page, a jump the trigger reads as a single step
+         * — left the tower parked on whatever frame it happened to be showing
+         * while the hero faded back in over it. Read off the scroll position
+         * instead, it cannot be missed, and it costs one comparison.
+         */
+        if (!inShowcaseMode && !introRunning && window.scrollY < st.start) {
+          if (target !== 0) target = 0;
+          introDone = false;
+          introAtP = 0;
+        }
+
         const maxT = safeMax();
         const targetClamped = Math.max(0, Math.min(maxT, target));
 
