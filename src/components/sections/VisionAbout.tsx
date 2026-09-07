@@ -120,12 +120,22 @@ export default function VisionAbout() {
         return -(deck.getBoundingClientRect().left - applied - grid.getBoundingClientRect().left);
       };
 
+      /*
+       * Matched to the hero's scrub, and for the same reason.
+       *
+       * At 1.2 the deck took another 1.2s to reach a scroll position Lenis had
+       * already spent 1.15s easing towards. The two lags run in series, so the
+       * flight across the stage was still crawling more than two seconds after
+       * the page had stopped moving — which does not read as a slow animation,
+       * it reads as a dropped frame rate. 0.25 absorbs the jitter between
+       * scroll events without being seen as the section failing to settle.
+       */
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: container,
           start: "top top",
           end: "bottom bottom",
-          scrub: 1.2,
+          scrub: 0.25,
         },
       });
 
