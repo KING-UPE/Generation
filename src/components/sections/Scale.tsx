@@ -83,13 +83,18 @@ const CARDS: Card[] = [
 ];
 
 /**
- * Card width and how much of it the next card covers.
+ * Card width and how much of it the next card covers, per breakpoint.
  *
  * The overlap is the whole design problem here: fanned tightly the deck looks
  * better and every figure but the last is cut in half by the card in front. So
- * the exposed strip — 200px — is set from the widest number the section
- * carries, and the cards are made wide enough to be worth looking at on top of
- * that rather than the other way round.
+ * the exposed strip is set from the widest number the section carries, and the
+ * cards are made wide enough to be worth looking at on top of that rather than
+ * the other way round.
+ *
+ * The fan is desktop only, and not for want of trying to keep it. It measures
+ * 1060px across; fitting that into a 375px screen is a scale of 0.32, which
+ * puts a six-figure number at about eight pixels. Below lg the same cards are
+ * laid out two up instead — small, but readable, which the fan would not be.
  */
 const CARD_W = 260;
 const STRIP = 200;
@@ -118,7 +123,7 @@ function ScaleCard({
       onMouseEnter={onEnter}
       onMouseLeave={onLeave}
       className={
-        "relative flex flex-col justify-between overflow-hidden rounded-[26px] p-6 " +
+        "relative flex flex-col justify-between overflow-hidden rounded-[26px] p-5 sm:p-6 " +
         className
       }
       style={{
@@ -126,27 +131,40 @@ function ScaleCard({
         boxShadow: lifted
           ? "0 26px 60px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.16) inset"
           : "0 18px 44px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.10) inset",
-        opacity: dimmed ? 0.62 : 1,
+        /* Darkened, never faded. At opacity 0.62 the card behind showed through
+           every overlap in the fan, so dimming one card revealed the edges of
+           two others — brightness keeps them solid. */
+        filter: dimmed ? "brightness(0.5)" : "none",
         transition: EASE,
         ...style,
       }}
     >
       <span
         aria-hidden
-        className="inline-flex h-11 w-11 items-center justify-center text-white/90"
+        className="inline-flex h-9 w-9 items-center justify-center text-white/90 sm:h-11 sm:w-11"
       >
         {card.icon}
       </span>
 
-      {/* The figure gets its own ground: the gradient is at its lightest under
-          the top of the card, and white numerals on it would sit flat. */}
-      <div className="rounded-2xl bg-black/45 px-4 py-4 backdrop-blur-sm">
-        <CountFigure
-          layout="stack"
-          value={card.value}
-          label={card.label}
-          size="clamp(1.75rem, 2.6vw, 2.1rem)"
-        />
+      {/* The platform names the figure here rather than under it. Pinned top and
+          bottom with nothing between, the card was mostly empty gradient. */}
+      <div>
+        <h3
+          className="font-display leading-none tracking-[-0.01em] text-white/95"
+          style={{ fontSize: "clamp(1rem, 1.6vw, 1.3rem)" }}
+        >
+          {card.label}
+        </h3>
+
+        <div className="mt-3 rounded-2xl bg-black/45 px-3.5 py-3 backdrop-blur-sm sm:px-4 sm:py-3.5">
+          <CountFigure
+            layout="stack"
+            showLabel={false}
+            value={card.value}
+            label={card.label}
+            size="clamp(1.5rem, 2.4vw, 2rem)"
+          />
+        </div>
       </div>
     </div>
   );
@@ -173,9 +191,8 @@ export default function Scale() {
           They already show up. Every day, on every screen.
         </ScrollCopy>
 
-        {/* ── The fan. Wide screens only: five overlapping cards need about a
-            thousand pixels before the exposed strip is worth anything. ── */}
-        <div className="mt-16 hidden justify-center lg:flex">
+        {/* ── The fan. Wide screens only: 1060px of deck needs the room. ── */}
+        <div className="mt-14 hidden justify-center md:mt-16 lg:flex">
           {CARDS.map((card, i) => {
             const lifted = hovered === i;
             return (
@@ -186,7 +203,7 @@ export default function Scale() {
                 dimmed={hovered !== null && !lifted}
                 onEnter={() => setHovered(i)}
                 onLeave={() => setHovered(null)}
-                className="h-[310px] shrink-0 cursor-pointer"
+                className="h-[250px] shrink-0 cursor-pointer"
                 style={{
                   width: CARD_W,
                   marginLeft: i === 0 ? 0 : STRIP - CARD_W,
@@ -201,10 +218,17 @@ export default function Scale() {
           })}
         </div>
 
-        {/* ── Below that the fan becomes a plain deck, one or two up. ── */}
-        <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:hidden">
-          {CARDS.map((card) => (
-            <ScaleCard key={card.label} card={card} className="min-h-[210px]" />
+        {/* ── Below that, the same cards two up. Five of them leaves the last
+            one alone on its row, which is why it is the widest number. ── */}
+        <div className="mt-12 grid grid-cols-2 gap-3 sm:gap-4 lg:hidden">
+          {CARDS.map((card, i) => (
+            <ScaleCard
+              key={card.label}
+              card={card}
+              className={
+                "min-h-[178px] sm:min-h-[200px] " + (i === CARDS.length - 1 ? "col-span-2" : "")
+              }
+            />
           ))}
         </div>
 

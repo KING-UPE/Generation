@@ -41,6 +41,9 @@ type Props = {
    * strip of card left showing.
    */
   layout?: "row" | "stack";
+  /** Off where something else already names the figure — the cards put the
+   *  platform above the number, and printing it twice reads as a mistake. */
+  showLabel?: boolean;
   className?: string;
 };
 
@@ -62,6 +65,7 @@ export default function CountFigure({
   label,
   size = "clamp(2.5rem, 3.6vw, 2.9rem)",
   layout = "row",
+  showLabel = true,
   className = "",
 }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -122,7 +126,7 @@ export default function CountFigure({
             <span ref={numRef}>{FORMAT.format(value)}</span>
             <span className="text-red-hot">{suffix}</span>
           </p>
-          <p className="eyebrow mt-2">{label}</p>
+          {showLabel ? <p className="eyebrow mt-2">{label}</p> : null}
         </div>
       </div>
     </div>
