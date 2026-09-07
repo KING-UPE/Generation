@@ -68,12 +68,19 @@ export default function Hero() {
          scroll position Lenis had already spent a second easing — the two lags
          run in series, so the hero was still drifting well after the page had
          stopped. 0.25 is enough to absorb jitter between scroll events without
-         being seen as the section failing to settle. */
+         being seen as the section failing to settle.
+
+         Ends at 40% of the hero rather than at its bottom. Against a full
+         viewport the wordmark was still fading a screen after the frame had
+         finished opening out, and the tower's own drop waits on this copy
+         clearing — so the reader spent 700px scrolling a picture that had
+         stopped moving before anything happened. The title now leaves as the
+         frame opens, and the drop follows it. */
       const heroTl = gsap.timeline({
         scrollTrigger: {
           trigger: root,
           start: "top top",
-          end: "bottom top",
+          end: "top+=40% top",
           scrub: 0.25,
         },
       });

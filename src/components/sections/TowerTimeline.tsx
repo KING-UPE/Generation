@@ -93,10 +93,10 @@ const SEEK_LERP = 0.22;
  * from INTRO_END to SHOW_T rather than the full 16.4 — a quarter less, which
  * is a quarter less runway at the same pixels per frame.
  *
- * 360 is that: about 720px held for the hero's exit, then ~1610px of scrub for
- * 12.2s, which is the same 132px per second of footage the section has always
- * run at. Going to 420 to protect the old figure was overpaying, and a page
- * this long cannot afford a screen of scroll that buys nothing.
+ * 300 is that: ~180px held while the hero's copy leaves, then ~1620px of scrub
+ * for 12.2s, which is the same 132px per second of footage the section has
+ * always run at. The hold shrank with the hero runway — it only has to cover
+ * the title going up, not a whole viewport of waiting.
  *
  * At 340 the sequence spanned 2240px and 3.75px per frame — half again as many
  * frames per second at every scroll speed, and roughly 480px of scroll per
@@ -104,7 +104,7 @@ const SEEK_LERP = 0.22;
  * more smoothness at the cost of dwell time; the cue times are all in video
  * seconds, so they follow this automatically and nothing needs re-timing.
  */
-const EDITIONS_RUNWAY = 360;
+const EDITIONS_RUNWAY = 300;
 
 /**
  * Frame rate of the encode above. The cross-fade divides video time into
@@ -719,15 +719,14 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
        * finish clearing until its own bottom reaches the top of the screen, so
        * that is the cue.
        */
-      /* `heroRef` is not the hero — it is the 20vh runway the frame opens
-         across, so its bottom is 180px down and cueing off it fired the shot
-         almost immediately. The hero's own copy fades against the section
-         inside it, over a full viewport, and that is what has to be gone. */
-      const heroSection =
-        heroRef.current?.querySelector<HTMLElement>("#hero") ?? heroRef.current ?? timeline;
-
+      /* The end of the hero runway: the frame has finished opening out and
+         the wordmark has finished leaving, because both are now scrubbed
+         across it. Cueing off the hero section instead put the drop a full
+         viewport later, with the footage frozen at the top of the tower for
+         everything in between — the reader scrolling a still picture waiting
+         for something to happen. */
       const introCue = ScrollTrigger.create({
-        trigger: heroSection,
+        trigger: heroRef.current ?? timeline,
         start: "bottom top",
         end: "bottom top",
         onEnter: () => playIntro(st.progress),
@@ -1117,11 +1116,13 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         </div>
       </div>
 
-      {/* Pulled up over the pinned frame: 20vh scroll runway for swift, responsive stage expansion */}
+      {/* Pulled up over the pinned frame. 40vh of runway: the stage expands
+          across it and the hero's copy leaves across the same stretch, so the
+          two read as one move and the drop can follow immediately. */}
       <div
         ref={heroRef}
         className="relative"
-        style={{ marginTop: "-100svh", height: "20vh" }}
+        style={{ marginTop: "-100svh", height: "40vh" }}
       >
         <div className="h-[100svh] w-full overflow-hidden">{children}</div>
       </div>
