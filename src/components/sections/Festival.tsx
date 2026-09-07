@@ -191,8 +191,8 @@ export default function Festival() {
 
   useReveal(deckRef, { children: true, stagger: 0.12 });
 
-  // Default active card is the center card (02 Education Stalls) so one card is naturally highlighted on load
-  const activeIndex = hovered !== null ? hovered : 1;
+  // Only active when hovered; no card is permanently active by default
+  const activeIndex = hovered;
 
   return (
     <section
