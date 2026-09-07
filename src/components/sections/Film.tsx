@@ -36,6 +36,21 @@ const RATE_SOUND = 1;
 const OPEN_AFTER = 140;
 
 /**
+ * Where the lock lands, taken from the timeline instead of guessed at.
+ *
+ * `--fp` reaches 0 — the tablet fully open — at 0.82 on a timeline running to
+ * about 1.03, so progress 0.796. The old threshold of 0.70 sat before that:
+ * once the scroll stopped there the scrub settled on a frame still a couple of
+ * per cent inset, so what got held was never quite the full-bleed video. The
+ * dwell puts the lock just inside the trailing spacer, which exists for it.
+ *
+ * Derived at runtime from `tl.duration()` so retuning the timeline cannot
+ * quietly leave this pointing at the wrong moment.
+ */
+const FRAME_OPEN_AT = 0.82;
+const LOCK_DWELL = 0.04;
+
+/**
  * Where it folds back into the tablet on the way up. This sits inside the
  * pinned range, not at the section edge — closing at the edge meant the stage
  * was already unsticking, so the fold-back happened off screen. The gap to
@@ -144,15 +159,48 @@ export default function Film() {
         if (lockSafetyTimer) clearTimeout(lockSafetyTimer);
         if (!locked) return;
         locked = false;
-        smoothScroll.current?.start();
+        const lenis = smoothScroll.current;
+        if (!lenis) return;
+        /* Kill an in-flight settle first. Without this it keeps pulling back
+           toward the lock point after the viewer has asked to leave, which
+           reads as the page refusing to let go. */
+        lenis.scrollTo(lenis.animatedScroll, { immediate: true, force: true });
+        lenis.start();
       };
+
+      /** Progress at which the frame is open and the hold should begin. */
+      const lockProgress = () =>
+        Math.min(0.98, FRAME_OPEN_AT / (tl.duration() || 1) + LOCK_DWELL);
 
       const lock = () => {
         if (reduced || finished || locked) return;
         const lenis = smoothScroll.current;
         if (!lenis) return;
         locked = true;
-        lenis.stop();
+
+        /* Settle onto the exact lock point before freezing.
+         *
+         * `onUpdate` runs once a frame, and a fast flick covers a lot of
+         * ground inside one: by the time the threshold is seen the scroll is
+         * already past it — on a phone far enough to have come out from under
+         * the sticky stage and shown what sits below the video. Stopping there
+         * froze that overshoot, so where it locked depended on how hard the
+         * swipe was. Easing back to the computed position lands the same frame
+         * every time. */
+        const st = tl.scrollTrigger;
+        const y = st ? st.start + lockProgress() * (st.end - st.start) : null;
+        if (y !== null && Math.abs(lenis.animatedScroll - y) > 2) {
+          lenis.scrollTo(y, {
+            duration: 0.35,
+            lock: true,
+            force: true,
+            onComplete: () => {
+              if (locked) lenis.stop();
+            },
+          });
+        } else {
+          lenis.stop();
+        }
 
         // Safety fallback: if video is blocked by mobile autoplay restrictions, unlock after 3.5s
         if (lockSafetyTimer) clearTimeout(lockSafetyTimer);
@@ -378,7 +426,7 @@ export default function Film() {
             }
 
             // Always lock when going down into the full video until it totally ends
-            if (self.progress >= 0.70 && !finished && !locked) {
+            if (self.progress >= lockProgress() && !finished && !locked) {
               lock();
             }
           },
