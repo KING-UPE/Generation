@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { gsap } from "@/lib/gsap";
 import { smoothScroll } from "@/lib/smooth-scroll";
+import { PRELOAD_MEDIA, resolveMedia } from "@/lib/media-cache";
 
 const VIDEO_SRC = "/Tower.seek.mp4";
 /* Only used if the server withholds content-length; the real size is read from
@@ -53,35 +54,76 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
     };
     window.addEventListener("tower:ready", onTowerReady, { once: true });
 
-    // 1. Fetch the video footage with real-time stream tracking
-    const downloadVideo = async () => {
+    /* 1. Fetch every piece of footage in full, tracking real bytes.
+     *
+     * Both files are kept as blobs and handed to the players as object URLs.
+     * Counting bytes and throwing them away would leave the players to fetch
+     * again — and these are served `max-age=0`, so that second fetch
+     * revalidates rather than being free. Holding the bytes is what actually
+     * guarantees nothing touches the network once the page is running, which
+     * is the whole point of waiting here. */
+    const downloadAll = async () => {
+      const sizes = new Array(PRELOAD_MEDIA.length).fill(0);
+      const got = new Array(PRELOAD_MEDIA.length).fill(0);
+      const urls: Record<string, string> = {};
+
+      const progress = () => {
+        const total = sizes.reduce((a, b) => a + b, 0);
+        const done = got.reduce((a, b) => a + b, 0);
+        if (total > 0) actualLoaded = Math.min(100, (done / total) * 100);
+      };
+
       try {
-        const response = await fetch(VIDEO_SRC);
-        if (!response.ok) throw new Error("Video fetch failed");
+        /* Sized first so the bar reflects the whole job from the start rather
+           than jumping when the second file appears. */
+        const responses = await Promise.all(
+          PRELOAD_MEDIA.map(async (path, i) => {
+            const res = await fetch(path);
+            if (!res.ok) throw new Error(`fetch ${path}`);
+            const len = res.headers.get("content-length");
+            sizes[i] = len ? parseInt(len, 10) : ESTIMATED_SIZE;
+            return res;
+          }),
+        );
 
-        const contentLength = response.headers.get("content-length");
-        const total = contentLength ? parseInt(contentLength, 10) : ESTIMATED_SIZE;
+        await Promise.all(
+          responses.map(async (res, i) => {
+            const reader = res.body?.getReader();
+            if (!reader) {
+              const blob = await res.blob();
+              got[i] = sizes[i];
+              urls[PRELOAD_MEDIA[i]] = URL.createObjectURL(blob);
+              progress();
+              return;
+            }
+            const chunks: BlobPart[] = [];
+            for (;;) {
+              const { done, value } = await reader.read();
+              if (done || isCancelled) break;
+              chunks.push(value);
+              got[i] += value.length;
+              progress();
+            }
+            urls[PRELOAD_MEDIA[i]] = URL.createObjectURL(new Blob(chunks));
+          }),
+        );
 
-        const reader = response.body?.getReader();
-        if (!reader) throw new Error("No reader");
-
-        let received = 0;
-        while (!isCancelled) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          received += value.length;
-          actualLoaded = Math.min(100, (received / total) * 100);
-        }
-      } catch (err) {
-        // Fallback simulation if fetch stream fails or is blocked
+        if (!isCancelled) resolveMedia(urls);
+      } catch {
+        /* Blocked, offline, or out of memory — let the players fall back to
+           the plain paths rather than leaving them without a source. */
+        resolveMedia({});
         actualLoaded = 100;
       }
     };
 
-    downloadVideo();
+    downloadAll();
 
     // 2. Fallback timer: ensure preloader never gets stuck regardless of network conditions
     const fallbackTimer = setTimeout(() => {
+      /* Never trap anyone behind a bad connection: release the page and let
+         the players stream from the network as they used to. */
+      resolveMedia({});
       actualLoaded = 100;
       towerReadyRef.current = true;
     }, LOAD_TIMEOUT_MS);

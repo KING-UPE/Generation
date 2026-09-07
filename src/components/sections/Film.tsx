@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
+import { mediaSrc, onMediaResolved } from "@/lib/media-cache";
 import LitTitle from "@/components/ui/LitTitle";
 import RevealText from "@/components/ui/RevealText";
 import { smoothScroll } from "@/lib/smooth-scroll";
@@ -318,21 +319,15 @@ export default function Film() {
       gsap.set(video, { scale: 1.12 });
       gsap.set(uiRef.current, { opacity: 0 });
 
-      /* Start fetching a screenful early. `preload="metadata"` keeps the file
-         off the initial load, but arriving at a cold video would just move the
-         stall rather than remove it. A viewport of warning is enough to have
-         it buffered by the time it is pinned, and it still does not compete
-         with the tower footage for bandwidth on the way in. */
-      const warmer = ScrollTrigger.create({
-        trigger: section,
-        start: "top bottom+=100%",
-        once: true,
-        onEnter: () => {
-          if (video.preload !== "auto") {
-            video.preload = "auto";
-            video.load();
-          }
-        },
+      /* Take the preloaded bytes as soon as they exist. No scroll-triggered
+         warming any more: the file is already downloaded by the time the page
+         is shown, so there is nothing left to fetch on approach. */
+      const stopWaiting = onMediaResolved(() => {
+        const src = mediaSrc(SRC);
+        if (video.getAttribute("src") !== src) {
+          video.src = src;
+          video.load();
+        }
       });
 
       // Bidirectional Scrubbed Timeline:
@@ -385,7 +380,7 @@ export default function Film() {
         .to({}, { duration: 0.18 });
 
       return () => {
-        warmer.kill();
+        stopWaiting();
         tl.kill();
         teardown();
       };
@@ -433,16 +428,14 @@ export default function Film() {
           <video
             ref={videoRef}
             className="absolute inset-0 h-full w-full object-cover will-change-transform"
-            src={SRC}
+
             muted
             autoPlay
             playsInline
-            /* `metadata`, not `auto`. Two videos preloading in full is 23MB
-               and two decoder sessions held at once, which phones ration; this
-               one sits far below the fold and has a whole page of scrolling
-               before it is needed, so it costs nothing to let it fetch when
-               it is actually approached. */
-            preload="metadata"
+            /* No `src` and no preloading here: the preloader fetches this
+               file up front and hands over the bytes, so anything set in the
+               markup would only start a second download of the same 10MB. */
+            preload="none"
           />
           <div className="pointer-events-none absolute inset-0 bg-black/25" />
         </div>

@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
+import { mediaSrc, onMediaResolved } from "@/lib/media-cache";
 
 /**
  * The seek-optimised build of the RIFE footage.
@@ -311,10 +312,16 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         }
       };
 
-      if (!video.getAttribute("src")) {
-        video.src = SRC;
-        video.load();
-      }
+      /* Wait for the preloader to settle, then take whatever it resolved —
+         an object URL over its own download, or the plain path if it could
+         not finish. It always settles, so this always runs. */
+      const stopWaiting = onMediaResolved(() => {
+        const src = mediaSrc(SRC);
+        if (video.getAttribute("src") !== src) {
+          video.src = src;
+          video.load();
+        }
+      });
 
       if (video.readyState >= 2) {
         markReady();
@@ -774,6 +781,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         framer.kill();
         exit.scrollTrigger?.kill();
         exit.kill();
+        stopWaiting();
         video.removeEventListener("seeked", onSeeked);
         primeEvents.forEach((e) => window.removeEventListener(e, prime));
         gsap.ticker.remove(tick);
@@ -810,9 +818,11 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
             style={{ opacity: 0 }}
             aria-hidden
           />
+          {/* No `src` here on purpose. The preloader downloads this file and
+              hands over the bytes; a src in the markup would start a second,
+              competing download of the same 12MB. */}
           <video
             ref={videoRef}
-            src={SRC}
             className="absolute inset-0 h-full w-full object-cover"
             muted
             playsInline
