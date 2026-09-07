@@ -39,46 +39,52 @@ type Wave = {
  *
  * Fills are kept low. Bands at full strength flood the panel into an even red
  * and the crests stop reading at all.
+ *
+ * Speeds and amplitudes are set so the travel is actually visible. They used to
+ * sit around 0.1 and 0.05, which moved the slowest crest less than a pixel a
+ * second — real motion, and completely invisible under a 28px blur. The field
+ * looked like a still image. These carry the crests tens of pixels a second,
+ * which is a slow swell rather than a ripple, but one you can see happening.
  */
 const WAVES: Wave[] = [
   {
     y: 0.08,
     thickness: 0.62,
-    amp: 0.06,
-    amp2: 0.026,
+    amp: 0.085,
+    amp2: 0.042,
     freq: 0.9,
     freq2: 1.7,
-    speed: 0.09,
+    speed: 0.24,
     fill: "rgba(255,46,46,0.4)",
   },
   {
     y: 0.40,
     thickness: 0.46,
-    amp: 0.045,
-    amp2: 0.02,
+    amp: 0.07,
+    amp2: 0.034,
     freq: 1.25,
     freq2: 2.3,
-    speed: -0.12,
+    speed: -0.3,
     fill: "rgba(225,6,0,0.42)",
   },
   {
     y: 0.74,
     thickness: 0.58,
-    amp: 0.055,
-    amp2: 0.024,
+    amp: 0.08,
+    amp2: 0.04,
     freq: 0.7,
     freq2: 1.9,
-    speed: 0.07,
+    speed: 0.2,
     fill: "rgba(214,6,28,0.48)",
   },
   {
     y: 0.98,
     thickness: 0.46,
-    amp: 0.045,
-    amp2: 0.02,
+    amp: 0.065,
+    amp2: 0.03,
     freq: 1.5,
     freq2: 2.6,
-    speed: -0.1,
+    speed: -0.27,
     fill: "rgba(168,3,22,0.44)",
   },
 ];
@@ -104,7 +110,7 @@ const MASS = {
   /** Two perturbations of the radius, so the outline is never an ellipse. */
   wobble: 0.16,
   wobble2: 0.085,
-  speed: 0.05,
+  speed: 0.12,
 };
 
 /** Band opacity with the pointer nowhere near it, and directly on it. */
