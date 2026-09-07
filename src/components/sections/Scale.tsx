@@ -1,16 +1,23 @@
 import LitTitle from "@/components/ui/LitTitle";
 import ScrollCopy from "@/components/ui/ScrollCopy";
 import CountFigure from "@/components/ui/CountFigure";
+import {
+  IconStudents,
+  IconYouTube,
+  IconTelegram,
+  IconFacebook,
+  IconTikTok,
+} from "@/components/ui/icons";
 
 const TITLE_SIZE = "text-[clamp(2.6rem,7.5vw,8.5rem)] leading-[0.9] tracking-[-0.025em]";
 
 /** ECheM's standing audience, before a single ticket moves. */
 const FIGURES = [
-  { value: 20000, label: "Students" },
-  { value: 325000, label: "YouTube" },
-  { value: 209000, label: "Telegram" },
-  { value: 86000, label: "Facebook" },
-  { value: 41000, label: "TikTok" },
+  { value: 20000, label: "Students", icon: <IconStudents /> },
+  { value: 325000, label: "YouTube", icon: <IconYouTube /> },
+  { value: 209000, label: "Telegram", icon: <IconTelegram /> },
+  { value: 86000, label: "Facebook", icon: <IconFacebook /> },
+  { value: 41000, label: "TikTok", icon: <IconTikTok /> },
 ];
 
 export default function Scale() {
@@ -37,6 +44,7 @@ export default function Scale() {
             <CountFigure
               key={f.label}
               value={f.value}
+              icon={f.icon}
               label={f.label}
               className="border-t border-hairline pt-5"
             />

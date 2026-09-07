@@ -1,15 +1,22 @@
 import LitTitle from "@/components/ui/LitTitle";
 import ScrollCopy from "@/components/ui/ScrollCopy";
 import CountFigure from "@/components/ui/CountFigure";
+import {
+  IconReach,
+  IconRoom,
+  IconLivestream,
+  IconSocial,
+  IconElsewhere,
+} from "@/components/ui/icons";
 
 const TITLE_SIZE = "text-[clamp(2.6rem,7.5vw,8.5rem)] leading-[0.9] tracking-[-0.025em]";
 
 /** The 26 outlook, broken out of the headline figure. */
 const SPLIT = [
-  { value: 13500, label: "In the room" },
-  { value: 240000, label: "Livestream" },
-  { value: 300000, label: "Social" },
-  { value: 200000, label: "Elsewhere" },
+  { value: 13500, label: "In the room", icon: <IconRoom /> },
+  { value: 240000, label: "Livestream", icon: <IconLivestream /> },
+  { value: 300000, label: "Social", icon: <IconSocial /> },
+  { value: 200000, label: "Elsewhere", icon: <IconElsewhere /> },
 ];
 
 export default function Projection() {
@@ -33,6 +40,7 @@ export default function Projection() {
 
         <CountFigure
           value={650000}
+          icon={<IconReach className="h-8 w-8" />}
           label="Total reach and engagement"
           size="clamp(3rem, 11vw, 8.5rem)"
           className="mt-14 md:mt-20"
@@ -43,6 +51,7 @@ export default function Projection() {
             <CountFigure
               key={s.label}
               value={s.value}
+              icon={s.icon}
               label={s.label}
               className="border-t border-hairline pt-5"
             />

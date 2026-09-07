@@ -6,6 +6,12 @@ import { gsap, useGSAP } from "@/lib/gsap";
 type Props = {
   /** The figure itself. Rendered server-side, then counted up to on scroll-in. */
   value: number;
+  /**
+   * Sits above the number so the row can be read at a glance rather than as a
+   * column of digits. Decorative — the label under it carries the meaning, and
+   * every mark is aria-hidden.
+   */
+  icon?: React.ReactNode;
   /** Sits after the number in red. Every figure we publish is a floor, not a total. */
   suffix?: string;
   label: string;
@@ -32,6 +38,7 @@ const FORMAT = new Intl.NumberFormat("en-US");
  */
 export default function CountFigure({
   value,
+  icon,
   suffix = "+",
   label,
   size = "clamp(1.75rem, 3.6vw, 2.9rem)",
@@ -69,6 +76,8 @@ export default function CountFigure({
 
   return (
     <div ref={rootRef} className={className}>
+      {/* inline-flex, so a centred column centres the mark too */}
+      {icon ? <span className="mb-4 inline-flex text-red-hot">{icon}</span> : null}
       <p
         className="font-display leading-[0.9] tracking-[-0.02em] text-bone tabular-nums"
         style={{ fontSize: size }}
