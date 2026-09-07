@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Anton, Inter_Tight, JetBrains_Mono } from "next/font/google";
+import { Anton, Inter_Tight, JetBrains_Mono, Noto_Sans_Sinhala } from "next/font/google";
 import "./globals.css";
 
 import SmoothScroll from "@/components/providers/SmoothScroll";
@@ -38,6 +38,21 @@ const interTight = Inter_Tight({
 const jetbrains = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-jetbrains",
+  display: "swap",
+});
+
+/**
+ * The Sinhala face, for the auditions copy.
+ *
+ * None of the three families above carry Sinhala glyphs, so without this the
+ * block renders in whatever the device happens to ship — Nirmala UI on Windows,
+ * something else on Android — and the line rhythm changes per platform. Declared
+ * here because a font has to be in the root layout to expose its variable, but
+ * the files are only fetched by a page that actually paints Sinhala.
+ */
+const notoSinhala = Noto_Sans_Sinhala({
+  subsets: ["sinhala"],
+  variable: "--font-sinhala",
   display: "swap",
 });
 
@@ -157,7 +172,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${anton.variable} ${interTight.variable} ${jetbrains.variable} h-full antialiased`}
+      className={`${anton.variable} ${interTight.variable} ${jetbrains.variable} ${notoSinhala.variable} h-full antialiased`}
     >
       {/* No background here: it is set on <html>, so the hero footage can sit on a
           negative z-index and still be seen. */}

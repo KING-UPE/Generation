@@ -92,6 +92,16 @@ html.lenis, html.lenis body { height: auto; }
 .font-mono-ui { font-family: var(--font-jetbrains), ui-monospace, monospace; }
 
 /*
+ * Sinhala first, Inter Tight behind it. The two scripts sit side by side in the
+ * auditions copy — "Batch එක", "Student ID එක" — and only the sinhala subset of
+ * Noto is loaded, so its @font-face covers no Latin codepoints and those words
+ * fall through to the body face instead of switching colour mid-sentence.
+ */
+.font-sinhala {
+  font-family: var(--font-sinhala), var(--font-inter-tight), system-ui, sans-serif;
+}
+
+/*
  * Labels sat at 10px on every screen: the vw term in the old clamp only reached
  * 10.4px at 1440 wide, so the 0.625rem floor was doing all the work. At that
  * size, with 0.28em tracking, "Venue" and "Crowd" were hard to read on a phone.

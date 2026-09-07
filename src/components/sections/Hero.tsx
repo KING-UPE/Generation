@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Link from "next/link";
 import { gsap, useGSAP } from "@/lib/gsap";
 import { useTorch } from "@/lib/use-torch";
 import Spotlight from "@/components/ui/Spotlight";
@@ -22,6 +23,7 @@ export default function Hero() {
   const headerRef = useRef<HTMLElement>(null);
   const markRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLDivElement>(null);
+  const ctaRef = useRef<HTMLDivElement>(null);
   const torchRef = useRef<HTMLSpanElement>(null);
   const cueRef = useRef<HTMLSpanElement>(null);
   const [torchActive, setTorchActive] = useState(false);
@@ -45,6 +47,17 @@ export default function Hero() {
           delay: 1.3,
           ease: "gen",
           onComplete: () => setTorchActive(true),
+        });
+      }
+
+      /* Lands with the line beside it rather than on its own beat. */
+      if (ctaRef.current) {
+        gsap.from(ctaRef.current, {
+          opacity: 0,
+          y: 18,
+          duration: reduced ? 0 : 0.9,
+          delay: reduced ? 0 : 1.05,
+          ease: "gen",
         });
       }
 
@@ -156,11 +169,30 @@ export default function Hero() {
 
         <div
           ref={footerRef}
-          className="mt-6 flex items-center justify-between gap-8 md:mt-14 will-change-transform"
+          className="mt-6 flex flex-wrap items-center justify-between gap-x-8 gap-y-6 md:mt-14 will-change-transform"
         >
           <RevealText as="p" delay={0.95} start="top 100%" className="eyebrow">
             The 2026 edition
           </RevealText>
+
+          <div ref={ctaRef}>
+            <Magnetic strength={16}>
+              <Link
+                href="/auditions"
+                scroll={false}
+                data-cursor="link"
+                className="cut-btn group gap-3 px-8 py-4 text-white"
+              >
+                Auditions
+                <span
+                  aria-hidden
+                  className="transition-transform duration-500 group-hover:translate-x-1"
+                >
+                  →
+                </span>
+              </Link>
+            </Magnetic>
+          </div>
         </div>
       </div>
 
