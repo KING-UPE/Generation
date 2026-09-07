@@ -261,29 +261,37 @@ export default function GlowField({ blur = 28, className = "" }: Props) {
       }
 
       /*
-       * Only animate what someone is looking at — but start running and let the
-       * observer park it, never the other way round. Gated the other way, a
-       * callback that is slow or never arrives leaves the waves frozen on their
-       * first frame, and a background optimisation has quietly become a bug.
+       * Only pay for what someone is looking at — the blur is wide and every
+       * path is rewritten each frame, and there is no reason to spend that
+       * eight thousand pixels up the page.
+       *
+       * The check is a rect read on the ticker, not an IntersectionObserver.
+       * An observer has to hand the work back when the panel returns, and every
+       * redraw in here lives inside this tick — so if that one callback is slow,
+       * throttled or dropped, the waves stay frozen on the frame they were
+       * parked at and the pointer does nothing, because the handler only writes
+       * to `state` and something else has to draw it. Measured mid-session: the
+       * ticker detached with the panel on screen, one frame drawn, hover dead.
+       * Reading the rect four times a second cannot miss the panel coming back,
+       * and costs nothing beside the paint it is guarding.
        */
-      let running = true;
-      const tick = (time: number) => draw(time);
-      gsap.ticker.add(tick);
+      let visible = true;
+      let sinceCheck = 0;
 
-      const io = new IntersectionObserver(
-        ([entry]) => {
-          if (!entry || entry.isIntersecting === running) return;
-          running = entry.isIntersecting;
-          if (running) gsap.ticker.add(tick);
-          else gsap.ticker.remove(tick);
-        },
-        { rootMargin: "20% 0px" },
-      );
-      io.observe(parent);
+      const tick = (time: number, delta: number) => {
+        sinceCheck += delta;
+        if (sinceCheck >= 250) {
+          sinceCheck = 0;
+          const r = parent.getBoundingClientRect();
+          const margin = window.innerHeight * 0.2;
+          visible = r.bottom > -margin && r.top < window.innerHeight + margin;
+        }
+        if (visible) draw(time);
+      };
+      gsap.ticker.add(tick);
 
       const teardown = () => {
         ro.disconnect();
-        io.disconnect();
         gsap.ticker.remove(tick);
       };
 
