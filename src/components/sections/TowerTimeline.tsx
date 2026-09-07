@@ -337,13 +337,45 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         }
       });
 
-      if (video.readyState >= 2) {
-        markReady();
-      } else {
-        video.addEventListener("canplay", markReady, { once: true });
+      /**
+       * Ready means a frame exists, not that the header parsed.
+       *
+       * This used to also fire on `loadedmetadata`, which is readyState 1: the
+       * container has been read and nothing has been decoded. The preloader
+       * took that as done and lifted, so the page arrived with the tower still
+       * blank for a moment while the first frame was decoded — which looked
+       * like the video failing to load rather than the loader leaving early.
+       *
+       * `requestVideoFrameCallback` is the only signal that a frame has
+       * actually been presented; `loadeddata` (readyState 2, first frame
+       * available) is the fallback where it does not exist. A seek to 0 is
+       * issued alongside, because a paused element will happily sit on
+       * metadata without ever decoding anything to show.
+       */
+      type WithRVFC = HTMLVideoElement & {
+        requestVideoFrameCallback?: (cb: () => void) => number;
+      };
+      const armReady = () => {
+        if (video.readyState >= 2) {
+          markReady();
+          return;
+        }
+        const rvfc = (video as WithRVFC).requestVideoFrameCallback;
+        if (typeof rvfc === "function") {
+          rvfc.call(video, () => markReady());
+        }
         video.addEventListener("loadeddata", markReady, { once: true });
-        video.addEventListener("loadedmetadata", markReady, { once: true });
-      }
+        video.addEventListener("canplay", markReady, { once: true });
+        /* Nudge the decoder into producing that first frame. */
+        video.addEventListener(
+          "loadedmetadata",
+          () => {
+            if (video.currentTime === 0) video.currentTime = 0.001;
+          },
+          { once: true },
+        );
+      };
+      armReady();
 
       let target = 0;
       let current = 0;

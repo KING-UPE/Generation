@@ -142,8 +142,11 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
     }, LOAD_TIMEOUT_MS);
 
     // 3. Smooth animation ticker for progress counter
+    let lastTickAt = performance.now();
+
     const tick = () => {
       if (isCancelled) return;
+      lastTickAt = performance.now();
 
       // Cap at 95% until the DOM video is actually decoded and ready to render
       const maxTarget = towerReadyRef.current ? 100 : Math.min(95, actualLoaded);
@@ -177,8 +180,28 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
 
     requestAnimationFrame(tick);
 
+    /* The counter above rides requestAnimationFrame, which a browser stops
+       delivering to a backgrounded tab. Switch apps mid-load and the bar
+       freezes, then the page is still sitting behind it on return. If the
+       frames have stopped arriving while everything is in fact loaded, finish
+       without them. */
+    const stallGuard = setInterval(() => {
+      if (
+        !isCancelled &&
+        performance.now() - lastTickAt > 1200 &&
+        towerReadyRef.current &&
+        actualLoaded >= 99
+      ) {
+        progressVal.current = 100;
+        setProgress(100);
+        setIsReady(true);
+        clearInterval(stallGuard);
+      }
+    }, 600);
+
     return () => {
       isCancelled = true;
+      clearInterval(stallGuard);
       window.removeEventListener("tower:ready", onTowerReady);
       clearTimeout(fallbackTimer);
     };
