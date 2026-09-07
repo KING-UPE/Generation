@@ -174,8 +174,30 @@ const CARDS_END = 15.5;
  * deliberately equal — 7.4 vs 7.5 seconds of footage per unit of scroll — so
  * the only speed change is through the part where nothing is moving anyway.
  */
+/**
+ * Where the played opening ends and the scroll takes over.
+ *
+ * Past the 2023 card's cue at 2.6 rather than stopping on it, so the card is up
+ * and has been held for a beat before anyone has to scroll for it — the drop
+ * and the first edition read as one shot instead of a shot that stops dead the
+ * instant its subject appears. Short of the 2024 card at 6.0, which is where
+ * the section becomes a list and the reader should be setting the pace.
+ *
+ * Everything before this is played rather than scrubbed, so it is also the
+ * first knot of the map below: the scroll picks the footage up here, and these
+ * seconds never belong to a scroll position at all.
+ */
+const INTRO_END = 4.2;
+
+/**
+ * How long that takes, in seconds. It is a shot, not a scrub, so it runs at a
+ * fixed rate no matter how the reader arrived — about 3x the footage's own
+ * speed, which is brisk without tearing through the descent.
+ */
+const INTRO_PLAY = 1.35;
+
 const EDITION_MAP: ReadonlyArray<readonly [number, number]> = [
-  [0, 0], [0.81, 12.0], [0.86, 14.3], [1, SHOW_T],
+  [0, INTRO_END], [0.81, 12.0], [0.86, 14.3], [1, SHOW_T],
 ];
 
 function editionTime(p: number) {
@@ -221,6 +243,10 @@ const smoothstep = (v: number) => v * v * (3 - 2 * v);
 const EDITIONS = [
   {
     year: "2023",
+    /* Its own cue in the footage, deliberately not INTRO_END. The played
+       opening runs past this so the card is up and held before the reader has
+       to scroll; tying the two together moved the cue every time that shot was
+       lengthened, and left the card sitting at half opacity when it stopped. */
     at: 2.6,
     venue: "Maharagama Youth Centre",
     crowd: "2,000+",
@@ -510,8 +536,49 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
 
       let inShowcaseMode = false;
 
+      /*
+       * The drop to the base plays; it is not scrubbed.
+       *
+       * Tying it to scroll made the one genuinely cinematic move in the section
+       * hostage to how fast someone happened to be turning a wheel — and at
+       * reading pace that is a slideshow, which is the whole problem
+       * EDITIONS_RUNWAY exists to manage. So the footage from the top of the
+       * tower down to the 2023 card runs at its own fixed rate the moment the
+       * section arrives, and the scroll map starts at INTRO_END rather than 0.
+       * Those seconds are a shot, and a shot has a speed.
+       *
+       * `ease: "none"` on purpose: `current` already chases this through
+       * SEEK_LERP, and easing a value that is itself being eased is how this
+       * file has produced drift every previous time.
+       */
+      const introHead = { t: 0 };
+      let introTween: gsap.core.Tween | null = null;
+      let introRunning = false;
+      let introDone = false;
+
+      const playIntro = () => {
+        if (introDone || introRunning) return;
+        introRunning = true;
+        introHead.t = 0;
+        target = 0;
+        introTween = gsap.to(introHead, {
+          t: INTRO_END,
+          duration: INTRO_PLAY,
+          ease: "none",
+          onUpdate: () => {
+            target = introHead.t;
+          },
+          onComplete: () => {
+            introRunning = false;
+            introDone = true;
+          },
+        });
+      };
+
       const setEditions = (p: number) => {
         if (inShowcaseMode) return;
+        /* The tween owns video time until it lets go. */
+        if (introRunning) return;
         target = Math.max(0, Math.min(SHOW_T, editionTime(p)));
       };
 
@@ -529,6 +596,27 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         start: "top top",
         end: "bottom bottom",
         onUpdate: (self) => setEditions(self.progress),
+        /*
+         * Only play it to someone who is actually at the top of the section. A
+         * reader who arrives already scrolled into the editions — a refresh
+         * part way down, a jump from the rail — would otherwise watch the drop
+         * play and then have the footage snap forward to wherever they are.
+         *
+         * If this never fires, `introDone` stays false and nothing plays, but
+         * the map still starts at INTRO_END, so the section works and simply
+         * opens on the 2023 card. Losing the shot is the failure; a stuck
+         * section is not.
+         */
+        onEnter: (self) => {
+          if (self.progress < 0.06) playIntro();
+          else introDone = true;
+        },
+        onLeaveBack: () => {
+          introTween?.kill();
+          introRunning = false;
+          introDone = false;
+          target = 0;
+        },
       });
 
       const shower = ScrollTrigger.create({
