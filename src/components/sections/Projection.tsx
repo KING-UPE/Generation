@@ -21,7 +21,7 @@ const SPLIT = [
   { value: 200000, label: "Elsewhere", icon: <IconElsewhere /> },
 ];
 
-const TITLE_SIZE = "text-[clamp(2.4rem,5.6vw,6rem)] leading-[0.9] tracking-[-0.025em]";
+const TITLE_SIZE = "text-[clamp(2.4rem,6.4vw,7rem)] leading-[0.9] tracking-[-0.025em]";
 
 export default function Projection() {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -41,7 +41,10 @@ export default function Projection() {
         >
           <GlowField />
 
-          <div className="relative grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
+          {/* Not two equal columns: "Projection" is one word, and given half a
+                1264px panel it left a 288px void between its last letter and the
+                figures. The headline column is sized to what it actually holds. */}
+          <div className="relative grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:items-center lg:gap-12">
             {/* Filled rather than the outline title the other sections use —
                 a hollow face on this much crimson has nothing to read against. */}
             <div ref={headRef}>
@@ -51,7 +54,7 @@ export default function Projection() {
                 Projection
               </h2>
 
-              <ScrollCopy className="mt-5 max-w-[30ch] text-[clamp(0.875rem,1.05vw,1.15rem)] font-medium leading-[1.65] text-bone">
+              <ScrollCopy className="mt-5 max-w-[34ch] text-[clamp(0.875rem,1.05vw,1.15rem)] font-medium leading-[1.65] text-bone">
                 Once in the room. Everywhere else after.
               </ScrollCopy>
             </div>

@@ -97,10 +97,10 @@ const WAVES: Wave[] = [
  * the edge where black meets red is never a fixed line.
  */
 const MASS = {
-  cx: 0.52,
-  cy: 0.46,
-  rx: 0.3,
-  ry: 0.56,
+  cx: 0.54,
+  cy: 0.48,
+  rx: 0.26,
+  ry: 0.44,
   /** Two perturbations of the radius, so the outline is never an ellipse. */
   wobble: 0.1,
   wobble2: 0.055,
