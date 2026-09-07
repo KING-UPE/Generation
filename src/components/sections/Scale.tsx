@@ -99,6 +99,18 @@ const CARDS: Card[] = [
 const CARD_W = 260;
 const STRIP = 200;
 
+/**
+ * Card order for the two-up grid.
+ *
+ * Five cards over two columns leaves one alone on the last row, and that row is
+ * full width — so it goes to whichever figure is widest, which is the one that
+ * most wants the space. Derived rather than written down, so it follows the
+ * numbers if they change. The fan keeps the declared order, where the gradients
+ * run bright to deep across it.
+ */
+const WIDEST = CARDS.reduce((a, b) => (b.value > a.value ? b : a));
+const PHONE_CARDS = [...CARDS.filter((c) => c !== WIDEST), WIDEST];
+
 const EASE = "all 0.45s cubic-bezier(0.16, 1, 0.3, 1)";
 
 function ScaleCard({
@@ -141,7 +153,7 @@ function ScaleCard({
     >
       <span
         aria-hidden
-        className="inline-flex h-9 w-9 items-center justify-center text-white/90 sm:h-11 sm:w-11"
+        className="inline-flex h-12 w-12 items-center justify-center text-white/90"
       >
         {card.icon}
       </span>
@@ -221,12 +233,13 @@ export default function Scale() {
         {/* ── Below that, the same cards two up. Five of them leaves the last
             one alone on its row, which is why it is the widest number. ── */}
         <div className="mt-12 grid grid-cols-2 gap-3 sm:gap-4 lg:hidden">
-          {CARDS.map((card, i) => (
+          {PHONE_CARDS.map((card, i) => (
             <ScaleCard
               key={card.label}
               card={card}
               className={
-                "min-h-[178px] sm:min-h-[200px] " + (i === CARDS.length - 1 ? "col-span-2" : "")
+                "min-h-[190px] sm:min-h-[210px] " +
+                (i === PHONE_CARDS.length - 1 ? "col-span-2" : "")
               }
             />
           ))}
