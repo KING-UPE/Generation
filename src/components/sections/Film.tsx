@@ -10,6 +10,21 @@ import { scrollState } from "@/lib/scroll-state";
 const SRC = "/Video.mp4";
 
 /** Slow-motion feel while silent; real speed if the viewer turns sound on. */
+/**
+ * Ceiling on scroll-driven playback speed.
+ *
+ * A phone decodes this in hardware at its native 30fps comfortably; asking for
+ * 4x means 120fps of decode, which no mobile decoder sustains, and it stalls
+ * rather than speeding up. Desktops have the headroom, so they keep the range.
+ */
+const MAX_RATE_DESKTOP = 4.0;
+const MAX_RATE_MOBILE = 1.8;
+
+/** Smallest change worth writing to `playbackRate`. Every write makes the media
+ *  pipeline resync, and this used to be set from a lerp on every frame — sixty
+ *  resyncs a second, which is itself enough to make playback judder on mobile. */
+const RATE_EPSILON = 0.08;
+
 const RATE_SILENT = 0.7;
 const RATE_SOUND = 1;
 
@@ -107,6 +122,10 @@ export default function Film() {
 
       const baseRate = () => (video.muted ? RATE_SILENT : RATE_SOUND);
       let currentRate = RATE_SILENT;
+      let appliedRate = RATE_SILENT;
+      const maxRate = window.matchMedia("(max-width: 767px)").matches
+        ? MAX_RATE_MOBILE
+        : MAX_RATE_DESKTOP;
 
       const showEndCard = (on: boolean) => {
         if (endRef.current) {
@@ -214,6 +233,7 @@ export default function Film() {
       const onSound = () => {
         video.muted = !video.muted;
         currentRate = baseRate();
+        appliedRate = currentRate;
         video.playbackRate = currentRate;
         if (soundRef.current) {
           soundRef.current.textContent = video.muted ? "Sound off" : "Sound on";
@@ -253,7 +273,11 @@ export default function Film() {
 
           currentRate += (targetSpeed - currentRate) * 0.14;
           if (!video.paused && video.readyState >= 2) {
-            video.playbackRate = Math.max(0.6, Math.min(4.0, currentRate));
+            const next = Math.max(0.6, Math.min(maxRate, currentRate));
+            if (Math.abs(next - appliedRate) > RATE_EPSILON) {
+              appliedRate = next;
+              video.playbackRate = next;
+            }
           }
         } else if (!inView) {
           if (!video.paused) {
@@ -293,6 +317,23 @@ export default function Film() {
       gsap.set(stage, { "--fp": 1 });
       gsap.set(video, { scale: 1.12 });
       gsap.set(uiRef.current, { opacity: 0 });
+
+      /* Start fetching a screenful early. `preload="metadata"` keeps the file
+         off the initial load, but arriving at a cold video would just move the
+         stall rather than remove it. A viewport of warning is enough to have
+         it buffered by the time it is pinned, and it still does not compete
+         with the tower footage for bandwidth on the way in. */
+      const warmer = ScrollTrigger.create({
+        trigger: section,
+        start: "top bottom+=100%",
+        once: true,
+        onEnter: () => {
+          if (video.preload !== "auto") {
+            video.preload = "auto";
+            video.load();
+          }
+        },
+      });
 
       // Bidirectional Scrubbed Timeline:
       // In small tablet screen (progress <= 0.05): stays on first frame (currentTime 0)
@@ -344,6 +385,7 @@ export default function Film() {
         .to({}, { duration: 0.18 });
 
       return () => {
+        warmer.kill();
         tl.kill();
         teardown();
       };
@@ -395,7 +437,12 @@ export default function Film() {
             muted
             autoPlay
             playsInline
-            preload="auto"
+            /* `metadata`, not `auto`. Two videos preloading in full is 23MB
+               and two decoder sessions held at once, which phones ration; this
+               one sits far below the fold and has a whole page of scrolling
+               before it is needed, so it costs nothing to let it fetch when
+               it is actually approached. */
+            preload="metadata"
           />
           <div className="pointer-events-none absolute inset-0 bg-black/25" />
         </div>
