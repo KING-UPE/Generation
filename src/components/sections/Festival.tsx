@@ -9,45 +9,115 @@ const TITLE_SIZE = "text-[clamp(2.6rem,7.5vw,8.5rem)] leading-[0.9] tracking-[-0
 
 /* ── Wireframe 3D Geometric Glyphs ──────────────────────────────────── */
 
-function GlyphOrbitalRings() {
+/** Food Stalls: Gourmet Plate with Crossed Fork & Chef's Knife */
+function GlyphFood() {
   return (
     <svg viewBox="0 0 54 54" fill="none" className="h-full w-full">
-      <ellipse cx="27" cy="27" rx="22" ry="9" stroke="currentColor" strokeWidth="1.3" transform="rotate(-24 27 27)" opacity="0.45" />
-      <ellipse cx="27" cy="27" rx="22" ry="9" stroke="currentColor" strokeWidth="1.3" transform="rotate(34 27 27)" opacity="0.85" />
-      <ellipse cx="27" cy="27" rx="14" ry="6" stroke="currentColor" strokeWidth="1.2" transform="rotate(75 27 27)" opacity="0.6" />
-      <circle cx="27" cy="27" r="3.5" fill="currentColor" opacity="0.9" />
-      <circle cx="43" cy="18" r="1.8" fill="currentColor" />
-      <circle cx="11" cy="36" r="1.8" fill="currentColor" />
+      {/* Gourmet Plate Rims */}
+      <circle cx="27" cy="27" r="21" stroke="currentColor" strokeWidth="1.2" strokeDasharray="3 2.5" opacity="0.35" />
+      <circle cx="27" cy="27" r="16" stroke="currentColor" strokeWidth="1.3" opacity="0.65" />
+      <circle cx="27" cy="27" r="8.5" stroke="currentColor" strokeWidth="1.1" opacity="0.3" />
+
+      {/* Fork (Left) */}
+      <g opacity="0.95">
+        <path d="M19.5 13 v7 c0 2 2.5 2 2.5 0 v-7 M20.7 13 v7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+        <path d="M20.7 21.5 v17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <circle cx="20.7" cy="39.5" r="1.2" fill="currentColor" />
+      </g>
+
+      {/* Chef Knife (Right) */}
+      <g opacity="0.95">
+        <path d="M33.5 13 v11 c0 2.2 -2.5 2.2 -2.5 0 v-11 c1.4 0 2.5 0 2.5 0 Z" stroke="currentColor" strokeWidth="1.3" fill="currentColor" fillOpacity="0.16" strokeLinejoin="round" />
+        <path d="M32.2 25.5 v13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <circle cx="32.2" cy="39.5" r="1.2" fill="currentColor" />
+      </g>
+
+      {/* Culinary Sparkle / Aroma Node */}
+      <circle cx="27" cy="27" r="2.2" fill="currentColor" opacity="0.9" />
+      <path d="M27 8 v-3 M25 6.5 h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.75" />
+      <circle cx="13" cy="27" r="1.4" fill="currentColor" opacity="0.4" />
+      <circle cx="41" cy="27" r="1.4" fill="currentColor" opacity="0.4" />
     </svg>
   );
 }
 
-function GlyphGeodesicSphere() {
+/** Education Stalls: Graduation Mortarboard Cap + Open Knowledge Book */
+function GlyphEducation() {
   return (
     <svg viewBox="0 0 54 54" fill="none" className="h-full w-full">
-      <circle cx="27" cy="27" r="20" stroke="currentColor" strokeWidth="1.3" opacity="0.85" />
-      <ellipse cx="27" cy="27" rx="9.5" ry="20" stroke="currentColor" strokeWidth="1.2" opacity="0.65" />
-      <ellipse cx="27" cy="27" rx="20" ry="9.5" stroke="currentColor" strokeWidth="1.2" opacity="0.65" />
-      <line x1="27" y1="7" x2="27" y2="47" stroke="currentColor" strokeWidth="1.1" opacity="0.4" />
-      <line x1="7" y1="27" x2="47" y2="27" stroke="currentColor" strokeWidth="1.1" opacity="0.4" />
-      <circle cx="27" cy="7" r="2" fill="currentColor" />
-      <circle cx="27" cy="47" r="2" fill="currentColor" />
-      <circle cx="7" cy="27" r="2" fill="currentColor" />
-      <circle cx="47" cy="27" r="2" fill="currentColor" />
+      {/* Graduation Mortarboard (Top) */}
+      <polygon points="27,9 45,16 27,23 9,16" stroke="currentColor" strokeWidth="1.4" fill="currentColor" fillOpacity="0.12" strokeLinejoin="round" opacity="0.95" />
+      {/* Cap Skull */}
+      <path d="M16 19 v6 c0 3.5 22 3.5 22 0 v-6" stroke="currentColor" strokeWidth="1.2" opacity="0.75" />
+      {/* Hanging Tassel & Bead on Left */}
+      <path d="M27 16 L9 20 v8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" opacity="0.9" />
+      <circle cx="9" cy="29" r="1.6" fill="currentColor" />
+
+      {/* Open Knowledge Book (Bottom) */}
+      {/* Left Page */}
+      <path d="M27 34 C21 31, 13 31, 7 33 L7 44 C13 42, 21 42, 27 45 Z" stroke="currentColor" strokeWidth="1.3" fill="currentColor" fillOpacity="0.08" strokeLinejoin="round" opacity="0.9" />
+      {/* Right Page */}
+      <path d="M27 34 C33 31, 41 31, 47 33 L47 44 C41 42, 33 42, 27 45 Z" stroke="currentColor" strokeWidth="1.3" fill="currentColor" fillOpacity="0.08" strokeLinejoin="round" opacity="0.9" />
+      {/* Book Spine */}
+      <line x1="27" y1="34" x2="27" y2="45" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.95" />
+      {/* Subtle Ruled Page Lines */}
+      <line x1="12" y1="36.5" x2="22" y2="35.5" stroke="currentColor" strokeWidth="1" opacity="0.45" />
+      <line x1="12" y1="40" x2="22" y2="39" stroke="currentColor" strokeWidth="1" opacity="0.45" />
+      <line x1="32" y1="35.5" x2="42" y2="36.5" stroke="currentColor" strokeWidth="1" opacity="0.45" />
+      <line x1="32" y1="39" x2="42" y2="40" stroke="currentColor" strokeWidth="1" opacity="0.45" />
     </svg>
   );
 }
 
-function GlyphTesseract() {
+/** Gaming Stalls: Precision Gamepad Controller */
+function GlyphGaming() {
   return (
     <svg viewBox="0 0 54 54" fill="none" className="h-full w-full">
-      <rect x="11" y="11" width="32" height="32" rx="4" stroke="currentColor" strokeWidth="1.3" opacity="0.8" />
-      <rect x="20" y="20" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.3" opacity="0.95" />
-      <line x1="11" y1="11" x2="20" y2="20" stroke="currentColor" strokeWidth="1.2" opacity="0.6" />
-      <line x1="43" y1="11" x2="34" y2="20" stroke="currentColor" strokeWidth="1.2" opacity="0.6" />
-      <line x1="11" y1="43" x2="20" y2="34" stroke="currentColor" strokeWidth="1.2" opacity="0.6" />
-      <line x1="43" y1="43" x2="34" y2="34" stroke="currentColor" strokeWidth="1.2" opacity="0.6" />
-      <circle cx="27" cy="27" r="2" fill="currentColor" />
+      {/* Ergonomic Gamepad Body */}
+      <path
+        d="M15 16 C10 16, 7 21, 8 27 L11 41 C12 45, 17 45, 19 41 L23 34 H31 L35 41 C37 45, 42 45, 43 41 L46 27 C47 21, 44 16, 39 16 C34 16, 32 19, 27 19 C22 19, 20 16, 15 16 Z"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        fill="currentColor"
+        fillOpacity="0.08"
+        strokeLinejoin="round"
+        opacity="0.95"
+      />
+
+      {/* Shoulder Bumpers L1 & R1 */}
+      <path d="M12 13 C12 10.5, 18 10.5, 19 13" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.6" />
+      <path d="M35 13 C36 10.5, 42 10.5, 42 13" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.6" />
+
+      {/* Directional D-Pad (Left) */}
+      <g opacity="0.95">
+        <path
+          d="M17 22 v2.5 h-2.5 v2 h2.5 v2.5 h2 v-2.5 h2.5 v-2 h-2.5 v-2.5 Z"
+          stroke="currentColor"
+          strokeWidth="1.2"
+          fill="currentColor"
+          fillOpacity="0.35"
+          strokeLinejoin="round"
+        />
+      </g>
+
+      {/* Action Buttons: 4 diamond dots (Right) */}
+      <g opacity="0.95">
+        <circle cx="37" cy="22.5" r="1.3" fill="currentColor" />
+        <circle cx="37" cy="28.5" r="1.3" fill="currentColor" />
+        <circle cx="34" cy="25.5" r="1.3" fill="currentColor" />
+        <circle cx="40" cy="25.5" r="1.3" fill="currentColor" />
+      </g>
+
+      {/* Dual Analog Thumbsticks (Center Bottom) */}
+      <g opacity="0.85">
+        <circle cx="21.5" cy="32.5" r="3.2" stroke="currentColor" strokeWidth="1.1" />
+        <circle cx="21.5" cy="32.5" r="1.2" fill="currentColor" />
+        <circle cx="32.5" cy="32.5" r="3.2" stroke="currentColor" strokeWidth="1.1" />
+        <circle cx="32.5" cy="32.5" r="1.2" fill="currentColor" />
+      </g>
+
+      {/* Central LED Status Bar */}
+      <line x1="25" y1="23" x2="29" y2="23" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" opacity="0.8" />
     </svg>
   );
 }
@@ -60,7 +130,7 @@ const STALLS = [
     title: "Food Stalls",
     line: "Artisan food kitchens and beverage stalls along the main walkway, serving 13,500+ attendees from doors open to encore.",
     spec: "High-Traffic Footprint · Power Equipped",
-    icon: <GlyphOrbitalRings />,
+    icon: <GlyphFood />,
     // Asymmetric scattered rotation and drop values
     rotate: -5.6,
     drop: 22,
@@ -71,7 +141,7 @@ const STALLS = [
     title: "Education Stalls",
     line: "University faculties, campuses, and youth programmes with direct face-to-face student engagement all night.",
     spec: "Direct Student Reach · Interactive Setup",
-    icon: <GlyphGeodesicSphere />,
+    icon: <GlyphEducation />,
     rotate: 4.4,
     drop: -10,
     zIndex: 20,
@@ -81,7 +151,7 @@ const STALLS = [
     title: "Gaming Stalls",
     line: "Interactive gaming zones, esports challenges, and open play stations between stage sets on the festival grounds.",
     spec: "Dedicated Power · Experiential Screens",
-    icon: <GlyphTesseract />,
+    icon: <GlyphGaming />,
     rotate: -2.8,
     drop: 18,
     zIndex: 15,
