@@ -26,6 +26,14 @@ const LOAD_TIMEOUT_MS = 25000;
 /** Container type for the preloaded blobs — see the note where they are made. */
 const MIME = "video/mp4";
 
+/**
+ * How far the bar may run on elapsed time before any bytes are counted, and
+ * over how long. Small on purpose: it exists to cover connection setup, not to
+ * flatter the download.
+ */
+const WARMUP_CEILING = 18;
+const WARMUP_MS = 1800;
+
 export default function Preloader({ onComplete }: { onComplete?: () => void }) {
   const [progress, setProgress] = useState(0);
   const [statusText, setStatusText] = useState("INITIALIZING SYSTEM CORE");
@@ -143,16 +151,39 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
     }, LOAD_TIMEOUT_MS);
 
     // 3. Smooth animation ticker for progress counter
-    let lastTickAt = performance.now();
+    const startedAt = performance.now();
+    let lastTickAt = startedAt;
 
     const tick = () => {
       if (isCancelled) return;
       lastTickAt = performance.now();
 
+      /* Connection setup and the response headers both land before a single
+         byte is counted, and a bar sitting at 0 through that reads as broken.
+         This lets it creep on time alone for a moment, bounded hard, so it can
+         never be more than a fifth ahead of work actually done. */
+      const warm = Math.min(1, (lastTickAt - startedAt) / WARMUP_MS) * WARMUP_CEILING;
+
       // Cap at 95% until the DOM video is actually decoded and ready to render
-      const maxTarget = towerReadyRef.current ? 100 : Math.min(95, actualLoaded);
-      const delta = (maxTarget - progressVal.current) * 0.12;
-      progressVal.current += Math.max(0.35, delta);
+      const maxTarget = towerReadyRef.current
+        ? 100
+        : Math.min(95, Math.max(actualLoaded, warm));
+
+      /* Approach the cap; never cross it.
+       *
+       * `progressVal += Math.max(0.35, delta)` ignored the cap entirely: once
+       * the bar reached it, delta was zero or negative and the minimum step
+       * still added 0.35 every frame. The counter therefore climbed about 21%
+       * a second on frame count alone and reached 100 in roughly five seconds
+       * no matter how the download was going. A warm reload served the footage
+       * from cache inside that window so it looked correct; a cold one had the
+       * loader announce itself finished while the video was still arriving,
+       * and the tower then turned up several seconds into the page.
+       *
+       * The minimum step stays — it is what keeps the approach from crawling
+       * — but it can only ever move toward the cap. */
+      const step = Math.max(0.35, (maxTarget - progressVal.current) * 0.12);
+      progressVal.current = Math.min(maxTarget, progressVal.current + step);
 
       if (progressVal.current >= 100) {
         progressVal.current = 100;
