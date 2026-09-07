@@ -39,7 +39,9 @@ export default function Scale() {
           They already show up. Every day, on every screen.
         </ScrollCopy>
 
-        <div className="mt-14 grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 md:mt-20 lg:grid-cols-5">
+        {/* One up on a phone: a mark this size plus a six-figure number will
+            not sit in half of a 375px screen. */}
+        <div className="mt-14 grid gap-x-8 gap-y-9 sm:grid-cols-2 md:mt-20 lg:grid-cols-3">
           {FIGURES.map((f) => (
             <CountFigure
               key={f.label}

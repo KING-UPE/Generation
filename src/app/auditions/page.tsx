@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import RevealText from "@/components/ui/RevealText";
 import Magnetic from "@/components/ui/Magnetic";
+import { IconTelegram, IconWhatsApp } from "@/components/ui/icons";
 
 const DESCRIPTION =
   "Auditions for Generation 26 — singing, dancing, drama, announcing, instruments, " +
@@ -47,10 +48,15 @@ const JOIN = [
 ];
 
 const CHANNELS = [
-  { title: "Telegram", href: "https://t.me/Generation_26" },
+  {
+    title: "Telegram",
+    href: "https://t.me/Generation_26",
+    icon: <IconTelegram className="h-7 w-7" />,
+  },
   {
     title: "WhatsApp",
     href: "https://whatsapp.com/channel/0029Vb41Gqw1iUxZyLIiYX0M",
+    icon: <IconWhatsApp className="h-7 w-7" />,
   },
 ];
 
@@ -68,7 +74,10 @@ function FormCard({ form }: { form: Form }) {
       className="cut-card group flex items-end justify-between gap-5 p-6 md:p-7"
     >
       <span className="flex flex-col gap-2.5">
-        <span className="font-mono-ui text-[11px] tracking-[0.26em] text-red-hot">
+        <span
+          className="font-display leading-none text-red-hot"
+          style={{ fontSize: "clamp(1.35rem, 2vw, 1.75rem)" }}
+        >
           {form.index}
         </span>
         <span
@@ -156,16 +165,17 @@ export default function AuditionsPage() {
 
       <section className="mx-auto w-full max-w-(--maxw) px-(--gutter) pt-16 md:pt-24">
         <p className="eyebrow">Stay on it</p>
-        <div className="mt-7 flex flex-wrap items-center gap-4">
+        <div className="mt-7 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center">
           {CHANNELS.map((c) => (
-            <Magnetic key={c.href} strength={16}>
+            <Magnetic key={c.href} strength={16} className="w-full sm:w-auto">
               <a
                 href={c.href}
                 target="_blank"
                 rel="noopener noreferrer"
                 data-cursor="link"
-                className="cut-btn-outline group gap-3"
+                className="cut-btn-outline cut-btn-lg group w-full justify-center sm:w-auto"
               >
+                <span className="text-red-hot">{c.icon}</span>
                 {c.title}
                 <span
                   aria-hidden

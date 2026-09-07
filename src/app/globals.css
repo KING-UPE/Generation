@@ -369,6 +369,21 @@ html.lenis, html.lenis body { height: auto; }
   transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/*
+ * Call-out size for either cut button, for the places where the button is the
+ * point of the block rather than one step in a row. Sits after both so the
+ * overrides land — these rules are unlayered, so a Tailwind padding or text
+ * utility would lose to the base class no matter which order it is written in.
+ */
+.cut-btn-lg {
+  gap: 0.9rem;
+  padding: 1.1rem 1.75rem;
+  font-size: clamp(0.875rem, 0.8vw + 0.6rem, 1.05rem);
+  letter-spacing: 0.16em;
+  --cut-tl: 12px;
+  --cut-br: 20px;
+}
+
 .cut-btn-outline:hover {
   filter: drop-shadow(1px 0 0 var(--red-hot))
           drop-shadow(-1px 0 0 var(--red-hot))

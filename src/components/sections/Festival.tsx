@@ -61,7 +61,10 @@ export default function Festival() {
         >
           {STALLS.map((s) => (
             <div key={s.title} className="cut-card flex flex-col gap-4 p-7 md:p-9">
-              <span className="font-mono-ui text-[11px] tracking-[0.26em] text-red-hot">
+              <span
+                className="font-display leading-none text-red-hot"
+                style={{ fontSize: "clamp(1.35rem, 2vw, 1.75rem)" }}
+              >
                 {s.index}
               </span>
               <h3

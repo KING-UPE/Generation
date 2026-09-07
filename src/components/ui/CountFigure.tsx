@@ -7,15 +7,15 @@ type Props = {
   /** The figure itself. Rendered server-side, then counted up to on scroll-in. */
   value: number;
   /**
-   * Sits above the number so the row can be read at a glance rather than as a
-   * column of digits. Decorative — the label under it carries the meaning, and
-   * every mark is aria-hidden.
+   * Sits to the left of the number so the row can be read at a glance rather
+   * than as a column of digits. Decorative — the label under it carries the
+   * meaning, and every mark is aria-hidden.
    */
   icon?: React.ReactNode;
   /**
-   * Edge of the mark's box, as a CSS length. Deliberately larger than the
-   * number's cap height: the point of the mark is to land before anyone reads
-   * a word, so it has to carry the cell on its own.
+   * Edge of the mark's box, as a CSS length. Deliberately taller than the
+   * number beside it: the point of the mark is to land before anyone reads a
+   * word, so it has to carry the cell on its own.
    */
   iconSize?: string;
   /** Sits after the number in red. Every figure we publish is a floor, not a total. */
@@ -83,23 +83,29 @@ export default function CountFigure({
 
   return (
     <div ref={rootRef} className={className}>
-      {/* inline-flex, so a centred column centres the mark too */}
-      {icon ? (
-        <span
-          className="mb-4 inline-flex items-center justify-center text-red-hot md:mb-5"
-          style={{ width: iconSize, height: iconSize }}
-        >
-          {icon}
-        </span>
-      ) : null}
-      <p
-        className="font-display leading-[0.9] tracking-[-0.02em] text-bone tabular-nums"
-        style={{ fontSize: size }}
-      >
-        <span ref={numRef}>{FORMAT.format(value)}</span>
-        <span className="text-red-hot">{suffix}</span>
-      </p>
-      <p className="eyebrow mt-2.5">{label}</p>
+      {/* inline-flex, so a centred column centres the whole pair as one block
+          while the number and its label stay ranged left against the mark */}
+      <div className="inline-flex items-center gap-3.5 text-left md:gap-5">
+        {icon ? (
+          <span
+            className="inline-flex shrink-0 items-center justify-center text-red-hot"
+            style={{ width: iconSize, height: iconSize }}
+          >
+            {icon}
+          </span>
+        ) : null}
+
+        <div>
+          <p
+            className="font-display leading-[0.9] tracking-[-0.02em] text-bone tabular-nums"
+            style={{ fontSize: size }}
+          >
+            <span ref={numRef}>{FORMAT.format(value)}</span>
+            <span className="text-red-hot">{suffix}</span>
+          </p>
+          <p className="eyebrow mt-2">{label}</p>
+        </div>
+      </div>
     </div>
   );
 }

@@ -47,7 +47,7 @@ export default function Projection() {
           className="mt-14 md:mt-20"
         />
 
-        <div className="mt-14 grid w-full grid-cols-2 gap-x-6 gap-y-10 text-left md:mt-20 md:grid-cols-4">
+        <div className="mt-14 grid w-full gap-x-8 gap-y-9 text-left sm:grid-cols-2 md:mt-20 lg:grid-cols-4">
           {SPLIT.map((s) => (
             <CountFigure
               key={s.label}
