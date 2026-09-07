@@ -232,7 +232,7 @@ export default function Scale() {
           ))}
         </div>
 
-        <p className="eyebrow mt-14 md:mt-16">
+        <p className="eyebrow mt-14 text-center md:mt-16">
           Island-wide <span className="text-red-hot">·</span> physical and digital
         </p>
       </div>
