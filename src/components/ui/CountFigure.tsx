@@ -27,6 +27,10 @@ type Props = {
    * Passed inline rather than as a utility class on purpose: the display sizes
    * in globals.css are unlayered, so they win over anything Tailwind emits into
    * `@layer utilities` no matter which order the classes are written in.
+   *
+   * The floor carries a phone, where the vw term is far too small to: one up
+   * per row leaves a six-figure number and its mark using two thirds of a
+   * 375px screen, so the clamp starts well above what the viewport asks for.
    */
   size?: string;
   className?: string;
@@ -45,10 +49,10 @@ const FORMAT = new Intl.NumberFormat("en-US");
 export default function CountFigure({
   value,
   icon,
-  iconSize = "clamp(2.5rem, 4.2vw, 3.5rem)",
+  iconSize = "clamp(3rem, 4.2vw, 3.5rem)",
   suffix = "+",
   label,
-  size = "clamp(1.75rem, 3.6vw, 2.9rem)",
+  size = "clamp(2.5rem, 3.6vw, 2.9rem)",
   className = "",
 }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);

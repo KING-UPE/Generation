@@ -43,7 +43,7 @@ export default function Projection() {
           icon={<IconReach />}
           iconSize="clamp(3.5rem, 7vw, 6rem)"
           label="Total reach and engagement"
-          size="clamp(3rem, 11vw, 8.5rem)"
+          size="clamp(3.25rem, 11vw, 8.5rem)"
           className="mt-14 md:mt-20"
         />
 
