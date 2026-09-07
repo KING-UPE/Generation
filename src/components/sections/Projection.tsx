@@ -1,6 +1,10 @@
-import LitTitle from "@/components/ui/LitTitle";
+"use client";
+
+import { useRef } from "react";
 import ScrollCopy from "@/components/ui/ScrollCopy";
 import CountFigure from "@/components/ui/CountFigure";
+import { useTorch } from "@/lib/use-torch";
+import { useReveal } from "@/lib/use-reveal";
 import {
   IconReach,
   IconRoom,
@@ -8,8 +12,6 @@ import {
   IconSocial,
   IconElsewhere,
 } from "@/components/ui/icons";
-
-const TITLE_SIZE = "text-[clamp(2.6rem,7.5vw,8.5rem)] leading-[0.9] tracking-[-0.025em]";
 
 /** The 26 outlook, broken out of the headline figure. */
 const SPLIT = [
@@ -19,44 +21,91 @@ const SPLIT = [
   { value: 200000, label: "Elsewhere", icon: <IconElsewhere /> },
 ];
 
+/**
+ * The panel's own light: a crimson bloom off the top-left corner, a second one
+ * rising from the bottom edge, and a diagonal that carries the whole thing down
+ * to the page's black on the right. Layered rather than one gradient so the
+ * falloff can be steep near the corner and long across the middle.
+ */
+const PANEL_BASE = [
+  "radial-gradient(105% 125% at 1% 4%, rgba(196,14,38,0.92) 0%, rgba(126,5,24,0.62) 32%, rgba(34,5,12,0.35) 62%, rgba(8,8,11,0) 80%)",
+  "radial-gradient(85% 120% at 4% 104%, rgba(214,10,32,0.55) 0%, rgba(96,3,18,0.28) 40%, transparent 70%)",
+  "linear-gradient(112deg, #2A0207 0%, #14040B 46%, #08080B 100%)",
+].join(", ");
+
+/**
+ * The reactive layer, lit by `--mx` / `--my` from useTorch. Its fallbacks are
+ * where the light rests on a touch screen, which is also where it sits before
+ * the pointer has moved.
+ */
+const PANEL_POINTER =
+  "radial-gradient(560px circle at var(--mx, 16%) var(--my, 30%), rgba(255,116,86,0.30) 0%, rgba(225,6,0,0.13) 38%, transparent 68%)";
+
+const TITLE_SIZE = "text-[clamp(2.4rem,5.6vw,6rem)] leading-[0.9] tracking-[-0.025em]";
+
 export default function Projection() {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const headRef = useRef<HTMLDivElement>(null);
+
+  useTorch(panelRef);
+  useReveal(headRef, { children: true, y: 34, stagger: 0.1 });
+
   return (
     <section
       id="projection"
       className="relative flex min-h-[100svh] w-full items-center py-24 md:py-32"
     >
-      <div className="mx-auto flex w-full max-w-(--maxw) flex-col items-center px-(--gutter) text-center">
-        <span className="badge-pill">Generation 26</span>
+      <div className="mx-auto w-full max-w-(--maxw) px-(--gutter)">
+        <div
+          ref={panelRef}
+          className="cut-shape relative isolate overflow-hidden px-7 py-12 sm:px-12 sm:py-16 lg:px-16 lg:py-20"
+          style={{ background: PANEL_BASE }}
+        >
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
+            style={{ background: PANEL_POINTER }}
+          />
 
-        <div className="mt-6">
-          <LitTitle className={TITLE_SIZE} radius={340} weight={1.9}>
-            Projection
-          </LitTitle>
-        </div>
+          <div className="relative grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
+            {/* Filled rather than the outline title the other sections use —
+                a hollow face on this much crimson has nothing to read against. */}
+            <div ref={headRef}>
+              <span className="badge-pill">Generation 26</span>
 
-        <ScrollCopy className="mt-5 max-w-[36ch] text-[clamp(0.875rem,1.05vw,1.15rem)] font-medium leading-[1.65] text-bone">
-          Once in the room. Everywhere else after.
-        </ScrollCopy>
+              <h2 className={"font-display mt-6 select-none text-bone " + TITLE_SIZE}>
+                Projection
+              </h2>
 
-        <CountFigure
-          value={650000}
-          icon={<IconReach />}
-          iconSize="clamp(3.5rem, 7vw, 6rem)"
-          label="Total reach and engagement"
-          size="clamp(3.25rem, 11vw, 8.5rem)"
-          className="mt-14 md:mt-20"
-        />
+              <ScrollCopy className="mt-5 max-w-[30ch] text-[clamp(0.875rem,1.05vw,1.15rem)] font-medium leading-[1.65] text-bone">
+                Once in the room. Everywhere else after.
+              </ScrollCopy>
+            </div>
 
-        <div className="mt-14 grid w-full gap-x-8 gap-y-9 text-left sm:grid-cols-2 md:mt-20 lg:grid-cols-4">
-          {SPLIT.map((s) => (
-            <CountFigure
-              key={s.label}
-              value={s.value}
-              icon={s.icon}
-              label={s.label}
-              className="border-t border-hairline pt-5"
-            />
-          ))}
+            <div>
+              <CountFigure
+                value={650000}
+                icon={<IconReach />}
+                iconSize="clamp(3rem, 5vw, 4.25rem)"
+                label="Total reach and engagement"
+                size="clamp(2.75rem, 6.4vw, 5.5rem)"
+              />
+
+              <div className="mt-10 grid gap-x-8 gap-y-9 sm:grid-cols-2 md:mt-12">
+                {SPLIT.map((s) => (
+                  <CountFigure
+                    key={s.label}
+                    value={s.value}
+                    icon={s.icon}
+                    iconSize="clamp(2.5rem, 3.2vw, 2.75rem)"
+                    size="clamp(2rem, 2.8vw, 2.4rem)"
+                    label={s.label}
+                    className="border-t border-white/15 pt-5"
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
