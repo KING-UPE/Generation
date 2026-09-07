@@ -20,47 +20,49 @@ type Blob = {
 };
 
 /**
- * Four of them: enough to light the corners and leave a dark middle for text,
- * few enough that the field never resolves into an even wash. Sizes overlap so
- * the seams between them stay soft once blurred.
+ * Four masses rather than four orbs. Each is most of the field across, centred
+ * near or past an edge so only a shoulder of it shows — that is what keeps them
+ * reading as shapes the panel is cut out of, instead of balls parked in the
+ * corners. They overlap heavily, and the dark middle the text sits in is what
+ * is left between them rather than anywhere one was placed.
  */
 const BLOBS: Blob[] = [
   {
-    x: 15,
-    y: 30,
-    size: 54,
-    core: "rgba(255,104,74,0.95)",
-    edge: "rgba(225,6,0,0.35)",
+    x: 18,
+    y: 34,
+    size: 98,
+    core: "rgba(255,104,74,0.82)",
+    edge: "rgba(225,6,0,0.28)",
     from: "62% 38% 46% 54% / 54% 44% 56% 46%",
     to: "44% 56% 63% 37% / 42% 58% 42% 58%",
     cycle: 11,
   },
   {
-    x: 33,
-    y: 92,
-    size: 46,
-    core: "rgba(225,6,0,0.85)",
-    edge: "rgba(139,2,18,0.30)",
+    x: 42,
+    y: 104,
+    size: 82,
+    core: "rgba(225,6,0,0.72)",
+    edge: "rgba(139,2,18,0.24)",
     from: "48% 52% 36% 64% / 62% 38% 62% 38%",
     to: "63% 37% 55% 45% / 38% 62% 38% 62%",
     cycle: 14,
   },
   {
-    x: 74,
-    y: 24,
-    size: 42,
-    core: "rgba(255,46,46,0.82)",
-    edge: "rgba(139,2,18,0.30)",
+    x: 80,
+    y: 8,
+    size: 74,
+    core: "rgba(255,46,46,0.52)",
+    edge: "rgba(139,2,18,0.20)",
     from: "56% 44% 62% 38% / 44% 56% 44% 56%",
     to: "38% 62% 42% 58% / 58% 40% 60% 42%",
     cycle: 9,
   },
   {
-    x: 96,
-    y: 82,
-    size: 36,
-    core: "rgba(198,10,30,0.85)",
-    edge: "rgba(60,2,12,0.34)",
+    x: 106,
+    y: 78,
+    size: 66,
+    core: "rgba(198,10,30,0.58)",
+    edge: "rgba(60,2,12,0.22)",
     from: "50% 50% 58% 42% / 46% 58% 42% 54%",
     to: "64% 36% 44% 56% / 60% 40% 56% 44%",
     cycle: 12,
@@ -68,10 +70,16 @@ const BLOBS: Blob[] = [
 ];
 
 /** Blob opacity with the pointer nowhere near it, and at its centre. */
-const REST = 0.66;
+const REST = 0.62;
 const LIT = 1;
-/** How far the pointer's influence reaches, as a share of the field diagonal. */
-const FALLOFF = 0.62;
+/**
+ * How far the pointer's influence reaches, as a share of the field's width.
+ *
+ * Wide, because the blobs are wide: their centres sit near or past the edges,
+ * so a tight radius means the pointer spends most of its time far from every
+ * one of them and the field barely answers.
+ */
+const FALLOFF = 0.9;
 
 type Props = {
   /** Blur radius in px. Larger fields want more, or the outlines show. */
@@ -91,7 +99,7 @@ type Props = {
  * Listens on its parent rather than itself, since it must not take events from
  * the content sitting above it.
  */
-export default function GlowField({ blur = 54, className = "" }: Props) {
+export default function GlowField({ blur = 70, className = "" }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const wrapRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const skinRefs = useRef<(HTMLSpanElement | null)[]>([]);
@@ -169,8 +177,8 @@ export default function GlowField({ blur = 54, className = "" }: Props) {
           const eased = near * near;
 
           opacityTo[i](REST + (LIT - REST) * eased);
-          scaleTo[i](1 + 0.16 * eased);
-          rotateTo[i]((i % 2 ? 1 : -1) * 10 * eased);
+          scaleTo[i](1 + 0.2 * eased);
+          rotateTo[i]((i % 2 ? 1 : -1) * 12 * eased);
         });
       };
 
