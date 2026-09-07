@@ -25,6 +25,13 @@ const RATIOS = ["4 / 3", "3 / 4", "1 / 1", "3 / 4", "4 / 3"];
 
 /** How many full passes of the field the fly-through covers. */
 const CYCLES = 1.05;
+/*
+ * The section is 280vh, down from 400. One pass of the field was being spread
+ * across four screens of scrolling — the single largest block on a page that
+ * already runs to fifteen, and unlike the tower there is no frame rate riding
+ * on it: these are CSS transforms, so a shorter runway makes the prints travel
+ * faster and costs nothing else.
+ */
 /**
  * Scale at the far end of the tunnel, and at the near end as it passes you.
  *
@@ -261,7 +268,7 @@ export default function GalleryFlow() {
     <section
       id="flow"
       ref={sectionRef as React.RefObject<HTMLElement>}
-      className="relative h-[400vh]"
+      className="relative h-[280vh]"
     >
       <div className="sticky top-0 h-[100svh] w-full overflow-hidden">
         {/* `--gs` scales every print together: at 13-21vw a print is barely

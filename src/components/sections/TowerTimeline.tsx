@@ -88,10 +88,15 @@ const SEEK_LERP = 0.22;
  * only reaches ~28fps at 80px/s. Less scroll costs nothing and helps just as
  * much, so this is the lever to pull first.
  *
- * The editions no longer get all of this: the drop is played once the hero has
- * left, around a third of the way in, and only what is left after that carries
- * the scrubbed cards. 420 is 340 plus that hero exit, so the cards keep exactly
- * the scroll they had before the shot was carved out of the front.
+ * The editions no longer get all of this, and no longer need all of it. The
+ * drop is played once the hero has left, so the scrub carries 12.2s of footage
+ * from INTRO_END to SHOW_T rather than the full 16.4 — a quarter less, which
+ * is a quarter less runway at the same pixels per frame.
+ *
+ * 360 is that: about 720px held for the hero's exit, then ~1610px of scrub for
+ * 12.2s, which is the same 132px per second of footage the section has always
+ * run at. Going to 420 to protect the old figure was overpaying, and a page
+ * this long cannot afford a screen of scroll that buys nothing.
  *
  * At 340 the sequence spanned 2240px and 3.75px per frame — half again as many
  * frames per second at every scroll speed, and roughly 480px of scroll per
@@ -99,7 +104,7 @@ const SEEK_LERP = 0.22;
  * more smoothness at the cost of dwell time; the cue times are all in video
  * seconds, so they follow this automatically and nothing needs re-timing.
  */
-const EDITIONS_RUNWAY = 420;
+const EDITIONS_RUNWAY = 360;
 
 /**
  * Frame rate of the encode above. The cross-fade divides video time into
