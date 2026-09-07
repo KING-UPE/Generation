@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { gsap, useGSAP } from "@/lib/gsap";
+import { useReveal } from "@/lib/use-reveal";
 import LitTitle from "@/components/ui/LitTitle";
 import ScrollCopy from "@/components/ui/ScrollCopy";
 
@@ -18,68 +18,7 @@ export default function Festival() {
   const rootRef = useRef<HTMLElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
 
-  useGSAP(
-    () => {
-      const grid = gridRef.current;
-      if (!grid) return;
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-      const cards = gsap.utils.toArray<HTMLElement>(grid.children);
-
-      /*
-       * Watched rather than scroll-triggered, which is why this one section
-       * does not look like the rest of the file.
-       *
-       * The page is not at its final height when these effects run: the tower
-       * and the film hold pins whose spacers only reach full size once their
-       * footage resolves, and measured on load the document is about 6700px
-       * against a settled 13100. A ScrollTrigger built in that window computes
-       * a start the page has already passed, fires immediately, and with
-       * `once: true` kills itself — spending the reveal while the section is
-       * thousands of pixels below the fold. A `from` tween is then rewound to
-       * its hidden state by the next refresh with nothing left alive to play it
-       * forward, which is how these three cards came to render as an empty band
-       * on the page. An observer has no cached geometry to go stale.
-       *
-       * The hidden state is armed inside the observer rather than before it, so
-       * that hiding and revealing cannot come apart: if the callback never runs
-       * at all, nothing was ever hidden and the cards render as themselves. The
-       * cost is that a reader who lands on the section directly gets the cards
-       * without the reveal, which is the right way round for a flourish.
-       */
-      let armed = false;
-
-      const io = new IntersectionObserver(
-        ([entry]) => {
-          if (!entry) return;
-
-          if (!entry.isIntersecting) {
-            if (!armed) {
-              armed = true;
-              gsap.set(cards, { y: 46, opacity: 0 });
-            }
-            return;
-          }
-
-          io.disconnect();
-          if (!armed) return;
-
-          gsap.to(cards, {
-            y: 0,
-            opacity: 1,
-            duration: 1.05,
-            ease: "gen",
-            stagger: 0.12,
-          });
-        },
-        { rootMargin: "0px 0px -12% 0px" },
-      );
-
-      io.observe(grid);
-      return () => io.disconnect();
-    },
-    { scope: rootRef },
-  );
+  useReveal(gridRef, { children: true, stagger: 0.12 });
 
   return (
     <section
