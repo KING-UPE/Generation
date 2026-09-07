@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
-import { mediaSrc, onMediaResolved } from "@/lib/media-cache";
+import { mediaPath, mediaSrc, onMediaResolved } from "@/lib/media-cache";
 
 /**
  * The seek-optimised build of the RIFE footage.
@@ -49,7 +49,8 @@ import { mediaSrc, onMediaResolved } from "@/lib/media-cache";
  * Every time constant below is in seconds of THIS file. Change the footage
  * length and they all have to move with it.
  */
-const SRC = "/Tower.seek.mp4";
+/* Paths live in MEDIA now — there is a wide and a narrow cut, and the
+   preloader picks one. See src/lib/media-cache.ts. */
 
 /**
  * How fast the scrubbed video time chases the scroll, per 60Hz frame.
@@ -312,11 +313,24 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         }
       };
 
+      /* If the preloaded blob will not decode — an unsupported type, memory
+         pressure, a revoked URL — fall back to the plain path once rather
+         than leaving the element with a source it cannot play. Losing the
+         preload costs a stall; losing this costs the whole video. */
+      let usedFallback = false;
+      const onSrcError = () => {
+        if (usedFallback) return;
+        usedFallback = true;
+        video.src = mediaPath("tower");
+        video.load();
+      };
+      video.addEventListener("error", onSrcError);
+
       /* Wait for the preloader to settle, then take whatever it resolved —
          an object URL over its own download, or the plain path if it could
          not finish. It always settles, so this always runs. */
       const stopWaiting = onMediaResolved(() => {
-        const src = mediaSrc(SRC);
+        const src = mediaSrc("tower");
         if (video.getAttribute("src") !== src) {
           video.src = src;
           video.load();
@@ -782,6 +796,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         exit.scrollTrigger?.kill();
         exit.kill();
         stopWaiting();
+        video.removeEventListener("error", onSrcError);
         video.removeEventListener("seeked", onSeeked);
         primeEvents.forEach((e) => window.removeEventListener(e, prime));
         gsap.ticker.remove(tick);

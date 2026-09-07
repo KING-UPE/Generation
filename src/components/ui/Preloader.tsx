@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { gsap } from "@/lib/gsap";
 import { smoothScroll } from "@/lib/smooth-scroll";
-import { PRELOAD_MEDIA, resolveMedia } from "@/lib/media-cache";
+import { MEDIA, mediaPath, resolveMedia, type MediaKey } from "@/lib/media-cache";
 
 const VIDEO_SRC = "/Tower.seek.mp4";
 /* Only used if the server withholds content-length; the real size is read from
@@ -22,6 +22,9 @@ const ESTIMATED_SIZE = 13_096_081; // ~12.5 MB
  * is ever trapped behind it.
  */
 const LOAD_TIMEOUT_MS = 25000;
+
+/** Container type for the preloaded blobs — see the note where they are made. */
+const MIME = "video/mp4";
 
 export default function Preloader({ onComplete }: { onComplete?: () => void }) {
   const [progress, setProgress] = useState(0);
@@ -63,9 +66,11 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
      * guarantees nothing touches the network once the page is running, which
      * is the whole point of waiting here. */
     const downloadAll = async () => {
-      const sizes = new Array(PRELOAD_MEDIA.length).fill(0);
-      const got = new Array(PRELOAD_MEDIA.length).fill(0);
-      const urls: Record<string, string> = {};
+      const keys = Object.keys(MEDIA) as MediaKey[];
+      const paths = keys.map(mediaPath);
+      const sizes = new Array(keys.length).fill(0);
+      const got = new Array(keys.length).fill(0);
+      const urls: Partial<Record<MediaKey, string>> = {};
 
       const progress = () => {
         const total = sizes.reduce((a, b) => a + b, 0);
@@ -77,7 +82,7 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
         /* Sized first so the bar reflects the whole job from the start rather
            than jumping when the second file appears. */
         const responses = await Promise.all(
-          PRELOAD_MEDIA.map(async (path, i) => {
+          paths.map(async (path, i) => {
             const res = await fetch(path);
             if (!res.ok) throw new Error(`fetch ${path}`);
             const len = res.headers.get("content-length");
@@ -92,7 +97,9 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
             if (!reader) {
               const blob = await res.blob();
               got[i] = sizes[i];
-              urls[PRELOAD_MEDIA[i]] = URL.createObjectURL(blob);
+              urls[keys[i]] = URL.createObjectURL(
+                blob.type ? blob : new Blob([blob], { type: MIME }),
+              );
               progress();
               return;
             }
@@ -104,7 +111,13 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
               got[i] += value.length;
               progress();
             }
-            urls[PRELOAD_MEDIA[i]] = URL.createObjectURL(new Blob(chunks));
+            /* The type is not optional. A blob URL with an empty type gives
+               the element nothing to identify the container by; Chrome sniffs
+               it and copes, other browsers refuse to decode and the video
+               simply never appears. */
+            urls[keys[i]] = URL.createObjectURL(
+              new Blob(chunks, { type: MIME }),
+            );
           }),
         );
 

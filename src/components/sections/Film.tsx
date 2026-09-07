@@ -2,13 +2,13 @@
 
 import { useRef } from "react";
 import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
-import { mediaSrc, onMediaResolved } from "@/lib/media-cache";
+import { mediaPath, mediaSrc, onMediaResolved } from "@/lib/media-cache";
 import LitTitle from "@/components/ui/LitTitle";
 import RevealText from "@/components/ui/RevealText";
 import { smoothScroll } from "@/lib/smooth-scroll";
 import { scrollState } from "@/lib/scroll-state";
 
-const SRC = "/Video.mp4";
+/* Paths live in MEDIA now — see src/lib/media-cache.ts. */
 
 /** Slow-motion feel while silent; real speed if the viewer turns sound on. */
 /**
@@ -319,11 +319,24 @@ export default function Film() {
       gsap.set(video, { scale: 1.12 });
       gsap.set(uiRef.current, { opacity: 0 });
 
+      /* If the preloaded blob will not decode — an unsupported type, memory
+         pressure, a revoked URL — fall back to the plain path once rather
+         than leaving the element with a source it cannot play. Losing the
+         preload costs a stall; losing this costs the whole video. */
+      let usedFallback = false;
+      const onSrcError = () => {
+        if (usedFallback) return;
+        usedFallback = true;
+        video.src = mediaPath("film");
+        video.load();
+      };
+      video.addEventListener("error", onSrcError);
+
       /* Take the preloaded bytes as soon as they exist. No scroll-triggered
          warming any more: the file is already downloaded by the time the page
          is shown, so there is nothing left to fetch on approach. */
       const stopWaiting = onMediaResolved(() => {
-        const src = mediaSrc(SRC);
+        const src = mediaSrc("film");
         if (video.getAttribute("src") !== src) {
           video.src = src;
           video.load();
@@ -381,6 +394,7 @@ export default function Film() {
 
       return () => {
         stopWaiting();
+        video.removeEventListener("error", onSrcError);
         tl.kill();
         teardown();
       };
