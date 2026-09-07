@@ -72,7 +72,7 @@ function FormCard({ form }: { form: Form }) {
       target="_blank"
       rel="noopener noreferrer"
       data-cursor="link"
-      className="cut-card group flex items-end justify-between gap-5 p-6 md:p-7"
+      className="cut-card group relative flex items-end justify-between gap-4 p-6 transition-all duration-300 hover:-translate-y-1 hover:border-red-hot/40 hover:shadow-[0_16px_36px_rgba(255,59,47,0.14)] md:p-7"
     >
       <span className="flex flex-col gap-2.5">
         <span
@@ -82,17 +82,24 @@ function FormCard({ form }: { form: Form }) {
           {form.index}
         </span>
         <span
-          className="font-display leading-none tracking-[-0.01em] text-bone"
+          className="font-display leading-none tracking-[-0.01em] text-bone transition-colors duration-300 group-hover:text-white"
           style={{ fontSize: "clamp(1.15rem, 2.2vw, 1.6rem)" }}
         >
           {form.title}
         </span>
       </span>
-      <span
-        aria-hidden
-        className="text-red-hot transition-transform duration-500 group-hover:translate-x-1"
-      >
-        →
+
+      {/* Hover action CTA */}
+      <span className="flex shrink-0 items-center gap-2 font-mono-ui text-[11px] uppercase tracking-[0.16em] text-red-hot transition-all duration-300">
+        <span className="translate-x-1 opacity-0 font-semibold transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100 group-hover:text-white sm:inline-block">
+          Click Here
+        </span>
+        <span
+          aria-hidden
+          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-red-hot/40 bg-red-hot/10 text-red-hot transition-all duration-300 group-hover:border-red-hot group-hover:bg-red-hot group-hover:text-white group-hover:shadow-[0_0_14px_rgba(255,59,47,0.45)]"
+        >
+          →
+        </span>
       </span>
     </a>
   );
