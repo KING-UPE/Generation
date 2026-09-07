@@ -215,6 +215,19 @@ const INTRO_END = 4.2;
  */
 const INTRO_HOLD = 0.35;
 
+/**
+ * How far above the section counts as "above it", in px.
+ *
+ * The drop's cue and the editions trigger start at the same scroll position, so
+ * a bare `scrollY < st.start` puts the reset in a race with the shot it is
+ * meant to leave alone: the page locks the moment the cue fires, and a stop
+ * that lands even a fraction of a pixel short reads as above the section. The
+ * reset then fires the instant the shot ends, snapping the tower back to its
+ * top and re-arming — so the reader waits, watches it play, watches it undo
+ * itself, and only gets the real one after nudging the wheel again.
+ */
+const ABOVE_MARGIN = 8;
+
 const EDITION_MAP: ReadonlyArray<readonly [number, number]> = [
   [0, INTRO_END], [0.81, 12.0], [0.86, 14.3], [1, SHOW_T],
 ];
@@ -945,7 +958,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
            outlive a stall is a scroll lock. */
         if (introRunning && now - introStartedAt >= INTRO_HOLD * 1000) endIntro();
 
-        if (!inShowcaseMode && !introRunning && window.scrollY < st.start) {
+        if (!inShowcaseMode && !introRunning && window.scrollY < st.start - ABOVE_MARGIN) {
           if (target !== 0) target = 0;
           introDone = false;
           introAtP = 0;
