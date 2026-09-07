@@ -48,27 +48,27 @@ type Wave = {
  */
 const WAVES: Wave[] = [
   {
-    y: 0.08,
-    thickness: 0.4,
-    amp: 0.07,
-    amp2: 0.03,
+    y: 0.02,
+    thickness: 0.34,
+    amp: 0.06,
+    amp2: 0.026,
     freq: 0.9,
     freq2: 1.7,
     speed: 0.09,
-    fill: "rgba(255,46,46,0.34)",
+    fill: "rgba(255,46,46,0.36)",
   },
   {
-    y: 0.28,
-    thickness: 0.2,
-    amp: 0.05,
-    amp2: 0.022,
+    y: 0.17,
+    thickness: 0.18,
+    amp: 0.045,
+    amp2: 0.02,
     freq: 1.25,
     freq2: 2.3,
     speed: -0.12,
-    fill: "rgba(225,6,0,0.36)",
+    fill: "rgba(225,6,0,0.38)",
   },
   {
-    y: 0.88,
+    y: 0.98,
     thickness: 0.34,
     amp: 0.055,
     amp2: 0.024,
@@ -78,9 +78,9 @@ const WAVES: Wave[] = [
     fill: "rgba(214,6,28,0.44)",
   },
   {
-    y: 1.06,
-    thickness: 0.32,
-    amp: 0.048,
+    y: 1.14,
+    thickness: 0.3,
+    amp: 0.045,
     amp2: 0.02,
     freq: 1.5,
     freq2: 2.6,
@@ -88,6 +88,18 @@ const WAVES: Wave[] = [
     fill: "rgba(168,3,22,0.42)",
   },
 ];
+
+/**
+ * The band of the panel no wave may enter, as shares of its height.
+ *
+ * The two groups are placed clear of it, but placement alone only makes the
+ * channel likely: amplitudes, the pointer's dent and any later change to a
+ * `y` can all eat into it, and it is the one thing about this field that is
+ * not decoration — the title and the figures are read against it. So it is
+ * enforced when the path is built rather than left to the numbers above.
+ */
+const CHANNEL_TOP = 0.34;
+const CHANNEL_BOTTOM = 0.68;
 
 /** Band opacity with the pointer nowhere near it, and directly on it. */
 const REST = 0.62;
@@ -162,6 +174,8 @@ export default function GlowField({ blur = 28, className = "" }: Props) {
         WAVES.forEach((wv, i) => {
           const path = paths[i];
           const half = (wv.thickness * h) / 2;
+          /* Which way is away from the middle for this band. */
+          const outward = wv.y < 0.5 ? -1 : 1;
           const top: string[] = [];
           const bottom: string[] = [];
 
@@ -175,11 +189,20 @@ export default function GlowField({ blur = 28, className = "" }: Props) {
               Math.sin(u * wv.freq2 * TAU - time * wv.speed * TAU * 0.7) * wv.amp2 * h;
 
             /* The dent: a gaussian in x centred on the pointer, so the crest
-               bends around it and settles back either side. */
+               bends around it and settles back either side. It bends away from
+               the middle rather than always upward, so the pointer opens the
+               black channel wider instead of pushing the lower bands into it. */
             if (state.strength > 0.001) {
               const d = (x / w - state.px) / BUMP_WIDTH;
-              y -= Math.exp(-d * d) * BUMP_LIFT * h * state.strength;
+              y += outward * Math.exp(-d * d) * BUMP_LIFT * h * state.strength;
             }
+
+            /* The rail. Keeps this band's near edge out of the channel however
+               the sines and the dent happen to land. */
+            y =
+              outward < 0
+                ? Math.min(y, CHANNEL_TOP * h - half)
+                : Math.max(y, CHANNEL_BOTTOM * h + half);
 
             top.push(`${x.toFixed(1)} ${(y - half).toFixed(1)}`);
             bottom.push(`${x.toFixed(1)} ${(y + half).toFixed(1)}`);
