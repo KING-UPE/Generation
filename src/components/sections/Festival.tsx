@@ -4,14 +4,43 @@ import { useRef } from "react";
 import { useReveal } from "@/lib/use-reveal";
 import LitTitle from "@/components/ui/LitTitle";
 import ScrollCopy from "@/components/ui/ScrollCopy";
+import { IconFood, IconEducation, IconGaming } from "@/components/ui/icons";
 
 const TITLE_SIZE = "text-[clamp(2.6rem,7.5vw,8.5rem)] leading-[0.9] tracking-[-0.025em]";
 
-/** What runs on the grounds beside the stage. */
+/**
+ * What runs on the grounds beside the stage.
+ *
+ * Built as the Scale deck is built, and from the same palette: mark, name, then
+ * the line on its own dark ground. The gradients run bright to deep across the
+ * three so the row reads as one sweep rather than three cards that happen to be
+ * red — the same rule the deck follows.
+ */
 const STALLS = [
-  { index: "01", title: "Food", line: "Kitchens along the walkway, from doors to encore." },
-  { index: "02", title: "Education", line: "Campuses and programmes, face to face, all night." },
-  { index: "03", title: "Gaming", line: "Screens and open play between the sets." },
+  {
+    index: "01",
+    title: "Food",
+    line: "Kitchens along the walkway, from doors to encore.",
+    icon: <IconFood />,
+    from: "#FF3B2F",
+    to: "#8B0212",
+  },
+  {
+    index: "02",
+    title: "Education",
+    line: "Campuses and programmes, face to face, all night.",
+    icon: <IconEducation />,
+    from: "#E10600",
+    to: "#4A0210",
+  },
+  {
+    index: "03",
+    title: "Gaming",
+    line: "Screens and open play between the sets.",
+    icon: <IconGaming />,
+    from: "#A0041A",
+    to: "#26040A",
+  },
 ];
 
 export default function Festival() {
@@ -43,21 +72,40 @@ export default function Festival() {
           ref={gridRef}
           className="mt-14 grid gap-5 md:mt-20 md:grid-cols-3 md:gap-7"
         >
-          {STALLS.map((s) => (
-            <div key={s.title} className="cut-card flex flex-col gap-4 p-7 md:p-9">
-              <span
-                className="font-display leading-none text-red-hot"
-                style={{ fontSize: "clamp(1.35rem, 2vw, 1.75rem)" }}
-              >
-                {s.index}
-              </span>
-              <h3
-                className="font-display leading-none tracking-[-0.01em] text-bone"
-                style={{ fontSize: "clamp(1.75rem, 3.4vw, 2.75rem)" }}
-              >
-                {s.title}
-              </h3>
-              <p className="text-sm leading-relaxed text-muted">{s.line}</p>
+          {STALLS.map((stall) => (
+            <div
+              key={stall.title}
+              className="relative flex min-h-[260px] flex-col justify-between overflow-hidden rounded-[26px] p-6 md:p-7"
+              style={{
+                background: `linear-gradient(158deg, ${stall.from} 0%, ${stall.to} 58%, #0B0509 100%)`,
+                boxShadow:
+                  "0 18px 44px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.10) inset",
+              }}
+            >
+              <div className="flex items-start justify-between">
+                <span
+                  aria-hidden
+                  className="inline-flex h-12 w-12 items-center justify-center text-white/90"
+                >
+                  {stall.icon}
+                </span>
+                <span className="font-mono-ui text-[11px] tracking-[0.26em] text-white/45">
+                  {stall.index}
+                </span>
+              </div>
+
+              <div>
+                <h3
+                  className="font-display leading-none tracking-[-0.01em] text-white/95"
+                  style={{ fontSize: "clamp(1.6rem, 3vw, 2.25rem)" }}
+                >
+                  {stall.title}
+                </h3>
+
+                <p className="mt-3 rounded-2xl bg-black/45 px-4 py-3.5 text-sm leading-relaxed text-white/75 backdrop-blur-sm">
+                  {stall.line}
+                </p>
+              </div>
             </div>
           ))}
         </div>
