@@ -42,8 +42,8 @@ type Wave = {
  */
 const WAVES: Wave[] = [
   {
-    y: 0.10,
-    thickness: 0.56,
+    y: 0.08,
+    thickness: 0.62,
     amp: 0.06,
     amp2: 0.026,
     freq: 0.9,
@@ -52,8 +52,8 @@ const WAVES: Wave[] = [
     fill: "rgba(255,46,46,0.4)",
   },
   {
-    y: 0.34,
-    thickness: 0.34,
+    y: 0.40,
+    thickness: 0.46,
     amp: 0.045,
     amp2: 0.02,
     freq: 1.25,
@@ -62,8 +62,8 @@ const WAVES: Wave[] = [
     fill: "rgba(225,6,0,0.42)",
   },
   {
-    y: 0.84,
-    thickness: 0.5,
+    y: 0.74,
+    thickness: 0.58,
     amp: 0.055,
     amp2: 0.024,
     freq: 0.7,
@@ -72,8 +72,8 @@ const WAVES: Wave[] = [
     fill: "rgba(214,6,28,0.48)",
   },
   {
-    y: 1.04,
-    thickness: 0.38,
+    y: 0.98,
+    thickness: 0.46,
     amp: 0.045,
     amp2: 0.02,
     freq: 1.5,
@@ -97,13 +97,13 @@ const WAVES: Wave[] = [
  * the edge where black meets red is never a fixed line.
  */
 const MASS = {
-  cx: 0.54,
-  cy: 0.48,
-  rx: 0.26,
-  ry: 0.44,
+  cx: 0.55,
+  cy: 0.5,
+  rx: 0.17,
+  ry: 0.3,
   /** Two perturbations of the radius, so the outline is never an ellipse. */
-  wobble: 0.1,
-  wobble2: 0.055,
+  wobble: 0.16,
+  wobble2: 0.085,
   speed: 0.05,
 };
 
@@ -325,9 +325,9 @@ export default function GlowField({ blur = 28, className = "" }: Props) {
             falloff, it reads as the field being deepest in the middle.
           */}
           <radialGradient id={heartId}>
-            <stop offset="0%" stopColor="var(--ink)" stopOpacity="1" />
-            <stop offset="46%" stopColor="var(--ink)" stopOpacity="0.94" />
-            <stop offset="78%" stopColor="var(--ink)" stopOpacity="0.55" />
+            <stop offset="0%" stopColor="var(--ink)" stopOpacity="0.86" />
+            <stop offset="42%" stopColor="var(--ink)" stopOpacity="0.68" />
+            <stop offset="76%" stopColor="var(--ink)" stopOpacity="0.3" />
             <stop offset="100%" stopColor="var(--ink)" stopOpacity="0" />
           </radialGradient>
         </defs>
