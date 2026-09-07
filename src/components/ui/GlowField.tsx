@@ -1,13 +1,14 @@
 "use client";
 
-import { useRef } from "react";
+import { useId, useRef } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
 import { clamp } from "@/lib/scroll-state";
 
 const TAU = Math.PI * 2;
 
-/** Points sampled across each wave. Past a blur this wide, nobody sees a chord. */
+/** Points sampled along each wave, and around the mass. */
 const SAMPLES = 56;
+const MASS_SAMPLES = 72;
 /** How far past each edge the paths run, so the blur has material to work with. */
 const BLEED = 0.12;
 
@@ -27,79 +28,84 @@ type Wave = {
 };
 
 /**
- * Four bands rather than four blobs.
- *
- * Each is a ribbon whose top and bottom edges are the same travelling wave, so
- * the light reads as a crest moving through the panel instead of a lamp sitting
- * in it. They overlap, and the dark the text sits in is the trough between them.
+ * Four bands: two riding the top edge, two the bottom, each centred outside the
+ * panel so only its shoulder reaches in. They are ribbons whose top and bottom
+ * edges are the same travelling wave, so the light reads as a crest moving
+ * through the panel rather than a lamp sitting in it.
  *
  * Built only from the palette's reds — #FF2E2E, #E10600, #8B0212. The lightest
  * stop of `--grad-red` is #FF5A3C, which is fine as a sliver in a gradient but
  * swings the whole field orange once it is carrying an area this size.
  *
- * Fills are light: four bands at full strength flood the panel into an even red
- * and the crests stop reading.
- *
- * Two ride the top edge and two the bottom, both pairs centred mostly outside
- * the panel so only their shoulders show. That is deliberate — it leaves a
- * black channel roughly 130px deep across the middle, and the title and the
- * figures sit in it. The channel is the trough between crests rather than a
- * mask laid over them, so it breathes as they travel.
+ * Fills are kept low. Bands at full strength flood the panel into an even red
+ * and the crests stop reading at all.
  */
 const WAVES: Wave[] = [
   {
-    y: 0.02,
-    thickness: 0.34,
+    y: 0.10,
+    thickness: 0.56,
     amp: 0.06,
     amp2: 0.026,
     freq: 0.9,
     freq2: 1.7,
     speed: 0.09,
-    fill: "rgba(255,46,46,0.36)",
+    fill: "rgba(255,46,46,0.4)",
   },
   {
-    y: 0.17,
-    thickness: 0.18,
+    y: 0.34,
+    thickness: 0.34,
     amp: 0.045,
     amp2: 0.02,
     freq: 1.25,
     freq2: 2.3,
     speed: -0.12,
-    fill: "rgba(225,6,0,0.38)",
+    fill: "rgba(225,6,0,0.42)",
   },
   {
-    y: 0.98,
-    thickness: 0.34,
+    y: 0.84,
+    thickness: 0.5,
     amp: 0.055,
     amp2: 0.024,
     freq: 0.7,
     freq2: 1.9,
     speed: 0.07,
-    fill: "rgba(214,6,28,0.44)",
+    fill: "rgba(214,6,28,0.48)",
   },
   {
-    y: 1.14,
-    thickness: 0.3,
+    y: 1.04,
+    thickness: 0.38,
     amp: 0.045,
     amp2: 0.02,
     freq: 1.5,
     freq2: 2.6,
     speed: -0.1,
-    fill: "rgba(168,3,22,0.42)",
+    fill: "rgba(168,3,22,0.44)",
   },
 ];
 
 /**
- * The band of the panel no wave may enter, as shares of its height.
+ * The dark the panel is really built around.
  *
- * The two groups are placed clear of it, but placement alone only makes the
- * channel likely: amplitudes, the pointer's dent and any later change to a
- * `y` can all eat into it, and it is the one thing about this field that is
- * not decoration — the title and the figures are read against it. So it is
- * enforced when the path is built rather than left to the numbers above.
+ * Holding the waves apart leaves a channel between them, and a channel is a
+ * stripe — it reads as a gap in a pattern rather than as a field with a dark
+ * heart. This is a shape in its own right: a soft mass of the page's own black,
+ * painted over the waves, tall enough to run the full height of the panel and
+ * wide enough that the red only survives down the sides and along the bottom.
+ * The title and the figures are read against it.
+ *
+ * Radii are shares of the field. It wanders on the same clock as the waves, so
+ * the edge where black meets red is never a fixed line.
  */
-const CHANNEL_TOP = 0.34;
-const CHANNEL_BOTTOM = 0.68;
+const MASS = {
+  cx: 0.52,
+  cy: 0.46,
+  rx: 0.3,
+  ry: 0.56,
+  /** Two perturbations of the radius, so the outline is never an ellipse. */
+  wobble: 0.1,
+  wobble2: 0.055,
+  speed: 0.05,
+};
 
 /** Band opacity with the pointer nowhere near it, and directly on it. */
 const REST = 0.62;
@@ -125,10 +131,11 @@ type Props = {
  * A field of slow red waves on black — the panel's whole background.
  *
  * The crests travel on their own, and the pointer pulls the nearest one out of
- * shape: the band under it brightens, and the wave itself lifts into a bump
- * that follows the cursor across the panel. Both fall away when the pointer
- * leaves. Coarse pointers and reduced-motion get a single still frame, which is
- * a composition in its own right.
+ * shape: the band under it brightens, and the wave itself bends into a bump
+ * that follows the cursor. The bend goes away from the centre, so the pointer
+ * opens the dark middle rather than crowding it. Both fall away when the
+ * pointer leaves. Coarse pointers and reduced-motion get a single still frame,
+ * which is a composition in its own right.
  *
  * Paths are rewritten on the GSAP ticker, so the waves share a clock with the
  * rest of the site rather than running a second animation loop. The ticker is
@@ -136,16 +143,19 @@ type Props = {
  * and there is no reason to pay for it eight thousand pixels up the page.
  */
 export default function GlowField({ blur = 28, className = "" }: Props) {
+  const heartId = "glow-heart-" + useId().replace(/:/g, "");
   const rootRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const pathRefs = useRef<(SVGPathElement | null)[]>([]);
+  const massRef = useRef<SVGPathElement>(null);
 
   useGSAP(
     () => {
       const root = rootRef.current;
       const svg = svgRef.current;
+      const mass = massRef.current;
       const parent = root?.parentElement;
-      if (!root || !svg || !parent) return;
+      if (!root || !svg || !mass || !parent) return;
 
       const paths = pathRefs.current.filter(Boolean) as SVGPathElement[];
       if (paths.length !== WAVES.length) return;
@@ -164,10 +174,7 @@ export default function GlowField({ blur = 28, className = "" }: Props) {
       /** Pointer position in field space, and how much of it is being applied. */
       const state = { px: 0.5, py: 0.5, strength: 0 };
 
-      const draw = (time: number) => {
-        const { w, h } = size;
-        if (!w || !h) return;
-
+      const drawWaves = (time: number, w: number, h: number) => {
         const x0 = -BLEED * w;
         const span = w * (1 + 2 * BLEED);
 
@@ -189,20 +196,11 @@ export default function GlowField({ blur = 28, className = "" }: Props) {
               Math.sin(u * wv.freq2 * TAU - time * wv.speed * TAU * 0.7) * wv.amp2 * h;
 
             /* The dent: a gaussian in x centred on the pointer, so the crest
-               bends around it and settles back either side. It bends away from
-               the middle rather than always upward, so the pointer opens the
-               black channel wider instead of pushing the lower bands into it. */
+               bends around it and settles back either side. */
             if (state.strength > 0.001) {
               const d = (x / w - state.px) / BUMP_WIDTH;
               y += outward * Math.exp(-d * d) * BUMP_LIFT * h * state.strength;
             }
-
-            /* The rail. Keeps this band's near edge out of the channel however
-               the sines and the dent happen to land. */
-            y =
-              outward < 0
-                ? Math.min(y, CHANNEL_TOP * h - half)
-                : Math.max(y, CHANNEL_BOTTOM * h + half);
 
             top.push(`${x.toFixed(1)} ${(y - half).toFixed(1)}`);
             bottom.push(`${x.toFixed(1)} ${(y + half).toFixed(1)}`);
@@ -214,6 +212,28 @@ export default function GlowField({ blur = 28, className = "" }: Props) {
           const eased = near * near * state.strength;
           path.style.opacity = (REST + (LIT - REST) * eased).toFixed(3);
         });
+      };
+
+      const drawMass = (time: number, w: number, h: number) => {
+        const pts: string[] = [];
+        for (let s = 0; s < MASS_SAMPLES; s++) {
+          const a = (s / MASS_SAMPLES) * TAU;
+          const r =
+            1 +
+            Math.sin(a * 3 + time * MASS.speed * TAU) * MASS.wobble +
+            Math.sin(a * 5 - time * MASS.speed * TAU * 0.7) * MASS.wobble2;
+          const x = MASS.cx * w + Math.cos(a) * MASS.rx * w * r;
+          const y = MASS.cy * h + Math.sin(a) * MASS.ry * h * r;
+          pts.push(`${x.toFixed(1)} ${y.toFixed(1)}`);
+        }
+        mass.setAttribute("d", `M${pts.join("L")}Z`);
+      };
+
+      const draw = (time: number) => {
+        const { w, h } = size;
+        if (!w || !h) return;
+        drawWaves(time, w, h);
+        drawMass(time, w, h);
       };
 
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -297,6 +317,23 @@ export default function GlowField({ blur = 28, className = "" }: Props) {
             style={{ opacity: REST }}
           />
         ))}
+
+        <defs>
+          {/*
+            Solid at the core and gone by the rim. Filled flat, the mass reads
+            as a hole punched in the field with a visible edge; carrying its own
+            falloff, it reads as the field being deepest in the middle.
+          */}
+          <radialGradient id={heartId}>
+            <stop offset="0%" stopColor="var(--ink)" stopOpacity="1" />
+            <stop offset="46%" stopColor="var(--ink)" stopOpacity="0.94" />
+            <stop offset="78%" stopColor="var(--ink)" stopOpacity="0.55" />
+            <stop offset="100%" stopColor="var(--ink)" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+
+        {/* Last, so it deepens the crests rather than sitting between them. */}
+        <path ref={massRef} fill={`url(#${heartId})`} />
       </svg>
     </div>
   );
