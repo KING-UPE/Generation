@@ -201,18 +201,19 @@ const CARDS_END = 15.5;
 const INTRO_END = 4.2;
 
 /**
- * How long that takes, in seconds — a whip down the tower, not a playback.
+ * How long the page is held while the drop runs, in seconds.
  *
- * Scrolling back up, the reset sweeps video time from 4.2 to 0 in about 0.2s
- * under SEEK_LERP alone, and that snap is the thing worth matching. Against it
- * a 1.35s tween read as ordinary scrubbing even though it was running: same
- * footage, same lock, but slow enough that nothing about it said "played".
+ * Not a playback rate — there is no longer a tween to set one. Going up, the
+ * reset snaps target to 0 and SEEK_LERP carries the picture the whole way, and
+ * that chase is what reads as fast. Going down was a tween feeding the same
+ * lerp, so it could only ever be slower than the direction it was being
+ * compared against: first the tween's own 0.55s, then the lerp's tail on top.
  *
- * 0.55 is roughly 8x the footage's own speed. The lerp adds its own short tail,
- * so the whole move lands a little under 0.8s, and the page is held for only
- * as long as that takes.
+ * Now both directions are the same move — snap the target, let the lerp run —
+ * so they take the same time by construction. At 0.22 per frame the chase is
+ * better than 99% done in 0.35s, which is all this has to cover.
  */
-const INTRO_PLAY = 0.55;
+const INTRO_HOLD = 0.35;
 
 const EDITION_MAP: ReadonlyArray<readonly [number, number]> = [
   [0, INTRO_END], [0.81, 12.0], [0.86, 14.3], [1, SHOW_T],
@@ -569,8 +570,8 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
        * SEEK_LERP, and easing a value that is itself being eased is how this
        * file has produced drift every previous time.
        */
-      const introHead = { t: 0 };
-      let introTween: gsap.core.Tween | null = null;
+      let introFinish: ReturnType<typeof setTimeout> | undefined;
+      let introStartedAt = 0;
       let introRunning = false;
       let introDone = false;
       /* Where along the editions the shot handed over, so the map can start
@@ -600,33 +601,36 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         smoothScroll.current?.start();
       };
 
+      const endIntro = () => {
+        if (introFinish) clearTimeout(introFinish);
+        introFinish = undefined;
+        if (!introRunning) return;
+        introRunning = false;
+        introDone = true;
+        /* Anchor where the drop actually let go. With the scroll held that is
+           where it started, but it stays correct if the lock ever fails and the
+           reader has moved. */
+        introAtP = Math.min(st.progress, 0.9);
+        releaseScroll();
+      };
+
       const playIntro = (p: number) => {
         if (introDone || introRunning) return;
         introRunning = true;
         introAtP = Math.min(p, 0.9);
-        introHead.t = 0;
-        target = 0;
+
+        /* The whole drop, in one line: put the target at the far end and let
+           SEEK_LERP chase it, which is precisely what the reset does in the
+           other direction. Same mechanism, same speed, nothing to keep in
+           sync. */
+        target = INTRO_END;
 
         smoothScroll.current?.stop();
-        introUnlock = setTimeout(releaseScroll, INTRO_PLAY * 1000 + 900);
-
-        introTween = gsap.to(introHead, {
-          t: INTRO_END,
-          duration: INTRO_PLAY,
-          ease: "none",
-          onUpdate: () => {
-            target = introHead.t;
-          },
-          onComplete: () => {
-            introRunning = false;
-            introDone = true;
-            /* Anchor where the shot actually let go. With the scroll held that
-               is where it started, but it stays correct if the lock ever fails
-               and the reader has moved. */
-            introAtP = Math.min(st.progress, 0.9);
-            releaseScroll();
-          },
-        });
+        introStartedAt = performance.now();
+        /* The tick ends it; these only cover a tick that has stopped running,
+           because a lock released by nothing is a page that cannot scroll. */
+        introFinish = setTimeout(endIntro, INTRO_HOLD * 1000 + 200);
+        introUnlock = setTimeout(releaseScroll, INTRO_HOLD * 1000 + 900);
       };
 
       /**
@@ -678,7 +682,8 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         end: "bottom bottom",
         onUpdate: (self) => setEditions(self.progress),
         onLeaveBack: () => {
-          introTween?.kill();
+          if (introFinish) clearTimeout(introFinish);
+          introFinish = undefined;
           introRunning = false;
           introDone = false;
           introAtP = 0;
@@ -781,7 +786,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         snap();
         return () => {
           introCue.kill();
-          introTween?.kill();
+          if (introFinish) clearTimeout(introFinish);
           releaseScroll();
           st.kill();
           shower.kill();
@@ -935,6 +940,11 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
          * while the hero faded back in over it. Read off the scroll position
          * instead, it cannot be missed, and it costs one comparison.
          */
+        /* The drop ends on the frame clock, not on a timer. A timer cannot run
+           while the main thread is busy, and the one thing that must not
+           outlive a stall is a scroll lock. */
+        if (introRunning && now - introStartedAt >= INTRO_HOLD * 1000) endIntro();
+
         if (!inShowcaseMode && !introRunning && window.scrollY < st.start) {
           if (target !== 0) target = 0;
           introDone = false;
@@ -1074,7 +1084,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         window.removeEventListener("preloader:opening", startIntro);
         window.removeEventListener("preloader:complete", startIntro);
         introCue.kill();
-        introTween?.kill();
+        if (introFinish) clearTimeout(introFinish);
         releaseScroll();
         st.kill();
         shower.kill();
