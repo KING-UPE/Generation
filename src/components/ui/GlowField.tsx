@@ -89,29 +89,38 @@ const WAVES: Wave[] = [
   },
 ];
 
-/**
- * The dark the panel is really built around.
- *
- * Holding the waves apart leaves a channel between them, and a channel is a
- * stripe — it reads as a gap in a pattern rather than as a field with a dark
- * heart. This is a shape in its own right: a soft mass of the page's own black,
- * painted over the waves, tall enough to run the full height of the panel and
- * wide enough that the red only survives down the sides and along the bottom.
- * The title and the figures are read against it.
- *
- * Radii are shares of the field. It wanders on the same clock as the waves, so
- * the edge where black meets red is never a fixed line.
- */
-const MASS = {
-  cx: 0.55,
-  cy: 0.5,
-  rx: 0.17,
-  ry: 0.3,
+type Mass = {
+  /** Centre, as a share of the field. Sits outside it, so only a shoulder reads. */
+  cx: number;
+  cy: number;
+  rx: number;
+  ry: number;
   /** Two perturbations of the radius, so the outline is never an ellipse. */
-  wobble: 0.16,
-  wobble2: 0.085,
-  speed: 0.12,
+  wobble: number;
+  wobble2: number;
+  speed: number;
 };
+
+/**
+ * The dark, and where it goes.
+ *
+ * One mass in the centre is a hole. It lands exactly where the eye goes first
+ * and reads as something missing from the field rather than as shading, and no
+ * amount of shrinking it fixed that — a smaller hole is still a hole.
+ *
+ * Two masses centred just outside the left and right edges do the same job the
+ * middle one was there for: a ground for the title on one side and the figures
+ * on the other. What is left is a field lit through the middle and falling away
+ * at the sides, which is the way round a vignette normally works.
+ *
+ * They wander on the same clock as the waves, in opposite directions, so the
+ * edge where black meets red is never a fixed line and the two sides never
+ * breathe in step.
+ */
+const MASSES: Mass[] = [
+  { cx: -0.04, cy: 0.46, rx: 0.34, ry: 0.92, wobble: 0.13, wobble2: 0.06, speed: 0.09 },
+  { cx: 1.04, cy: 0.54, rx: 0.32, ry: 0.9, wobble: 0.15, wobble2: 0.07, speed: -0.08 },
+];
 
 /** Band opacity with the pointer nowhere near it, and directly on it. */
 const REST = 0.62;
@@ -138,8 +147,7 @@ type Props = {
  *
  * The crests travel on their own, and the pointer pulls the nearest one out of
  * shape: the band under it brightens, and the wave itself bends into a bump
- * that follows the cursor. The bend goes away from the centre, so the pointer
- * opens the dark middle rather than crowding it. Both fall away when the
+ * that follows the cursor. Both fall away when the
  * pointer leaves. Coarse pointers and reduced-motion get a single still frame,
  * which is a composition in its own right.
  *
@@ -153,18 +161,18 @@ export default function GlowField({ blur = 28, className = "" }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const pathRefs = useRef<(SVGPathElement | null)[]>([]);
-  const massRef = useRef<SVGPathElement>(null);
+  const massRefs = useRef<(SVGPathElement | null)[]>([]);
 
   useGSAP(
     () => {
       const root = rootRef.current;
       const svg = svgRef.current;
-      const mass = massRef.current;
       const parent = root?.parentElement;
-      if (!root || !svg || !mass || !parent) return;
+      if (!root || !svg || !parent) return;
 
       const paths = pathRefs.current.filter(Boolean) as SVGPathElement[];
-      if (paths.length !== WAVES.length) return;
+      const masses = massRefs.current.filter(Boolean) as SVGPathElement[];
+      if (paths.length !== WAVES.length || masses.length !== MASSES.length) return;
 
       const size = { w: 0, h: 0 };
       const measure = () => {
@@ -220,26 +228,28 @@ export default function GlowField({ blur = 28, className = "" }: Props) {
         });
       };
 
-      const drawMass = (time: number, w: number, h: number) => {
-        const pts: string[] = [];
-        for (let s = 0; s < MASS_SAMPLES; s++) {
-          const a = (s / MASS_SAMPLES) * TAU;
-          const r =
-            1 +
-            Math.sin(a * 3 + time * MASS.speed * TAU) * MASS.wobble +
-            Math.sin(a * 5 - time * MASS.speed * TAU * 0.7) * MASS.wobble2;
-          const x = MASS.cx * w + Math.cos(a) * MASS.rx * w * r;
-          const y = MASS.cy * h + Math.sin(a) * MASS.ry * h * r;
-          pts.push(`${x.toFixed(1)} ${y.toFixed(1)}`);
-        }
-        mass.setAttribute("d", `M${pts.join("L")}Z`);
+      const drawMasses = (time: number, w: number, h: number) => {
+        MASSES.forEach((m, i) => {
+          const pts: string[] = [];
+          for (let s = 0; s < MASS_SAMPLES; s++) {
+            const a = (s / MASS_SAMPLES) * TAU;
+            const r =
+              1 +
+              Math.sin(a * 3 + time * m.speed * TAU) * m.wobble +
+              Math.sin(a * 5 - time * m.speed * TAU * 0.7) * m.wobble2;
+            const x = m.cx * w + Math.cos(a) * m.rx * w * r;
+            const y = m.cy * h + Math.sin(a) * m.ry * h * r;
+            pts.push(`${x.toFixed(1)} ${y.toFixed(1)}`);
+          }
+          masses[i].setAttribute("d", `M${pts.join("L")}Z`);
+        });
       };
 
       const draw = (time: number) => {
         const { w, h } = size;
         if (!w || !h) return;
         drawWaves(time, w, h);
-        drawMass(time, w, h);
+        drawMasses(time, w, h);
       };
 
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -331,15 +341,23 @@ export default function GlowField({ blur = 28, className = "" }: Props) {
             falloff, it reads as the field being deepest in the middle.
           */}
           <radialGradient id={heartId}>
-            <stop offset="0%" stopColor="var(--ink)" stopOpacity="0.86" />
-            <stop offset="42%" stopColor="var(--ink)" stopOpacity="0.68" />
-            <stop offset="76%" stopColor="var(--ink)" stopOpacity="0.3" />
+            <stop offset="0%" stopColor="var(--ink)" stopOpacity="0.96" />
+            <stop offset="42%" stopColor="var(--ink)" stopOpacity="0.82" />
+            <stop offset="76%" stopColor="var(--ink)" stopOpacity="0.36" />
             <stop offset="100%" stopColor="var(--ink)" stopOpacity="0" />
           </radialGradient>
         </defs>
 
-        {/* Last, so it deepens the crests rather than sitting between them. */}
-        <path ref={massRef} fill={`url(#${heartId})`} />
+        {/* Last, so they deepen the crests rather than sit between them. */}
+        {MASSES.map((_, i) => (
+          <path
+            key={i}
+            ref={(el) => {
+              massRefs.current[i] = el;
+            }}
+            fill={`url(#${heartId})`}
+          />
+        ))}
       </svg>
     </div>
   );
