@@ -87,13 +87,18 @@ const SEEK_LERP = 0.22;
  * only reaches ~28fps at 80px/s. Less scroll costs nothing and helps just as
  * much, so this is the lever to pull first.
  *
- * At 340 the sequence spans 2240px and 3.75px per frame — half again as many
+ * The editions no longer get all of this: the drop is played once the hero has
+ * left, around a third of the way in, and only what is left after that carries
+ * the scrubbed cards. 420 is 340 plus that hero exit, so the cards keep exactly
+ * the scroll they had before the shot was carved out of the front.
+ *
+ * At 340 the sequence spanned 2240px and 3.75px per frame — half again as many
  * frames per second at every scroll speed, and roughly 480px of scroll per
  * edition card, which is still enough to read one. Turn it down further for
  * more smoothness at the cost of dwell time; the cue times are all in video
  * seconds, so they follow this automatically and nothing needs re-timing.
  */
-const EDITIONS_RUNWAY = 340;
+const EDITIONS_RUNWAY = 420;
 
 /**
  * Frame rate of the encode above. The cross-fade divides video time into
@@ -555,10 +560,14 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
       let introTween: gsap.core.Tween | null = null;
       let introRunning = false;
       let introDone = false;
+      /* Where along the editions the shot handed over, so the map can start
+         there instead of at the top of the section. */
+      let introAtP = 0;
 
-      const playIntro = () => {
+      const playIntro = (p: number) => {
         if (introDone || introRunning) return;
         introRunning = true;
+        introAtP = Math.min(p, 0.9);
         introHead.t = 0;
         target = 0;
         introTween = gsap.to(introHead, {
@@ -575,11 +584,38 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         });
       };
 
+      /**
+       * Past this much of the section the shot is written off and the scrub
+       * takes over wherever the reader is.
+       *
+       * Without it the section can strand: video time is held at 0 until the
+       * shot has run, so a hero trigger that never fires would leave the tower
+       * frozen at its top for the whole of the editions with no way out. The
+       * shot is the thing worth losing here, not the section.
+       */
+      const INTRO_GIVE_UP = 0.45;
+
       const setEditions = (p: number) => {
         if (inShowcaseMode) return;
         /* The tween owns video time until it lets go. */
         if (introRunning) return;
-        target = Math.max(0, Math.min(SHOW_T, editionTime(p)));
+
+        if (!introDone) {
+          if (p < INTRO_GIVE_UP) {
+            /* The hero is still on its way out and the tower is its backdrop:
+               hold the top of the frame rather than start the descent under
+               text that has not finished leaving. */
+            target = 0;
+            return;
+          }
+          introDone = true;
+          introAtP = p;
+        }
+
+        /* The scroll picks the footage up where the shot put it down, so the
+           handover is continuous no matter where the shot happened to fire. */
+        const q = introAtP >= 1 ? 1 : (p - introAtP) / (1 - introAtP);
+        target = Math.max(0, Math.min(SHOW_T, editionTime(clamp01(q))));
       };
 
       const setShowcase = (p: number) => {
@@ -596,25 +632,11 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         start: "top top",
         end: "bottom bottom",
         onUpdate: (self) => setEditions(self.progress),
-        /*
-         * Only play it to someone who is actually at the top of the section. A
-         * reader who arrives already scrolled into the editions — a refresh
-         * part way down, a jump from the rail — would otherwise watch the drop
-         * play and then have the footage snap forward to wherever they are.
-         *
-         * If this never fires, `introDone` stays false and nothing plays, but
-         * the map still starts at INTRO_END, so the section works and simply
-         * opens on the 2023 card. Losing the shot is the failure; a stuck
-         * section is not.
-         */
-        onEnter: (self) => {
-          if (self.progress < 0.06) playIntro();
-          else introDone = true;
-        },
         onLeaveBack: () => {
           introTween?.kill();
           introRunning = false;
           introDone = false;
+          introAtP = 0;
           target = 0;
         },
       });
@@ -639,6 +661,30 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         onUpdate: (self) => {
           framingTarget = self.progress;
         },
+      });
+
+      /*
+       * The shot starts when the hero is gone, not when the section arrives.
+       *
+       * These two overlap by design — the timeline begins 180px down while the
+       * hero runs a full viewport — so firing on the section's own start put
+       * the drop under a wordmark that had barely begun to fade, and left the
+       * 2023 card sitting on top of GENERATION 26. The hero's mark does not
+       * finish clearing until its own bottom reaches the top of the screen, so
+       * that is the cue.
+       */
+      /* `heroRef` is not the hero — it is the 20vh runway the frame opens
+         across, so its bottom is 180px down and cueing off it fired the shot
+         almost immediately. The hero's own copy fades against the section
+         inside it, over a full viewport, and that is what has to be gone. */
+      const heroSection =
+        heroRef.current?.querySelector<HTMLElement>("#hero") ?? heroRef.current ?? timeline;
+
+      const introCue = ScrollTrigger.create({
+        trigger: heroSection,
+        start: "bottom top",
+        end: "bottom top",
+        onEnter: () => playIntro(st.progress),
       });
 
       /**
@@ -689,6 +735,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         };
         snap();
         return () => {
+          introCue.kill();
           st.kill();
           shower.kill();
           framer.kill();
@@ -962,6 +1009,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
       return () => {
         window.removeEventListener("preloader:opening", startIntro);
         window.removeEventListener("preloader:complete", startIntro);
+        introCue.kill();
         st.kill();
         shower.kill();
         framer.kill();
