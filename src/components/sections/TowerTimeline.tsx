@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
 import { mediaPath, mediaSrc, onMediaResolved } from "@/lib/media-cache";
+import { smoothScroll } from "@/lib/smooth-scroll";
 
 /**
  * The seek-optimised build of the RIFE footage.
@@ -564,12 +565,39 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
          there instead of at the top of the section. */
       let introAtP = 0;
 
+      /*
+       * The page holds still for the shot.
+       *
+       * Without this the shot fires and the scroll runs away underneath it:
+       * measured on a steady downward scroll it played while the reader
+       * travelled from 900 to 2786 — most of the editions — and the moment it
+       * finished the scrub cut in at 10.82 and raced to the end. The shot was
+       * playing the whole time and could not be seen, which is exactly the
+       * complaint. A timed shot and a scrubbed one cannot share the same
+       * pixels; for its 1.35s the shot owns them.
+       *
+       * Released on a timer as well as on completion, so a killed or stalled
+       * tween can never leave the page unscrollable — the same belt Film wears
+       * around its own lock.
+       */
+      let introUnlock: ReturnType<typeof setTimeout> | undefined;
+
+      const releaseScroll = () => {
+        if (introUnlock) clearTimeout(introUnlock);
+        introUnlock = undefined;
+        smoothScroll.current?.start();
+      };
+
       const playIntro = (p: number) => {
         if (introDone || introRunning) return;
         introRunning = true;
         introAtP = Math.min(p, 0.9);
         introHead.t = 0;
         target = 0;
+
+        smoothScroll.current?.stop();
+        introUnlock = setTimeout(releaseScroll, INTRO_PLAY * 1000 + 900);
+
         introTween = gsap.to(introHead, {
           t: INTRO_END,
           duration: INTRO_PLAY,
@@ -580,6 +608,11 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
           onComplete: () => {
             introRunning = false;
             introDone = true;
+            /* Anchor where the shot actually let go. With the scroll held that
+               is where it started, but it stays correct if the lock ever fails
+               and the reader has moved. */
+            introAtP = Math.min(st.progress, 0.9);
+            releaseScroll();
           },
         });
       };
@@ -638,6 +671,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
           introDone = false;
           introAtP = 0;
           target = 0;
+          releaseScroll();
         },
       });
 
@@ -736,6 +770,8 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         snap();
         return () => {
           introCue.kill();
+          introTween?.kill();
+          releaseScroll();
           st.kill();
           shower.kill();
           framer.kill();
@@ -1010,6 +1046,8 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         window.removeEventListener("preloader:opening", startIntro);
         window.removeEventListener("preloader:complete", startIntro);
         introCue.kill();
+        introTween?.kill();
+        releaseScroll();
         st.kill();
         shower.kill();
         framer.kill();
