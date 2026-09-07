@@ -636,6 +636,8 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
       let videoFrame = -1;      // frame index the video was last asked for
       let videoReady = false;   // has the decoder confirmed it
       let canvasFrame = -1;     // frame index painted into the canvas
+      let scrubDir = 1;         // which way the scrub is travelling
+      let lastTarget = -1;      // previous scroll-driven target, for direction
       let seekBusy = false;
       let seekIssuedAt = 0;
 
@@ -743,16 +745,25 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         const maxT = safeMax();
         const targetClamped = Math.max(0, Math.min(maxT, target));
 
+        /* Which way the scroll is going, taken from the target rather than
+           from the target-to-current gap: the lerp closes that gap within a
+           frame or two of a small scroll, so it reads as no movement at all
+           for exactly the slow scrolling this is here to smooth. The target is
+           what the wheel actually moved. Unchanged target keeps the previous
+           direction, so coming to rest does not flip to forward and re-seek. */
+        if (lastTarget >= 0 && Math.abs(targetClamped - lastTarget) > 1e-4) {
+          scrubDir = targetClamped > lastTarget ? 1 : -1;
+        }
+        lastTarget = targetClamped;
+
         // Always smoothly interpolate current towards targetClamped with zero pause on rewind
         current += (targetClamped - current) * (1 - Math.pow(1 - SEEK_LERP, dt * 60));
         if (Math.abs(targetClamped - current) < 1 / 120) current = targetClamped;
 
-        /* Where we are between two frames. `i` is the frame behind us, `frac`
-           how far past it we have travelled — which is exactly the opacity the
-           next frame should be showing at. */
+        /* Where the scrub is, in frames. `i` is the frame behind us; how far
+           past it we have travelled is what the cross-fade below spends. */
         const f = current * SOURCE_FPS;
         const i = Math.max(0, Math.floor(f));
-        const frac = f - i;
 
         if (Math.abs(video.currentTime - lastSeenTime) > 0.001) {
           lastSeenTime = video.currentTime;
@@ -771,27 +782,46 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
           }
         }
 
-        /* Scrolling forward, the video is already sitting on the frame that
-           just became `i` — snapshot it before asking for the next one, and
-           the whole cycle costs one seek per frame rather than two. */
-        if (canvas && videoReady && videoFrame === i && canvasFrame !== i) {
-          if (snapshot()) canvasFrame = i;
-        }
+        /**
+         * Blend the frame behind us against the frame ahead of us.
+         *
+         * The blend only means anything if the video is holding a frame we
+         * have not reached yet. Seeking it to `round(f)` — the frame the
+         * scrub is already on — leaves nothing to fade into: the fade is
+         * complete the moment it is computed, so every tick painted a whole
+         * frame and the picture stepped. The seek therefore aims one frame
+         * ahead, at `i + 1`, and `frac` — how far past frame `i` the scrub
+         * has travelled — is exactly the opacity that frame should be at.
+         *
+         * The canvas takes a copy immediately before each new seek, so it
+         * holds frame `i` while the video fetches `i + 1`. That ordering is
+         * also why the blend must not wait on `videoReady`: the seek it was
+         * waiting on is issued on the same tick and clears the flag, so
+         * requiring it sent every moving tick down the un-blended path. While
+         * a seek is in flight the element still displays its pre-seek frame —
+         * the same picture the canvas just took — so blending the two is a
+         * no-op until it lands, and a true dissolve once it does.
+         */
+        const wanted = scrubDir >= 0 ? i + 1 : i;
 
-        if (canvas && canvasFrame === i) {
-          /* The canvas holds the base; the video chases the next frame and
-             fades up over it. Only blend toward a frame the decoder has
-             actually produced — fading up something still showing a different
-             moment would smear two unrelated frames together. */
-          seekToFrame(i + 1, maxT, now);
-          const blend = videoReady && videoFrame === i + 1 ? frac : 0;
+        if (canvas && videoReady && videoFrame !== wanted && videoFrame >= 0) {
+          /* About to move: keep what is on screen before it is replaced. */
+          if (snapshot()) canvasFrame = videoFrame;
+        }
+        seekToFrame(wanted, maxT, now);
+
+        /* `span` is +/-1 while scrolling normally, so `t` reduces to how far
+           past the canvas's frame we have travelled. It is signed on purpose:
+           scrolling up puts the canvas ahead of the video and both terms flip
+           together, so one expression covers either direction. After a jump
+           the canvas is further away and this dissolves across the whole gap
+           rather than cutting. */
+        const span = videoFrame - canvasFrame;
+        if (canvas && canvasFrame >= 0 && span !== 0) {
           canvas.style.opacity = "1";
-          video.style.opacity = blend.toFixed(3);
+          video.style.opacity = clamp01((f - canvasFrame) / span).toFixed(3);
         } else {
-          /* No usable base — a jump, a reversal, or the very first frame.
-             Show the real frame directly and let the next tick start blending
-             once it has been snapshotted. */
-          seekToFrame(i, maxT, now);
+          /* Nothing behind us yet — the first frames of the page. */
           if (canvas) canvas.style.opacity = "0";
           video.style.opacity = "1";
         }
