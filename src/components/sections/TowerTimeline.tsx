@@ -196,11 +196,18 @@ const CARDS_END = 15.5;
 const INTRO_END = 4.2;
 
 /**
- * How long that takes, in seconds. It is a shot, not a scrub, so it runs at a
- * fixed rate no matter how the reader arrived — about 3x the footage's own
- * speed, which is brisk without tearing through the descent.
+ * How long that takes, in seconds — a whip down the tower, not a playback.
+ *
+ * Scrolling back up, the reset sweeps video time from 4.2 to 0 in about 0.2s
+ * under SEEK_LERP alone, and that snap is the thing worth matching. Against it
+ * a 1.35s tween read as ordinary scrubbing even though it was running: same
+ * footage, same lock, but slow enough that nothing about it said "played".
+ *
+ * 0.55 is roughly 8x the footage's own speed. The lerp adds its own short tail,
+ * so the whole move lands a little under 0.8s, and the page is held for only
+ * as long as that takes.
  */
-const INTRO_PLAY = 1.35;
+const INTRO_PLAY = 0.55;
 
 const EDITION_MAP: ReadonlyArray<readonly [number, number]> = [
   [0, INTRO_END], [0.81, 12.0], [0.86, 14.3], [1, SHOW_T],
