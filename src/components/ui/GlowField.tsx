@@ -20,6 +20,12 @@ type Blob = {
 };
 
 /**
+ * Built only from the palette's reds — #FF2E2E, #E10600, #8B0212, #2A0207.
+ * The lightest stop of `--grad-red` is #FF5A3C, which is fine as a sliver in a
+ * gradient but reads as orange once it is the core of the largest shape on the
+ * panel: green at 104 is enough to swing the whole field warm. Nothing here
+ * goes above 46.
+ *
  * Four masses rather than four orbs. Each is most of the field across, centred
  * near or past an edge so only a shoulder of it shows — that is what keeps them
  * reading as shapes the panel is cut out of, instead of balls parked in the
@@ -31,8 +37,8 @@ const BLOBS: Blob[] = [
     x: 18,
     y: 34,
     size: 98,
-    core: "rgba(255,104,74,0.82)",
-    edge: "rgba(225,6,0,0.28)",
+    core: "rgba(255,46,46,0.80)",
+    edge: "rgba(225,6,0,0.30)",
     from: "62% 38% 46% 54% / 54% 44% 56% 46%",
     to: "44% 56% 63% 37% / 42% 58% 42% 58%",
     cycle: 11,
@@ -41,8 +47,8 @@ const BLOBS: Blob[] = [
     x: 42,
     y: 104,
     size: 82,
-    core: "rgba(225,6,0,0.72)",
-    edge: "rgba(139,2,18,0.24)",
+    core: "rgba(225,6,0,0.74)",
+    edge: "rgba(139,2,18,0.26)",
     from: "48% 52% 36% 64% / 62% 38% 62% 38%",
     to: "63% 37% 55% 45% / 38% 62% 38% 62%",
     cycle: 14,
@@ -51,7 +57,7 @@ const BLOBS: Blob[] = [
     x: 80,
     y: 8,
     size: 74,
-    core: "rgba(255,46,46,0.52)",
+    core: "rgba(238,14,26,0.50)",
     edge: "rgba(139,2,18,0.20)",
     from: "56% 44% 62% 38% / 44% 56% 44% 56%",
     to: "38% 62% 42% 58% / 58% 40% 60% 42%",
@@ -61,8 +67,8 @@ const BLOBS: Blob[] = [
     x: 106,
     y: 78,
     size: 66,
-    core: "rgba(198,10,30,0.58)",
-    edge: "rgba(60,2,12,0.22)",
+    core: "rgba(160,4,22,0.60)",
+    edge: "rgba(42,2,7,0.24)",
     from: "50% 50% 58% 42% / 46% 58% 42% 54%",
     to: "64% 36% 44% 56% / 60% 40% 56% 44%",
     cycle: 12,
