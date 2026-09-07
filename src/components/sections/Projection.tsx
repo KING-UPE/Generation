@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import ScrollCopy from "@/components/ui/ScrollCopy";
 import CountFigure from "@/components/ui/CountFigure";
-import { useTorch } from "@/lib/use-torch";
+import GlowField from "@/components/ui/GlowField";
 import { useReveal } from "@/lib/use-reveal";
 import {
   IconReach,
@@ -21,33 +21,12 @@ const SPLIT = [
   { value: 200000, label: "Elsewhere", icon: <IconElsewhere /> },
 ];
 
-/**
- * The panel's own light: a crimson bloom off the top-left corner, a second one
- * rising from the bottom edge, and a diagonal that carries the whole thing down
- * to the page's black on the right. Layered rather than one gradient so the
- * falloff can be steep near the corner and long across the middle.
- */
-const PANEL_BASE = [
-  "radial-gradient(105% 125% at 1% 4%, rgba(196,14,38,0.92) 0%, rgba(126,5,24,0.62) 32%, rgba(34,5,12,0.35) 62%, rgba(8,8,11,0) 80%)",
-  "radial-gradient(85% 120% at 4% 104%, rgba(214,10,32,0.55) 0%, rgba(96,3,18,0.28) 40%, transparent 70%)",
-  "linear-gradient(112deg, #2A0207 0%, #14040B 46%, #08080B 100%)",
-].join(", ");
-
-/**
- * The reactive layer, lit by `--mx` / `--my` from useTorch. Its fallbacks are
- * where the light rests on a touch screen, which is also where it sits before
- * the pointer has moved.
- */
-const PANEL_POINTER =
-  "radial-gradient(560px circle at var(--mx, 16%) var(--my, 30%), rgba(255,116,86,0.30) 0%, rgba(225,6,0,0.13) 38%, transparent 68%)";
-
 const TITLE_SIZE = "text-[clamp(2.4rem,5.6vw,6rem)] leading-[0.9] tracking-[-0.025em]";
 
 export default function Projection() {
   const panelRef = useRef<HTMLDivElement>(null);
   const headRef = useRef<HTMLDivElement>(null);
 
-  useTorch(panelRef);
   useReveal(headRef, { children: true, y: 34, stagger: 0.1 });
 
   return (
@@ -59,13 +38,8 @@ export default function Projection() {
         <div
           ref={panelRef}
           className="cut-shape relative isolate overflow-hidden px-7 py-12 sm:px-12 sm:py-16 lg:px-16 lg:py-20"
-          style={{ background: PANEL_BASE }}
         >
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0"
-            style={{ background: PANEL_POINTER }}
-          />
+          <GlowField />
 
           <div className="relative grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
             {/* Filled rather than the outline title the other sections use —
