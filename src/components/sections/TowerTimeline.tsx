@@ -589,6 +589,49 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
       const onSeeked = () => { seekBusy = false; videoReady = true; };
       video.addEventListener("seeked", onSeeked);
 
+      /**
+       * Give the decoder one play/pause on the first gesture.
+       *
+       * iOS will not reliably attach a decoder to a <video> that has never
+       * played. Seeks on such an element can silently do nothing — no error,
+       * no `seeked`, the frame simply never changes — which is the other way
+       * this ends up stuck on frame 0. The element is muted and playsInline,
+       * so starting and immediately stopping it is neither seen nor heard, and
+       * it has to hang off a real gesture or the play() is refused.
+       */
+      let primed = false;
+      const prime = () => {
+        if (primed) return;
+        primed = true;
+        try {
+          const played = video.play();
+          if (played && typeof played.then === "function") {
+            played.then(() => video.pause()).catch(() => {
+              /* refused — seeking may still work, so this is not fatal */
+            });
+          } else {
+            video.pause();
+          }
+        } catch {
+          /* same: best effort */
+        }
+      };
+      const primeEvents = ["touchstart", "pointerdown", "wheel", "keydown"] as const;
+      primeEvents.forEach((e) =>
+        window.addEventListener(e, prime, { once: true, passive: true }),
+      );
+
+      /* Recovery watchdog. A decoder that has been dropped — iOS reclaims them
+         under memory pressure — leaves a seek that never answers, and the
+         scrub would then hold one frame for the rest of the page with nothing
+         to indicate why. If the picture has not moved at all while the scroll
+         has clearly asked it to, force the guard open and ask again; if that
+         does not take either, reload the element, which is the only reset that
+         reliably works. */
+      let lastMovedAt = performance.now();
+      let lastSeenTime = -1;
+      let recoveries = 0;
+
       /** Is this moment already downloaded? A seek inside a buffered range is a
        *  decode and lands in milliseconds; one outside it is a network fetch. */
       const isBuffered = (t: number) => {
@@ -658,6 +701,23 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         const i = Math.max(0, Math.floor(f));
         const frac = f - i;
 
+        if (Math.abs(video.currentTime - lastSeenTime) > 0.001) {
+          lastSeenTime = video.currentTime;
+          lastMovedAt = now;
+          recoveries = 0;
+        } else if (
+          Math.abs(current - video.currentTime) > 0.25 &&
+          now - lastMovedAt > 3000
+        ) {
+          lastMovedAt = now;
+          seekBusy = false;
+          videoFrame = -1;
+          if (++recoveries > 2) {
+            recoveries = 0;
+            video.load();
+          }
+        }
+
         /* Scrolling forward, the video is already sitting on the frame that
            just became `i` — snapshot it before asking for the next one, and
            the whole cycle costs one seek per frame rather than two. */
@@ -715,6 +775,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         exit.scrollTrigger?.kill();
         exit.kill();
         video.removeEventListener("seeked", onSeeked);
+        primeEvents.forEach((e) => window.removeEventListener(e, prime));
         gsap.ticker.remove(tick);
       };
     },
