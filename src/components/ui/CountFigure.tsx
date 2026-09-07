@@ -12,6 +12,12 @@ type Props = {
    * every mark is aria-hidden.
    */
   icon?: React.ReactNode;
+  /**
+   * Edge of the mark's box, as a CSS length. Deliberately larger than the
+   * number's cap height: the point of the mark is to land before anyone reads
+   * a word, so it has to carry the cell on its own.
+   */
+  iconSize?: string;
   /** Sits after the number in red. Every figure we publish is a floor, not a total. */
   suffix?: string;
   label: string;
@@ -39,6 +45,7 @@ const FORMAT = new Intl.NumberFormat("en-US");
 export default function CountFigure({
   value,
   icon,
+  iconSize = "clamp(2.5rem, 4.2vw, 3.5rem)",
   suffix = "+",
   label,
   size = "clamp(1.75rem, 3.6vw, 2.9rem)",
@@ -77,7 +84,14 @@ export default function CountFigure({
   return (
     <div ref={rootRef} className={className}>
       {/* inline-flex, so a centred column centres the mark too */}
-      {icon ? <span className="mb-4 inline-flex text-red-hot">{icon}</span> : null}
+      {icon ? (
+        <span
+          className="mb-4 inline-flex items-center justify-center text-red-hot md:mb-5"
+          style={{ width: iconSize, height: iconSize }}
+        >
+          {icon}
+        </span>
+      ) : null}
       <p
         className="font-display leading-[0.9] tracking-[-0.02em] text-bone tabular-nums"
         style={{ fontSize: size }}

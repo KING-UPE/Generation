@@ -2,7 +2,9 @@ import type { ReactNode } from "react";
 
 type Props = { className?: string };
 
-const DEFAULT_SIZE = "h-5 w-5";
+/* Fills whatever box it is given — CountFigure sizes the wrapper, so a mark
+   and the figure under it scale on the same clamp. */
+const DEFAULT_SIZE = "h-full w-full";
 
 /**
  * Two families, deliberately.

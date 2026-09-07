@@ -40,7 +40,8 @@ export default function Projection() {
 
         <CountFigure
           value={650000}
-          icon={<IconReach className="h-8 w-8" />}
+          icon={<IconReach />}
+          iconSize="clamp(3.5rem, 7vw, 6rem)"
           label="Total reach and engagement"
           size="clamp(3rem, 11vw, 8.5rem)"
           className="mt-14 md:mt-20"
