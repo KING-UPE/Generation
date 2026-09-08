@@ -84,6 +84,21 @@ export default function VisionAbout() {
     return () => mq.removeEventListener("change", sync);
   }, []);
 
+  /*
+   * Only clear when the pointer has actually gone.
+   *
+   * The deck is `absolute inset-0`, but the cards are translated and scaled
+   * out past that box, so a pointer moving from one card to the other leaves
+   * the deck's own bounds and the browser fires pointerleave -- with a
+   * relatedTarget that is still inside the deck. Measured mid-sweep: hover,
+   * leave, hover, leave, which is the flicker. Moving between descendants is
+   * not leaving.
+   */
+  const stillInside = (e: React.PointerEvent) => {
+    const to = e.relatedTarget as Node | null;
+    return !!to && e.currentTarget.contains(to);
+  };
+
   const onFrontPointerOver = (e: React.PointerEvent) => {
     const card = (e.target as HTMLElement | null)?.closest<HTMLElement>("[data-card-index]");
     if (!card) return;
@@ -91,7 +106,8 @@ export default function VisionAbout() {
     setFrontHovered((prev) => (prev === index ? prev : index));
   };
 
-  const onFrontPointerLeave = () => {
+  const onFrontPointerLeave = (e: React.PointerEvent) => {
+    if (stillInside(e)) return;
     setFrontHovered(null);
   };
 
@@ -102,7 +118,8 @@ export default function VisionAbout() {
     setBackHovered((prev) => (prev === index ? prev : index));
   };
 
-  const onBackPointerLeave = () => {
+  const onBackPointerLeave = (e: React.PointerEvent) => {
+    if (stillInside(e)) return;
     setBackHovered(null);
   };
 
@@ -373,6 +390,23 @@ export default function VisionAbout() {
                     onPointerLeave={onFrontPointerLeave}
                     className="absolute inset-0 [backface-visibility:hidden]"
                   >
+                    {/*
+                      A hit surface that covers the gaps between the cards.
+
+                      The deck is `absolute inset-0`, but the fan pushes its
+                      cards up to 16% beyond that box, so crossing from one card
+                      to the other passes over ground the deck does not occupy.
+                      The pointer landed on the deck's ancestor there, which is a
+                      real pointerleave, so the hover cleared and re-armed on
+                      every crossing -- measured as hover, none, hover, none.
+
+                      This sits under the cards and carries no paint. Moving over
+                      it keeps the pointer inside the deck, and since it holds no
+                      data-card-index the over handler ignores it, so the hovered
+                      card simply stays hovered until another one is reached.
+                    */}
+                    <span aria-hidden className="absolute -inset-[22%]" />
+
                     {VISION_CARDS.map((c, i) => {
                       const isHovered = frontHovered === i;
                       const isOtherHovered = frontHovered !== null && frontHovered !== i;
@@ -454,6 +488,23 @@ export default function VisionAbout() {
                     className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)]"
                     style={{ visibility: "hidden", pointerEvents: "none" }}
                   >
+                    {/*
+                      A hit surface that covers the gaps between the cards.
+
+                      The deck is `absolute inset-0`, but the fan pushes its
+                      cards up to 16% beyond that box, so crossing from one card
+                      to the other passes over ground the deck does not occupy.
+                      The pointer landed on the deck's ancestor there, which is a
+                      real pointerleave, so the hover cleared and re-armed on
+                      every crossing -- measured as hover, none, hover, none.
+
+                      This sits under the cards and carries no paint. Moving over
+                      it keeps the pointer inside the deck, and since it holds no
+                      data-card-index the over handler ignores it, so the hovered
+                      card simply stays hovered until another one is reached.
+                    */}
+                    <span aria-hidden className="absolute -inset-[22%]" />
+
                     {ABOUT_CARDS.map((c, i) => {
                       const isHovered = backHovered === i;
                       const isOtherHovered = backHovered !== null && backHovered !== i;
