@@ -458,8 +458,16 @@ export default function Film() {
     <section id="film" ref={sectionRef as React.RefObject<HTMLElement>} className="relative h-[135vh]">
       <div
         ref={stageRef}
-        className="film-stage sticky top-0 h-[100svh] w-full overflow-hidden"
-        style={FRAME_VARS}
+        /* Held to the site's column rather than the viewport, so the frame
+           stops running edge to edge when it opens.
+
+           The width is set on the box itself rather than as padding: the video
+           inside scales past its own bounds for the parallax, and clipping it
+           against a padding edge left it spilling the full width anyway. This
+           is the same measure every other section lands on -- min(100%, maxw)
+           less a gutter each side. */
+        className="film-stage sticky top-0 mx-auto h-[100svh] overflow-hidden"
+        style={{ ...FRAME_VARS, width: "calc(min(100%, var(--maxw)) - 2 * var(--gutter))" }}
       >
         {/* ── the tablet body ─────────────────────────────────── */}
         <div ref={chromeRef} aria-hidden className="absolute inset-0">
