@@ -22,6 +22,11 @@ const ScrollTuner =
     ? () => null
     : dynamic(() => import("@/components/dev/ScrollTuner"));
 
+const ThemeTuner =
+  process.env.NODE_ENV === "production"
+    ? () => null
+    : dynamic(() => import("@/components/dev/ThemeTuner"));
+
 const anton = Anton({
   subsets: ["latin"],
   weight: "400",
@@ -191,6 +196,8 @@ export default function RootLayout({
         <Grain />
         {/* Delete this line and the component once the scroll feel is settled. */}
         <ScrollTuner />
+        {/* Drag a hue, then paste the two lines it gives you into globals.css. */}
+        <ThemeTuner />
       </body>
     </html>
   );

@@ -51,8 +51,17 @@ export default function Starfield() {
     let dpr = 1;
     let stars: Star[] = [];
     const glowCool = makeGlow("rgba(226,238,250,0.55)", 64);
-    const glowWarm = makeGlow(brandColor("--tint", 0.55), 64);
-    const starWarm = brandColor("--tint-soft");
+    let glowWarm = makeGlow(brandColor("--tint", 0.55), 64);
+    let starWarm = brandColor("--tint-soft");
+
+    /* Every other accent on the page follows --brand-h on its own, because it
+       reads the ramp live. These two are resolved strings baked into a sprite
+       and a fillStyle, so the theme tuner tells them when to go again. */
+    const rereadBrand = () => {
+      glowWarm = makeGlow(brandColor("--tint", 0.55), 64);
+      starWarm = brandColor("--tint-soft");
+    };
+    window.addEventListener("brand:change", rereadBrand);
 
     const build = () => {
       dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -145,6 +154,7 @@ export default function Starfield() {
     return () => {
       ro.disconnect();
       window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("brand:change", rereadBrand);
       gsap.ticker.remove(draw);
     };
   }, []);
