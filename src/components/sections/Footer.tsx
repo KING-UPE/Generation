@@ -106,9 +106,15 @@ export default function Footer() {
           const sheen = Math.max(0, 1 - (weights[i] - 0.3) / 1.0);
           const alpha = 0.05 + 0.5 * sheen * sheen;
 
-          ctx.strokeStyle = `rgba(255,255,255,${alpha.toFixed(3)})`;
           ctx.lineWidth = 0.7 + sheen * 0.8;
-          ctx.beginPath();
+
+          /* Drawn a segment at a time so the field can fade across the panel.
+             An overlay laid on top instead put a visible edge where it thinned
+             enough for the lines to show through -- a gradient is smooth, but
+             a line appearing out of nothing is not. Fading the strokes
+             themselves has no boundary to see. */
+          let px = 0;
+          let py = 0;
 
           for (let j = 0; j <= steps; j++) {
             const u = j / steps;
@@ -126,10 +132,20 @@ export default function Footer() {
                right, so the field opens towards the corner. */
             const y = y0 + disp * (0.25 + u * u * 1.35);
 
-            if (j === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
+            if (j > 0) {
+              /* Smoothstep across the width: nothing at the left edge, full
+                 strength by the right. */
+              const t = Math.min(1, Math.max(0, (u - 0.06) / 0.72));
+              const ramp = t * t * (3 - 2 * t);
+              ctx.strokeStyle = `rgba(255,255,255,${(alpha * ramp).toFixed(3)})`;
+              ctx.beginPath();
+              ctx.moveTo(px, py);
+              ctx.lineTo(x, y);
+              ctx.stroke();
+            }
+            px = x;
+            py = y;
           }
-          ctx.stroke();
         }
 
         if (!reduced) offset += 0.004;
@@ -151,18 +167,17 @@ export default function Footer() {
       {/* The contour field. Behind everything, and clipped by the footer. */}
       <canvas ref={canvasRef} aria-hidden className="pointer-events-none absolute inset-0 h-full w-full" />
 
-      {/* Reads the lines down towards the left, so the type never sits on them. */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-ink-2 via-ink-2/70 to-transparent" />
-
       {/* Subtle ambient warm red glow on bottom-left */}
       <div className="absolute -bottom-12 -left-12 h-44 w-44 rounded-full bg-red-hot/10 blur-3xl pointer-events-none" />
 
       {/* Content wrapper */}
       <div className="relative z-10 mx-auto w-full max-w-(--maxw) px-(--gutter) pt-10 pb-8 md:pt-14 md:pb-10">
         {/* Main Grid: Brand summary + Quick Columns */}
-        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-12">
+        {/* Two up on a phone. Stacked one per row the four blocks ran the
+            whole screen; paired, the footer is a little over half that. */}
+        <div className="grid grid-cols-2 gap-x-6 gap-y-9 sm:gap-10 lg:grid-cols-4 lg:gap-12">
           {/* Brand Identity */}
-          <div className="flex flex-col justify-between">
+          <div className="col-span-2 flex flex-col justify-between lg:col-span-1">
             <div>
               <Link href="/" className="inline-block group">
                 <span className="font-display text-2xl font-bold tracking-tight text-bone group-hover:text-red-hot transition-colors duration-200">
@@ -180,8 +195,10 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Column 1: Auditions */}
-          <div>
+          {/* Column 1: Auditions.
+              Two rows tall on a phone, so Channels and Event stack beside it
+              in the second column instead of pushing a third row. */}
+          <div className="row-span-2 lg:row-span-1">
             <span className="font-mono uppercase text-dim tracking-[0.18em] text-[11px] mb-5 block">
               Auditions
             </span>
