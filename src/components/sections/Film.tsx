@@ -73,10 +73,14 @@ const CLOSE_BEFORE = 50;
  */
 const FRAME_VARS = {
   "--fp": 1,
-  "--ft": "calc(var(--fp) * 28%)",
-  "--fr": "calc(var(--fp) * 6%)",
-  "--fb": "calc(var(--fp) * 28%)",
-  "--fl": "calc(var(--fp) * 50%)",
+  /* The insets come from `.film-stage` in globals.css, which sets them per
+     breakpoint: equal left and right below 64rem, so the screen sits in the
+     middle of a phone; the 50/6 pair above it, which puts it in the right-hand
+     half beside the title. The fallbacks are the phone values. */
+  "--ft": "calc(var(--fp) * var(--ft-base, 42%))",
+  "--fr": "calc(var(--fp) * var(--fr-base, 16%))",
+  "--fb": "calc(var(--fp) * var(--fb-base, 10%))",
+  "--fl": "calc(var(--fp) * var(--fl-base, 16%))",
   "--bez": "calc(var(--fp) * 13px)",
   "--srad": "calc(var(--fp) * 9px)",
   "--brad": "calc(var(--fp) * 22px)",
@@ -454,7 +458,7 @@ export default function Film() {
     <section id="film" ref={sectionRef as React.RefObject<HTMLElement>} className="relative h-[135vh]">
       <div
         ref={stageRef}
-        className="sticky top-0 h-[100svh] w-full overflow-hidden"
+        className="film-stage sticky top-0 h-[100svh] w-full overflow-hidden"
         style={FRAME_VARS}
       >
         {/* ── the tablet body ─────────────────────────────────── */}
