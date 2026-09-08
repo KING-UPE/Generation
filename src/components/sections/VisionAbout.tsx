@@ -6,14 +6,17 @@ import LitTitle from "@/components/ui/LitTitle";
 import ScrollCopy from "@/components/ui/ScrollCopy";
 import CutCard from "@/components/ui/CutCard";
 
+/* The deck is aspect-[4/3], so these are the landscape frames. Vision carries
+   the two that show the size of the room; About carries the two that show what
+   happens in it. */
 const VISION_CARDS = [
-  { src: "/img/stage.svg", alt: "Performer under stage lights" },
-  { src: "/img/poster.svg", alt: "Generation 26 key art" },
+  { src: "/img/photos/IAP07571.jpg", alt: "A performer facing a full open-air crowd at dusk" },
+  { src: "/img/photos/IAP08008.jpg", alt: "The floor lit end to end by phone torches" },
 ];
 
 const ABOUT_CARDS = [
-  { src: "/img/lights.svg", alt: "Stage beams over the floor" },
-  { src: "/img/crowd.svg", alt: "Crowd with hands raised" },
+  { src: "/img/photos/IAP09052.jpg", alt: "A dance troupe in line across the stage" },
+  { src: "/img/photos/IAP08596.jpg", alt: "A singer on stage behind a curtain of sparks" },
 ];
 
 const TITLE_SIZE = "text-[clamp(2.6rem,7.5vw,8.5rem)] leading-[0.9] tracking-[-0.025em]";

@@ -4,22 +4,33 @@
 import { useRef } from "react";
 import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
 
+/*
+ * Ordered against RATIOS below, not by preference: the two cycle together, so
+ * slot i always lands in the same frame shape. The four portrait frames get the
+ * four portrait photographs; where there are more portrait frames than portrait
+ * photographs, the landscape ones chosen for them have a centred subject, which
+ * is all that survives an object-cover crop to 3/4.
+ *
+ * Fifteen frames against fourteen photographs, so one repeats. It is a wide
+ * venue shot placed nine slots from its twin, which is most of a pass of the
+ * tunnel — far enough apart not to read as the same picture twice.
+ */
 const SLOTS = [
-  "/img/stage.svg",
-  "/img/photos/01.svg",
-  "/img/lights.svg",
-  "/img/photos/02.svg",
-  "/img/crowd.svg",
-  "/img/photos/03.svg",
-  "/img/poster.svg",
-  "/img/photos/04.svg",
-  "/img/stage.svg",
-  "/img/photos/05.svg",
-  "/img/lights.svg",
-  "/img/photos/06.svg",
-  "/img/crowd.svg",
-  "/img/photos/07.svg",
-  "/img/poster.svg",
+  "/img/photos/IAP07571.jpg", // open-air crowd from the stage
+  "/img/photos/IAP07479.jpg", // singer, arm out
+  "/img/photos/IAP08180.jpg", // full stage under the LED wall
+  "/img/photos/IAP07837.jpg", // kandyan dancers, pair
+  "/img/photos/IAP08008.jpg", // the floor lit by phone torches
+  "/img/photos/IAP07942.jpg", // beam wash over the venue
+  "/img/photos/IAP06765.jpg", // singer mid-phrase
+  "/img/photos/IAP06905.jpg", // crowd, shoulders up
+  "/img/photos/IAP07843.jpg", // kandyan dancer, arm raised
+  "/img/photos/IAP08596.jpg", // sparklers behind the singer
+  "/img/photos/IAP09052.jpg", // dance troupe in line
+  "/img/photos/IAP06665.jpg", // singer against the green wash
+  "/img/photos/IAP07600.jpg", // stage and the crowd beside it
+  "/img/photos/IAP07586.jpg", // silhouette in the haze
+  "/img/photos/IAP07942.jpg", // beam wash again, a pass away
 ];
 const RATIOS = ["4 / 3", "3 / 4", "1 / 1", "3 / 4", "4 / 3"];
 
