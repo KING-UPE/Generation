@@ -82,8 +82,12 @@ const FRAME_VARS = {
   "--fb": "calc(var(--fp) * var(--fb-base, 10%))",
   "--fl": "calc(var(--fp) * var(--fl-base, 16%))",
   "--bez": "calc(var(--fp) * 13px)",
-  "--srad": "calc(var(--fp) * 9px)",
-  "--brad": "calc(var(--fp) * 22px)",
+  /* Square. The rounded pair -- 9px on the screen, 22px on the body -- read as
+     a tablet held up to the camera; the closed frame is meant to be a plain
+     rectangle. Both still scale with --fp, so there is nothing to unwind as it
+     opens. */
+  "--srad": "calc(var(--fp) * 0px)",
+  "--brad": "calc(var(--fp) * 0px)",
 } as React.CSSProperties;
 
 /** The screen itself. */
@@ -458,16 +462,11 @@ export default function Film() {
     <section id="film" ref={sectionRef as React.RefObject<HTMLElement>} className="relative h-[135vh]">
       <div
         ref={stageRef}
-        /* Held to the site's column rather than the viewport, so the frame
-           stops running edge to edge when it opens.
-
-           The width is set on the box itself rather than as padding: the video
-           inside scales past its own bounds for the parallax, and clipping it
-           against a padding edge left it spilling the full width anyway. This
-           is the same measure every other section lands on -- min(100%, maxw)
-           less a gutter each side. */
-        className="film-stage sticky top-0 mx-auto h-[100svh] overflow-hidden"
-        style={{ ...FRAME_VARS, width: "calc(min(100%, var(--maxw)) - 2 * var(--gutter))" }}
+        /* Full width on purpose: the frame is inset within it while closed,
+           and opening it is meant to fill the screen. Holding the stage to the
+           site's column capped that, so the footage never went full screen. */
+        className="film-stage sticky top-0 h-[100svh] w-full overflow-hidden"
+        style={FRAME_VARS}
       >
         {/* ── the tablet body ─────────────────────────────────── */}
         <div ref={chromeRef} aria-hidden className="absolute inset-0">
