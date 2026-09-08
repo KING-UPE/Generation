@@ -59,14 +59,21 @@ export default function CutCard({ src, alt, delay = 0, className = "" }: Props) 
         (h - 0.75) + " L 0.75 " + tl + " Z"
       : "";
 
+  const hasPlayedRef = useRef(false);
+
   useGSAP(
     () => {
       const root = rootRef.current;
       if (!root) return;
 
+      if (hasPlayedRef.current) return;
+
       const intro = gsap.timeline({
         scrollTrigger: { trigger: root, start: "top 82%", once: true },
         delay,
+        onComplete: () => {
+          hasPlayedRef.current = true;
+        },
       });
 
       intro

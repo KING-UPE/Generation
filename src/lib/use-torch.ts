@@ -17,20 +17,21 @@ export function useTorch(ref: RefObject<HTMLElement | null>, enabled = true) {
 
     const setX = gsap.quickSetter(el, "--mx", "px");
     const setY = gsap.quickSetter(el, "--my", "px");
-    const pos = { x: 0, y: 0 };
+    let clientX = 0;
+    let clientY = 0;
     let dirty = false;
 
     const onMove = (e: PointerEvent) => {
-      const r = el.getBoundingClientRect();
-      pos.x = e.clientX - r.left;
-      pos.y = e.clientY - r.top;
+      clientX = e.clientX;
+      clientY = e.clientY;
       dirty = true;
     };
 
     const tick = () => {
       if (!dirty) return;
-      setX(pos.x);
-      setY(pos.y);
+      const r = el.getBoundingClientRect();
+      setX(clientX - r.left);
+      setY(clientY - r.top);
       dirty = false;
     };
 

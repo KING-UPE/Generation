@@ -84,6 +84,28 @@ export default function VisionAbout() {
     return () => mq.removeEventListener("change", sync);
   }, []);
 
+  const onFrontPointerOver = (e: React.PointerEvent) => {
+    const card = (e.target as HTMLElement | null)?.closest<HTMLElement>("[data-card-index]");
+    if (!card) return;
+    const index = Number(card.dataset.cardIndex);
+    setFrontHovered((prev) => (prev === index ? prev : index));
+  };
+
+  const onFrontPointerLeave = () => {
+    setFrontHovered(null);
+  };
+
+  const onBackPointerOver = (e: React.PointerEvent) => {
+    const card = (e.target as HTMLElement | null)?.closest<HTMLElement>("[data-card-index]");
+    if (!card) return;
+    const index = Number(card.dataset.cardIndex);
+    setBackHovered((prev) => (prev === index ? prev : index));
+  };
+
+  const onBackPointerLeave = () => {
+    setBackHovered(null);
+  };
+
   useGSAP(
     () => {
       const container = containerRef.current;
@@ -235,19 +257,19 @@ export default function VisionAbout() {
       // 5. Interactive 3D mouse parallax tilt on hover
       const cleanups: (() => void)[] = [];
       if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
-        const tiltX = gsap.quickTo(tilt, "rotationX", { duration: 0.6, ease: "power3" });
-        const tiltY = gsap.quickTo(tilt, "rotationY", { duration: 0.6, ease: "power3" });
-        const driftX = gsap.quickTo(tilt, "x", { duration: 0.8, ease: "power3" });
-        const driftY = gsap.quickTo(tilt, "y", { duration: 0.8, ease: "power3" });
+        const tiltX = gsap.quickTo(tilt, "rotationX", { duration: 0.4, ease: "power2" });
+        const tiltY = gsap.quickTo(tilt, "rotationY", { duration: 0.4, ease: "power2" });
+        const driftX = gsap.quickTo(tilt, "x", { duration: 0.4, ease: "power2" });
+        const driftY = gsap.quickTo(tilt, "y", { duration: 0.4, ease: "power2" });
 
         const onMove = (e: PointerEvent) => {
           const r = deck.getBoundingClientRect();
           const nx = (e.clientX - r.left) / r.width - 0.5;
           const ny = (e.clientY - r.top) / r.height - 0.5;
-          tiltY(nx * 12);
-          tiltX(-ny * 10);
-          driftX(nx * 14);
-          driftY(ny * 10);
+          tiltY(nx * 10);
+          tiltX(-ny * 8);
+          driftX(nx * 10);
+          driftY(ny * 8);
         };
 
         const onLeave = () => {
@@ -347,6 +369,8 @@ export default function VisionAbout() {
                   {/* ── FRONT DECK (Vision: 2 Fanned Cards) ── */}
                   <div
                     ref={frontDeckRef}
+                    onPointerOver={onFrontPointerOver}
+                    onPointerLeave={onFrontPointerLeave}
                     className="absolute inset-0 [backface-visibility:hidden]"
                   >
                     {VISION_CARDS.map((c, i) => {
@@ -394,13 +418,12 @@ export default function VisionAbout() {
                       return (
                         <div
                           key={c.src}
-                          onMouseEnter={() => setFrontHovered(i)}
-                          onMouseLeave={() => setFrontHovered(null)}
-                          className="absolute inset-0 cursor-pointer"
+                          className="pointer-events-none absolute inset-0"
                           style={{ transform: rest, zIndex }}
                         >
                           <div
-                            className="h-full w-full"
+                            data-card-index={i}
+                            className="pointer-events-auto h-full w-full cursor-pointer"
                             style={{
                               transform: lift,
                               filter,
@@ -417,6 +440,8 @@ export default function VisionAbout() {
                   {/* ── BACK DECK (About: 2 Fanned Cards, Pre-flipped 180deg) ── */}
                   <div
                     ref={backDeckRef}
+                    onPointerOver={onBackPointerOver}
+                    onPointerLeave={onBackPointerLeave}
                     className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)]"
                     style={{ visibility: "hidden", pointerEvents: "none" }}
                   >
@@ -454,13 +479,12 @@ export default function VisionAbout() {
                       return (
                         <div
                           key={c.src}
-                          onMouseEnter={() => setBackHovered(i)}
-                          onMouseLeave={() => setBackHovered(null)}
-                          className="absolute inset-0 cursor-pointer"
+                          className="pointer-events-none absolute inset-0"
                           style={{ transform: rest, zIndex }}
                         >
                           <div
-                            className="h-full w-full"
+                            data-card-index={i}
+                            className="pointer-events-auto h-full w-full cursor-pointer"
                             style={{
                               transform: lift,
                               filter,
