@@ -77,10 +77,16 @@ export default function Footer() {
          * are displaced by a field that grows towards the right, so they still
          * fan out from that side.
          */
-        const lines = 150;
         const steps = 90;
         const spread = height * 1.7;
         const top = -height * 0.35;
+
+        /* Spacing first, count second. A fixed 150 lines packed a short footer
+           to roughly 4px apart, which reads as hatching rather than as a
+           surface -- the reference has air between its curves. Holding the
+           average gap at 14px and deriving the count keeps that air whatever
+           the panel's height. */
+        const lines = Math.max(28, Math.min(120, Math.round(spread / 14)));
 
         /* Spacing is modulated rather than constant -- lines drawing together
            into bands and opening out again is what reads as silk instead of
@@ -124,9 +130,9 @@ export default function Footer() {
                two ripple along it. Keyed to y0 as well as x so neighbouring
                lines drift apart instead of moving as one ribbon. */
             const disp =
-              Math.sin(u * 3.1 + offset * 0.8 + y0 * 0.006) * 26 +
-              Math.sin(u * 6.7 - offset * 0.5 + y0 * 0.011) * 12 +
-              Math.cos(u * 1.4 + offset * 0.3 + y0 * 0.003) * 18;
+              Math.sin(u * 3.1 + offset * 0.8 + y0 * 0.006) * 34 +
+              Math.sin(u * 6.7 - offset * 0.5 + y0 * 0.011) * 14 +
+              Math.cos(u * 1.4 + offset * 0.3 + y0 * 0.003) * 22;
 
             /* The fan: displacement is slight at the left edge and full at the
                right, so the field opens towards the corner. */
