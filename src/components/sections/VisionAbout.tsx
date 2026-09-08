@@ -99,29 +99,147 @@ export default function VisionAbout() {
     return !!to && e.currentTarget.contains(to);
   };
 
-  const onFrontPointerOver = (e: React.PointerEvent) => {
-    const card = (e.target as HTMLElement | null)?.closest<HTMLElement>("[data-card-index]");
-    if (!card) return;
-    const index = Number(card.dataset.cardIndex);
+  /*
+   * Which card is under the pointer, worked out from geometry rather than from
+   * what the browser reports is under it.
+   *
+   * This is the whole fix, and every earlier attempt missed it. Hit-testing an
+   * element includes its descendants, and the hovered card's inner wrapper
+   * scales to 1.163 -- so the instant a card is hovered it owns area it did not
+   * own a frame earlier. Reading hover from hit-testing therefore reads it from
+   * something hover itself moves, and near any edge that oscillates: hover,
+   * grow, the pointer is now somewhere else, un-hover, shrink, hover again.
+   *
+   * The outer wrapper sits at `rest` and never moves, and getBoundingClientRect
+   * reports an element's own box without its children. Testing the pointer
+   * against those boxes makes the answer a pure function of position -- the
+   * same coordinates give the same card no matter what the deck is doing, so
+   * there is no path from the visual state back into the hover state.
+   *
+   * Front-most first by resting order, deliberately not by z-index: z-index is
+   * something hover changes, which would put the loop straight back.
+   *
+   * The boxes are also measured once, when the pointer arrives, rather than on
+   * every move. The deck carries a pointer-driven 3D tilt that keeps easing for
+   * 0.4s after the last movement, which slides every card a few pixels while the
+   * pointer is travelling -- live boxes would let that drift decide hover near an
+   * edge. Frozen boxes cannot.
+   */
+  const zones = useRef(new WeakMap<HTMLElement, { index: number; r: DOMRect }[]>());
+
+  /* Re-measured when the pointer arrives and whenever the page moves under it,
+     never while the pointer is travelling across the deck. */
+  const measureZones = (deck: HTMLElement) => {
+    const list = Array.from(deck.querySelectorAll<HTMLElement>("[data-card-index]")).map(
+      (el) => ({ index: Number(el.dataset.cardIndex), r: el.getBoundingClientRect() }),
+    );
+    zones.current.set(deck, list);
+    return list;
+  };
+
+  const onDeckEnter = (e: React.PointerEvent) => measureZones(e.currentTarget as HTMLElement);
+
+  const cardUnder = (e: React.PointerEvent) => {
+    const deck = e.currentTarget as HTMLElement;
+    const list = zones.current.get(deck) ?? measureZones(deck);
+    /* Front-most first, by resting order. */
+    for (let i = list.length - 1; i >= 0; i--) {
+      const { r } = list[i];
+      if (
+        e.clientX >= r.left &&
+        e.clientX <= r.right &&
+        e.clientY >= r.top &&
+        e.clientY <= r.bottom
+      ) {
+        return list[i].index;
+      }
+    }
+    return null;
+  };
+
+  const onFrontPointerMove = (e: React.PointerEvent) => {
+    const index = cardUnder(e);
+    /* A sliver between the two boxes belongs to neither. Keeping the last card
+       there stops a crossing from reading as a blink; leaving the deck still
+       clears it. */
+    if (index === null) return;
     setFrontHovered((prev) => (prev === index ? prev : index));
   };
 
+  /*
+   * A leave is only believed if the pointer really is off the cards.
+   *
+   * This is what the flicker actually was. The browser fires pointerleave on
+   * the deck while the pointer is still travelling across a card -- measured
+   * twelve of them during one sweep, each followed about 20ms later by the
+   * hover clearing and re-arming. The deck is `absolute inset-0` while its
+   * cards are translated and scaled well outside that box, so the element the
+   * browser considers "the deck" is not the shape the reader is pointing at,
+   * and its boundary events do not describe the interaction.
+   *
+   * Selection already ignores hit-testing and reads geometry. Clearing now
+   * does too: the same cached boxes, padded, decide whether the pointer has
+   * gone. Everything else about the leave is ignored.
+   */
+  const offTheCards = (deck: HTMLElement | null, x: number, y: number, pad = 48) => {
+    const list = deck && zones.current.get(deck);
+    if (!list || !list.length) return true;
+    const left = Math.min(...list.map((z) => z.r.left)) - pad;
+    const right = Math.max(...list.map((z) => z.r.right)) + pad;
+    const top = Math.min(...list.map((z) => z.r.top)) - pad;
+    const bottom = Math.max(...list.map((z) => z.r.bottom)) + pad;
+    return x < left || x > right || y < top || y > bottom;
+  };
+
+  /*
+   * Clearing is driven from the pointer's own position, not from the deck's
+   * boundary events.
+   *
+   * Ignoring the spurious leaves fixed the flicker but cost the only signal
+   * that the pointer had gone: the browser fires leave once on the way out,
+   * and if that one is disbelieved no other arrives, so a card stayed lit
+   * after the pointer had left the section entirely. Watching the pointer
+   * while a card is lit answers both -- a leave that is really a card-to-card
+   * move changes nothing, and a real departure always clears.
+   */
   const onFrontPointerLeave = (e: React.PointerEvent) => {
-    if (stillInside(e)) return;
+    if (stillInside(e) || !offTheCards(e.currentTarget as HTMLElement, e.clientX, e.clientY))
+      return;
     setFrontHovered(null);
   };
 
-  const onBackPointerOver = (e: React.PointerEvent) => {
-    const card = (e.target as HTMLElement | null)?.closest<HTMLElement>("[data-card-index]");
-    if (!card) return;
-    const index = Number(card.dataset.cardIndex);
+  const onBackPointerMove = (e: React.PointerEvent) => {
+    const index = cardUnder(e);
+    if (index === null) return;
     setBackHovered((prev) => (prev === index ? prev : index));
   };
 
   const onBackPointerLeave = (e: React.PointerEvent) => {
-    if (stillInside(e)) return;
+    if (stillInside(e) || !offTheCards(e.currentTarget as HTMLElement, e.clientX, e.clientY))
+      return;
     setBackHovered(null);
   };
+
+
+  /* Front deck: watch the pointer while a card is lit. */
+  useEffect(() => {
+    if (frontHovered === null) return;
+    const onMove = (ev: PointerEvent) => {
+      if (offTheCards(frontDeckRef.current, ev.clientX, ev.clientY)) setFrontHovered(null);
+    };
+    window.addEventListener("pointermove", onMove, { passive: true });
+    return () => window.removeEventListener("pointermove", onMove);
+  }, [frontHovered]);
+
+  /* Back deck: the same watch. This is the half that flickered. */
+  useEffect(() => {
+    if (backHovered === null) return;
+    const onMove = (ev: PointerEvent) => {
+      if (offTheCards(backDeckRef.current, ev.clientX, ev.clientY)) setBackHovered(null);
+    };
+    window.addEventListener("pointermove", onMove, { passive: true });
+    return () => window.removeEventListener("pointermove", onMove);
+  }, [backHovered]);
 
   useGSAP(
     () => {
@@ -386,7 +504,8 @@ export default function VisionAbout() {
                   {/* ── FRONT DECK (Vision: 2 Fanned Cards) ── */}
                   <div
                     ref={frontDeckRef}
-                    onPointerOver={onFrontPointerOver}
+                    onPointerMove={onFrontPointerMove}
+                    onPointerEnter={onDeckEnter}
                     onPointerLeave={onFrontPointerLeave}
                     className="absolute inset-0 [backface-visibility:hidden]"
                   >
@@ -483,7 +602,8 @@ export default function VisionAbout() {
                   {/* ── BACK DECK (About: 2 Fanned Cards, Pre-flipped 180deg) ── */}
                   <div
                     ref={backDeckRef}
-                    onPointerOver={onBackPointerOver}
+                    onPointerMove={onBackPointerMove}
+                    onPointerEnter={onDeckEnter}
                     onPointerLeave={onBackPointerLeave}
                     className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)]"
                     style={{ visibility: "hidden", pointerEvents: "none" }}
