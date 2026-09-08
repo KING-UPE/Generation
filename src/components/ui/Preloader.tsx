@@ -47,11 +47,54 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
   const progressVal = useRef(0);
   const towerReadyRef = useRef(false);
   const announcedRef = useRef(false);
+  /** Lifts the input gate below. Held in a ref because the lock is set up in one
+   *  effect and released from the exit timeline in another. */
+  const openScrollRef = useRef<() => void>(() => {});
 
   useEffect(() => {
     // Lock scrolling while preloader is active
     if (smoothScroll.current) smoothScroll.current.stop();
     document.body.style.overflow = "hidden";
+
+    /*
+     * Refuse the input as well as the movement.
+     *
+     * `overflow: hidden` stops the document scrolling, and a stopped Lenis
+     * ignores what it is handed — but the events still fire, and everything
+     * downstream of them still runs: momentum banks up, triggers evaluate
+     * against a page that is being held, and the reader arrives at a section
+     * whose bounds were measured while it could not move. Refusing wheel, touch
+     * and the scroll keys outright means nothing is queued to apply the moment
+     * the panel lifts.
+     *
+     * These come off in the same place the lock does, so the gate cannot outlive
+     * the panel that put it there.
+     */
+    const swallow = (e: Event) => e.preventDefault();
+    const SCROLL_KEYS = new Set([
+      "ArrowDown",
+      "ArrowUp",
+      "PageDown",
+      "PageUp",
+      "Home",
+      "End",
+      " ",
+      "Spacebar",
+    ]);
+    const swallowKey = (e: KeyboardEvent) => {
+      if (SCROLL_KEYS.has(e.key)) e.preventDefault();
+    };
+
+    window.addEventListener("wheel", swallow, { passive: false });
+    window.addEventListener("touchmove", swallow, { passive: false });
+    window.addEventListener("keydown", swallowKey);
+
+    const openScroll = () => {
+      window.removeEventListener("wheel", swallow);
+      window.removeEventListener("touchmove", swallow);
+      window.removeEventListener("keydown", swallowKey);
+    };
+    openScrollRef.current = openScroll;
 
     let isCancelled = false;
     let actualLoaded = 0;
@@ -236,6 +279,9 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
       clearInterval(stallGuard);
       window.removeEventListener("tower:ready", onTowerReady);
       clearTimeout(fallbackTimer);
+      /* Unmounting mid-load must not leave the page refusing to scroll. */
+      openScroll();
+      document.body.style.overflow = "";
     };
   }, []);
 
@@ -262,6 +308,7 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
       const tl = gsap.timeline({
         onComplete: () => {
           setIsDone(true);
+          openScrollRef.current();
           document.body.style.overflow = "";
           window.scrollTo(0, 0);
           if (smoothScroll.current) {
