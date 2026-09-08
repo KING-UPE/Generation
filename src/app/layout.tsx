@@ -55,7 +55,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://generation26.lk";
 const TITLE = "Generation 26 — Talents by ECheM";
 const DESCRIPTION =
   "Generation 26 lands at the Lotus Tower Open Arena, Colombo on Saturday 12 December 2026. " +
-  "Ten thousand people, one stage, produced by ECheM — the fourth edition of Sri Lanka's " +
+  "Ten thousand people, one stage, produced by ECheM — the fourth event of Sri Lanka's " +
   "Generation live music series.";
 
 export const metadata: Metadata = {
@@ -163,6 +163,29 @@ export default function RootLayout({
       {/* No background here: it is set on <html>, so the hero footage can sit on a
           negative z-index and still be seen. */}
       <body className="min-h-full text-bone">
+        {/*
+          Refuse the browser's scroll restoration, before it happens.
+          
+          On a reload the browser puts the page back where it was, and this one
+          is scroll-driven: every animation on it reads a scroll position. The
+          page would come up at the old offset with the hero timeline already at
+          its end -- wordmark, badges and button faded out, the tower seeked to a
+          late frame -- and only then get pulled to the top. Measured at 220ms of
+          it, and whether the hero came back depended on whether ScrollTrigger
+          was told about the correction in time.
+
+          SmoothScroll asks for `manual` too, but it asks from an effect: by then
+          the restore has already happened, and the router sets the flag back to
+          `auto` about 50ms later, so the request never survives to the reload it
+          was meant to prevent. Asking here runs before hydration and before the
+          restore, and runs again on every load, which is what makes it stick.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              'if("scrollRestoration" in history)history.scrollRestoration="manual";',
+          }}
+        />
         <script
           type="application/ld+json"
           /* Serialised through JSON.stringify from a literal we control — no

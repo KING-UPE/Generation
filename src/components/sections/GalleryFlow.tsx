@@ -307,7 +307,7 @@ export default function GalleryFlow() {
           className="pointer-events-none absolute inset-x-0 top-0 z-[200] mx-auto flex w-full max-w-(--maxw) items-center justify-between px-(--gutter) pt-8 md:pt-10"
         >
           <span className="badge-pill whitespace-nowrap">Archive · Gallery</span>
-          <span className="badge-pill whitespace-nowrap">Past Editions</span>
+          <span className="badge-pill whitespace-nowrap">Past Events</span>
         </header>
 
         {/* the field hands over to black */}

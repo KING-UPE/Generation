@@ -1226,7 +1226,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
                         Upcoming
                       </>
                     ) : (
-                      "Past edition"
+                      "Past event"
                     )}
                   </span>
 

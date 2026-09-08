@@ -12,7 +12,7 @@ import Preloader from "@/components/ui/Preloader";
 /** Sections 01–02 live upstream; this page starts at 03 by design. */
 const MARKERS = [
   { id: "hero", index: "03", label: "Hero" },
-  { id: "timeline", index: "04", label: "Editions" },
+  { id: "timeline", index: "04", label: "Events" },
   { id: "vision", index: "05", label: "Vision" },
   { id: "about", index: "06", label: "About" },
   { id: "film", index: "07", label: "Film" },

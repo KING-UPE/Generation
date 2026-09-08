@@ -184,7 +184,7 @@ export default function Hero() {
           className="mt-6 flex flex-wrap items-center justify-between gap-x-8 gap-y-6 md:mt-14 will-change-transform"
         >
           <RevealText as="p" delay={0.95} start="top 100%" className="eyebrow">
-            The 2026 edition
+            The 2026 event
           </RevealText>
 
           <div ref={ctaRef}>
