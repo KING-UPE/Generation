@@ -108,7 +108,7 @@ function FormButton({ form }: { form: Form }) {
 
 export default function AuditionsPage() {
   return (
-    <div className="relative w-full pb-28 md:pb-40">
+    <div className="relative w-full">
       <header className="mx-auto flex w-full max-w-(--maxw) items-center justify-between gap-4 px-(--gutter) pt-8 md:pt-10">
         <Link
           href="/"
