@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
 import LitTitle from "@/components/ui/LitTitle";
 import ScrollCopy from "@/components/ui/ScrollCopy";
@@ -28,6 +28,8 @@ export default function VisionAbout() {
   const deckRef = useRef<HTMLDivElement>(null);
   const tiltRef = useRef<HTMLDivElement>(null);
   const flipDeckRef = useRef<HTMLDivElement>(null);
+  const frontDeckRef = useRef<HTMLDivElement>(null);
+  const backDeckRef = useRef<HTMLDivElement>(null);
   const visionTextRef = useRef<HTMLDivElement>(null);
   const aboutTextRef = useRef<HTMLDivElement>(null);
 
@@ -52,24 +54,27 @@ export default function VisionAbout() {
 
   /**
    * Scroll positions where the About block is actually on screen.
-   *
-   * Its copy and title used to trigger off their own position like any other
-   * text, which is wrong here: the block sits at the top of a pinned section
-   * from the moment that section arrives, but is held at opacity 0 until the
-   * deck flips more than halfway through. Measured, the word-by-word
-   * illumination ran 4853-5104 while the reveal did not begin until 5761 —
-   * finished 657px before anyone could see a word of it.
-   *
-   * Read off the container at refresh time rather than hard-coded, so the
-   * fractions stay tied to the timeline positions above (the About fade sits
-   * at 0.55-0.90 of a 0.95-long timeline) and survive a change of section
-   * height.
+   * Memoized with useCallback so their function references remain completely
+   * stable across card hover re-renders, preventing LitTitle and ScrollCopy
+   * from unmounting or restarting their entrance animations.
    */
-  const revealAt = (fraction: number) => () => {
+  const revealAboutStart = useCallback(() => {
     const el = containerRef.current;
     if (!el) return 0;
-    return el.offsetTop + (el.offsetHeight - window.innerHeight) * fraction;
-  };
+    return el.offsetTop + (el.offsetHeight - window.innerHeight) * (0.5 / 0.95);
+  }, []);
+
+  const revealAboutCopyStart = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return 0;
+    return el.offsetTop + (el.offsetHeight - window.innerHeight) * (0.55 / 0.95);
+  }, []);
+
+  const revealAboutCopyEnd = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return 0;
+    return el.offsetTop + (el.offsetHeight - window.innerHeight) * 0.95;
+  }, []);
 
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 1024px)");
@@ -86,10 +91,12 @@ export default function VisionAbout() {
       const deck = deckRef.current;
       const tilt = tiltRef.current;
       const flipDeck = flipDeckRef.current;
+      const frontDeck = frontDeckRef.current;
+      const backDeck = backDeckRef.current;
       const visionText = visionTextRef.current;
       const aboutText = aboutTextRef.current;
 
-      if (!container || !stage || !deck || !tilt || !flipDeck || !visionText || !aboutText) return;
+      if (!container || !stage || !deck || !tilt || !flipDeck || !frontDeck || !backDeck || !visionText || !aboutText) return;
 
       if (isDesktop === null) return;
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -98,6 +105,8 @@ export default function VisionAbout() {
       gsap.set(aboutText, { opacity: 0, y: 30, pointerEvents: "none" });
       gsap.set(visionText, { opacity: 1, y: 0, pointerEvents: "auto" });
       gsap.set(flipDeck, { rotationY: 0, transformOrigin: "center center" });
+      gsap.set(frontDeck, { visibility: "visible", pointerEvents: "auto" });
+      gsap.set(backDeck, { visibility: "hidden", pointerEvents: "none" });
 
       if (reduced) return;
 
@@ -191,6 +200,18 @@ export default function VisionAbout() {
           duration: 0.2,
         },
         0.75,
+      );
+
+      // At the 90-degree midpoint (0.475), cleanly isolate Front Deck and Back Deck
+      tl.set(frontDeck, { visibility: "hidden", pointerEvents: "none" }, 0.475);
+      tl.set(backDeck, { visibility: "visible", pointerEvents: "auto" }, 0.475);
+      tl.call(
+        () => {
+          setFrontHovered(null);
+          setBackHovered(null);
+        },
+        undefined,
+        0.475,
       );
 
       // 4. Fade in About text
@@ -290,7 +311,7 @@ export default function VisionAbout() {
                 <div>
                   <LitTitle
                     trigger={containerRef}
-                    start={revealAt(0.5 / 0.95)}
+                    start={revealAboutStart}
                     className={TITLE_SIZE}
                     radius={340}
                     weight={1.9}
@@ -301,8 +322,8 @@ export default function VisionAbout() {
 
                 <ScrollCopy
                   trigger={containerRef}
-                  start={revealAt(0.55 / 0.95)}
-                  end={revealAt(0.95)}
+                  start={revealAboutCopyStart}
+                  end={revealAboutCopyEnd}
                   className="text-[clamp(0.875rem,1.05vw,1.15rem)] font-medium leading-[1.65] text-bone lg:leading-[1.85]"
                 >
                   Generation is produced by ECheM. Live performance, design and sound engineering held to a single production standard, for an audience that still turns up in person.
@@ -324,7 +345,10 @@ export default function VisionAbout() {
                   className="relative h-full w-full [transform-style:preserve-3d] will-change-transform"
                 >
                   {/* ── FRONT DECK (Vision: 2 Fanned Cards) ── */}
-                  <div className="absolute inset-0 [backface-visibility:hidden]">
+                  <div
+                    ref={frontDeckRef}
+                    className="absolute inset-0 [backface-visibility:hidden]"
+                  >
                     {VISION_CARDS.map((c, i) => {
                       const isHovered = frontHovered === i;
                       const isOtherHovered = frontHovered !== null && frontHovered !== i;
@@ -353,7 +377,7 @@ export default function VisionAbout() {
                           i === 0
                             ? "translate(12%, -14%) rotate(5deg) scale(1.163)"
                             : "translate(-4%, -3%) rotate(-2deg) scale(1.06)";
-                        filter = "drop-shadow(0 16px 36px hsl(var(--red-hot-c) / 0.45))";
+                        filter = "drop-shadow(0 16px 36px rgba(255, 59, 47, 0.45))";
                       } else if (isOtherHovered) {
                         zIndex = 1;
                         /* Dimmed, not faded. Dropping the opacity made the card
@@ -391,7 +415,11 @@ export default function VisionAbout() {
                   </div>
 
                   {/* ── BACK DECK (About: 2 Fanned Cards, Pre-flipped 180deg) ── */}
-                  <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)]">
+                  <div
+                    ref={backDeckRef}
+                    className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)]"
+                    style={{ visibility: "hidden", pointerEvents: "none" }}
+                  >
                     {ABOUT_CARDS.map((c, i) => {
                       const isHovered = backHovered === i;
                       const isOtherHovered = backHovered !== null && backHovered !== i;
@@ -413,7 +441,7 @@ export default function VisionAbout() {
                           i === 0
                             ? "translate(-12%, -14%) rotate(-5deg) scale(1.163)"
                             : "translate(4%, -3%) rotate(2deg) scale(1.06)";
-                        filter = "drop-shadow(0 16px 36px hsl(var(--red-hot-c) / 0.45))";
+                        filter = "drop-shadow(0 16px 36px rgba(255, 59, 47, 0.45))";
                       } else if (isOtherHovered) {
                         zIndex = 1;
                         filter = "brightness(0.45) saturate(0.75)";

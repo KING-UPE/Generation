@@ -34,6 +34,7 @@ export default function LitTitle({
   const wrapRef = useRef<HTMLDivElement>(null);
   const glowRef = useRef<HTMLSpanElement>(null);
   const [torchActive, setTorchActive] = useState(false);
+  const hasPlayedRef = useRef(false);
 
   useTorch(glowRef, torchActive);
 
@@ -43,6 +44,8 @@ export default function LitTitle({
       const glow = glowRef.current;
       if (!wrap || !glow) return;
 
+      if (hasPlayedRef.current) return;
+
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const w = glow.offsetWidth || 600;
       const h = glow.offsetHeight || 120;
@@ -51,6 +54,7 @@ export default function LitTitle({
       gsap.set(glow, { "--mx": -0.3 * w + "px", "--my": h / 2 + "px" });
 
       if (reduced) {
+        hasPlayedRef.current = true;
         gsap.set(wrap, { opacity: 1, y: 0 });
         setTorchActive(true);
         return;
@@ -58,7 +62,10 @@ export default function LitTitle({
 
       const tl = gsap.timeline({
         scrollTrigger: { trigger: trigger?.current ?? wrap, start, once: true },
-        onComplete: () => setTorchActive(true),
+        onComplete: () => {
+          hasPlayedRef.current = true;
+          setTorchActive(true);
+        },
       });
 
       tl.fromTo(
