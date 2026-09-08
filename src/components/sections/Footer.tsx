@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import Link from "next/link";
+import { brandColor } from "@/lib/brand";
 import {
   IconWhatsApp,
   IconTelegram,
@@ -16,8 +17,129 @@ const FORMS = [
 ];
 
 export default function Footer() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  /*
+   * The sweeping contour field behind the footer.
+   *
+   * Concentric arcs centred just off the bottom-right corner, each perturbed by
+   * a couple of harmonics so the set reads as a field being drawn rather than a
+   * stack of ellipses.
+   *
+   * Three things differ from the first pass. It paints no background of its
+   * own -- the footer's --ink-2 shows through, so the panel stays on the ink
+   * scale instead of a hardcoded near-black beside it. The accent line asks the
+   * palette for its colour rather than naming a red, so it follows the theme
+   * selector, and it asks again when the hue changes. And it skips the draw
+   * while the footer is off screen, checked from the element's own rect inside
+   * the tick rather than by parking the loop on an observer -- an observer that
+   * parks a ticker is how the glow field ended up frozen.
+   */
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const host = canvas?.parentElement;
+    if (!canvas || !host) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let frame = 0;
+    let offset = 0;
+    let accent = brandColor("--red-hot", 0.32);
+    const reReadBrand = () => {
+      accent = brandColor("--red-hot", 0.32);
+    };
+    window.addEventListener("brand:change", reReadBrand);
+
+    let width = 0;
+    let height = 0;
+    const measure = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      width = host.offsetWidth;
+      height = host.offsetHeight;
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    measure();
+
+    const ro = new ResizeObserver(measure);
+    ro.observe(host);
+
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    const draw = () => {
+      const box = host.getBoundingClientRect();
+      const onScreen = box.bottom > 0 && box.top < window.innerHeight;
+
+      if (onScreen && width > 0) {
+        ctx.clearRect(0, 0, width, height);
+
+        /* Centre sits outside the panel, so only the shoulder of the field
+           reaches into it. */
+        const cx = width * 0.95;
+        const cy = height * 1.05;
+        const lineCount = 52;
+        const spacing = 15;
+        const startR = 30;
+
+        ctx.lineWidth = 1.25;
+
+        for (let i = 0; i < lineCount; i++) {
+          ctx.beginPath();
+          const baseR = startR + i * spacing;
+
+          if (i % 8 === 0) {
+            ctx.strokeStyle = accent;
+          } else {
+            ctx.strokeStyle = `rgba(255,255,255,${(0.04 + (i / lineCount) * 0.14).toFixed(3)})`;
+          }
+
+          const startAngle = Math.PI * 1.04;
+          const endAngle = -Math.PI * 0.54;
+          const steps = 70;
+          const step = (endAngle - startAngle) / steps;
+
+          for (let j = 0; j <= steps; j++) {
+            const theta = startAngle + j * step;
+            const wave =
+              Math.sin(theta * 3.5 + offset + i * 0.1) * 18 +
+              Math.cos(theta * 2.2 - offset * 0.7) * 12 +
+              Math.sin(baseR * 0.015 + offset * 0.4) * 8;
+
+            const rx = (baseR + wave) * 1.45;
+            const ry = (baseR + wave) * 0.88;
+            const x = cx + rx * Math.cos(theta);
+            const y = cy + ry * Math.sin(theta);
+
+            if (j === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+        }
+
+        if (!reduced) offset += 0.005;
+      }
+
+      frame = requestAnimationFrame(draw);
+    };
+
+    frame = requestAnimationFrame(draw);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      ro.disconnect();
+      window.removeEventListener("brand:change", reReadBrand);
+    };
+  }, []);
+
   return (
-    <footer className="relative z-10 border-t border-hairline bg-ink-2 text-bone">
+    <footer className="relative z-10 overflow-hidden border-t border-hairline bg-ink-2 text-bone">
+      {/* The contour field. Behind everything, and clipped by the footer. */}
+      <canvas ref={canvasRef} aria-hidden className="pointer-events-none absolute inset-0 h-full w-full" />
+
+      {/* Reads the lines down towards the left, so the type never sits on them. */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-ink-2 via-ink-2/85 to-transparent" />
+
       {/* Subtle ambient warm red glow on bottom-left */}
       <div className="absolute -bottom-12 -left-12 h-44 w-44 rounded-full bg-red-hot/10 blur-3xl pointer-events-none" />
 
