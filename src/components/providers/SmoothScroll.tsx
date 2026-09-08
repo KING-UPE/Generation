@@ -43,8 +43,38 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
     gsap.ticker.add(raf);
     gsap.ticker.lagSmoothing(0);
 
+    /*
+     * A floor under the scroll event.
+     *
+     * ScrollTrigger normally hears about movement through the handler above, so
+     * a page that moves without Lenis emitting — because Lenis is stopped, and
+     * two things stop it: the preloader while it downloads, and the tower's drop
+     * while it plays — leaves every scrubbed animation holding whatever progress
+     * it had. Caught on the hero: scroll down across the tower's cue, come back
+     * to the top, and the wordmark, the badges and the button are all still
+     * faded out at scroll 0, because the last thing ScrollTrigger was told was
+     * the position they faded at.
+     *
+     * One number compared per frame against what it was last told, on a ticker
+     * that is already running. `update` is idempotent, so overlapping with the
+     * scroll handler costs nothing.
+     */
+    let lastSeen = -1;
+    const watchScroll = () => {
+      const y = window.scrollY;
+      /* Also while Lenis is held: a position that goes stale during the hold
+         does not change again on its own, so a delta check alone would leave it
+         stale until the reader moved — which is why it looked like scrolling was
+         what brought the hero back. */
+      if (y === lastSeen && !lenis.isStopped) return;
+      lastSeen = y;
+      ScrollTrigger.update();
+    };
+    gsap.ticker.add(watchScroll);
+
     return () => {
       gsap.ticker.remove(raf);
+      gsap.ticker.remove(watchScroll);
       smoothScroll.current = null;
       lenis.destroy();
     };
