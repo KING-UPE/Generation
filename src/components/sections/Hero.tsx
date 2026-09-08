@@ -26,6 +26,7 @@ export default function Hero() {
   const ctaRef = useRef<HTMLDivElement>(null);
   const torchRef = useRef<HTMLSpanElement>(null);
   const cueRef = useRef<HTMLSpanElement>(null);
+  const spotlightRef = useRef<HTMLDivElement>(null);
   const [torchActive, setTorchActive] = useState(false);
 
   useTorch(torchRef, torchActive);
@@ -86,6 +87,7 @@ export default function Hero() {
       });
 
       heroTl
+        .to(spotlightRef.current, { opacity: 0, ease: "power2.inOut", duration: 0.25 }, 0)
         .to(headerRef.current, { opacity: 0, y: -25, ease: "power2.inOut", duration: 0.3 }, 0)
         .to(footerRef.current, { opacity: 0, y: 30, ease: "power2.inOut", duration: 0.35 }, 0)
         .to(cueRef.current, { opacity: 0, scaleY: 0, ease: "power2.inOut", duration: 0.2 }, 0)
@@ -100,7 +102,8 @@ export default function Hero() {
             duration: 0.6,
           },
           0.05,
-        );
+        )
+        .to(root, { autoAlpha: 0, ease: "power2.inOut", duration: 0.2 }, 0.2);
 
       gsap.to(cueRef.current, {
         scaleY: 0.15,
@@ -120,7 +123,9 @@ export default function Hero() {
       ref={rootRef as React.RefObject<HTMLElement>}
       className="relative flex min-h-[100svh] flex-col overflow-hidden"
     >
-      <Spotlight size={980} opacity={0.42} />
+      <div ref={spotlightRef} className="pointer-events-none absolute inset-0 z-0">
+        <Spotlight size={980} opacity={0.42} />
+      </div>
 
       <header
         ref={headerRef}

@@ -731,8 +731,33 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         end: "bottom top",
         onUpdate: (self) => {
           framingTarget = self.progress;
+          if (heroRef.current) {
+            const isGone = self.progress >= 0.99;
+            heroRef.current.style.visibility = isGone ? "hidden" : "visible";
+            heroRef.current.style.pointerEvents = isGone ? "none" : "auto";
+            heroRef.current.style.opacity = String(Math.max(0, 1 - self.progress * 1.15));
+          }
+        },
+        onLeave: () => {
+          if (heroRef.current) {
+            heroRef.current.style.visibility = "hidden";
+            heroRef.current.style.pointerEvents = "none";
+            heroRef.current.style.opacity = "0";
+          }
+        },
+        onEnterBack: () => {
+          if (heroRef.current) {
+            heroRef.current.style.visibility = "visible";
+            heroRef.current.style.pointerEvents = "auto";
+          }
         },
       });
+
+      if (heroRef.current && framer.progress >= 0.99) {
+        heroRef.current.style.visibility = "hidden";
+        heroRef.current.style.pointerEvents = "none";
+        heroRef.current.style.opacity = "0";
+      }
 
       /*
        * The shot starts when the hero is gone, not when the section arrives.

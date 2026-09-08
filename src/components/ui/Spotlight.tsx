@@ -38,6 +38,14 @@ export default function Spotlight({ size = 900, className = "", opacity = 0.5 }:
       let shown = false;
       const onMove = (e: PointerEvent) => {
         const r = parent.getBoundingClientRect();
+        if (r.bottom <= 0 || r.top >= window.innerHeight) {
+          if (shown) {
+            shown = false;
+            gsap.to(el, { opacity: 0, duration: 0.3 });
+          }
+          return;
+        }
+
         xTo(e.clientX - r.left);
         yTo(e.clientY - r.top);
         if (!shown) {
@@ -50,11 +58,23 @@ export default function Spotlight({ size = 900, className = "", opacity = 0.5 }:
         gsap.to(el, { opacity: 0, duration: 0.7 });
       };
 
+      const onScroll = () => {
+        const r = parent.getBoundingClientRect();
+        if (r.bottom <= 0 || r.top >= window.innerHeight) {
+          if (shown) {
+            shown = false;
+            gsap.to(el, { opacity: 0, duration: 0.4 });
+          }
+        }
+      };
+
       parent.addEventListener("pointermove", onMove);
       parent.addEventListener("pointerleave", onLeave);
+      window.addEventListener("scroll", onScroll, { passive: true });
       return () => {
         parent.removeEventListener("pointermove", onMove);
         parent.removeEventListener("pointerleave", onLeave);
+        window.removeEventListener("scroll", onScroll);
       };
     },
     { scope: ref },
