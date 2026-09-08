@@ -6,26 +6,7 @@ import SmoothScroll from "@/components/providers/SmoothScroll";
 import Cursor from "@/components/ui/Cursor";
 import Grain from "@/components/ui/Grain";
 import Starfield from "@/components/ui/Starfield";
-import dynamic from "next/dynamic";
-
-/**
- * The scroll-feel panel, kept out of production entirely.
- *
- * A plain import plus a `NODE_ENV` guard around the JSX is not enough — the
- * guard drops the element but the module stays in the graph, and it was
- * measurably shipping in a chunk the built page referenced. Behind a dynamic
- * import the ternary resolves at build time and the production branch has no
- * import to follow.
- */
-const ScrollTuner =
-  process.env.NODE_ENV === "production"
-    ? () => null
-    : dynamic(() => import("@/components/dev/ScrollTuner"));
-
-const ThemeTuner =
-  process.env.NODE_ENV === "production"
-    ? () => null
-    : dynamic(() => import("@/components/dev/ThemeTuner"));
+import ThemeTuner from "@/components/ui/ThemeTuner";
 
 const anton = Anton({
   subsets: ["latin"],
@@ -194,9 +175,8 @@ export default function RootLayout({
         </SmoothScroll>
         <Cursor />
         <Grain />
-        {/* Delete this line and the component once the scroll feel is settled. */}
-        <ScrollTuner />
-        {/* Drag a hue, then paste the two lines it gives you into globals.css. */}
+        {/* Ships. The point is for whoever is looking at the site to be able
+            to try a colour on it, not just whoever is building it. */}
         <ThemeTuner />
       </body>
     </html>

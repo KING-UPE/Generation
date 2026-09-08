@@ -3,21 +3,22 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * A development-only panel for choosing the site's accent colour.
+ * A panel for trying the site's accent colour on, live.
  *
  * The whole palette hangs off two custom properties — `--brand-h` and
  * `--brand-s`, at the top of globals.css — so picking a colour is picking two
- * numbers. Reading those numbers off a hex code is guesswork, and editing them
- * in the stylesheet means a reload between every guess. Dragging them here
- * repaints every accent, gradient, glow and card on the page as you move.
+ * numbers. Reading those off a hex code is guesswork, and editing them in the
+ * stylesheet means a reload between every guess. Dragging them here repaints
+ * every accent, gradient, glow and card as you move, which is the only honest
+ * way to judge a colour this much of the page is painted with.
  *
- * When a colour is right, Copy gives you the two lines to paste back into
- * globals.css. Until you do, this is a local override and nothing else sees it.
+ * This one ships. The people who have to agree on the colour are not the
+ * people editing the stylesheet, so the panel goes where they are.
  *
- * Values persist in localStorage, so a reload keeps whatever you were trying.
- *
- * Never ships: the whole component returns null outside development, and the
- * mount point in layout.tsx is compiled out of production too.
+ * What a visitor changes is theirs alone: the override is set on the root
+ * element and remembered in their own localStorage, and reaches nobody else.
+ * Copy hands them the two lines to send back, and pasting those into :root in
+ * globals.css is what makes a colour the site's.
  */
 
 const STORAGE_KEY = "gen26_theme_tuner";
@@ -51,7 +52,9 @@ const RAMP: { label: string; dh: number; ds: number; l: number }[] = [
 
 export default function ThemeTuner() {
   const [values, setValues] = useState<Values>(SHIPPED);
-  const [open, setOpen] = useState(true);
+  /* Collapsed is the safe first render: it matches what the server sends, and
+     on a phone the open panel is half the screen. Desktop opens it below. */
+  const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const loaded = useRef(false);
 
@@ -69,6 +72,10 @@ export default function ThemeTuner() {
     } catch {
       /* private mode, cleared storage — the defaults are fine */
     }
+
+    /* Open where there is room for it. Anywhere the panel would cover the page
+       it stays a header until it is asked for. */
+    if (window.matchMedia("(min-width: 768px)").matches) setOpen(true);
     loaded.current = true;
   }, []);
 
@@ -93,8 +100,6 @@ export default function ThemeTuner() {
       /* not worth failing the panel over */
     }
   }, [values]);
-
-  if (process.env.NODE_ENV === "production") return null;
 
   const snippet = `--brand-h: ${values.h};\n--brand-s: ${values.s}%;`;
   const dirty = values.h !== SHIPPED.h || values.s !== SHIPPED.s;
@@ -127,7 +132,7 @@ export default function ThemeTuner() {
       </button>
 
       {open && (
-        <div className="border-t border-white/10 px-3 pb-3 pt-2">
+        <div className="max-h-[70svh] overflow-y-auto border-t border-white/10 px-3 pb-3 pt-2">
           {/* The ramp itself, so you are judging the palette rather than one
               swatch — the deep end is what most of the page is painted with. */}
           <div className="mb-3 flex h-7 overflow-hidden rounded">
@@ -223,7 +228,7 @@ export default function ThemeTuner() {
             {snippet}
           </pre>
           <p className="mt-1 text-[10px] leading-tight text-white/30">
-            Paste into :root in globals.css to make it the site&apos;s colour.
+            Send these two lines back to make it the site&apos;s colour.
           </p>
         </div>
       )}
