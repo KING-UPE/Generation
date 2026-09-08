@@ -393,6 +393,19 @@ html.lenis, html.lenis body { height: auto; }
   color: #fff;
 }
 
+/*
+ * The festival deck scrolls sideways on a phone, and the bar under it reads as
+ * a stray line across the section. The cards are their own affordance — they
+ * run off the edge of the screen, which is what says "keep going".
+ */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Gallery Field responsive scaling variable */
 .gallery-field {
   --gs: 3;
