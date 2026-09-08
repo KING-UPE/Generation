@@ -523,7 +523,12 @@ export default function Film() {
           /* Top-left on a phone: centring it there leaves the top of the screen
              empty while the device takes the side. Desktop keeps it centred,
              where it balances the tablet across the fold. */
-          className="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-full max-w-(--maxw) flex-col justify-start px-(--gutter) pt-24 lg:w-[52%] lg:justify-center lg:pt-0"
+          /* Ranged right on desktop so the block ends against the frame.
+             Left-aligned, only the title came near it -- 44px off the video --
+             while the badge sat 367px away and the copy 200px, so the three
+             read as scattered across the empty half rather than as a column
+             beside the footage. They now share the title's right edge. */
+          className="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-full max-w-(--maxw) flex-col justify-start px-(--gutter) pt-24 lg:w-[52%] lg:items-end lg:justify-center lg:pt-0 lg:text-right"
         >
           <div className="badge-pill border-red-hot/40 bg-red-black/50 text-red-hot mb-4 w-fit">
             ✦ OFFICIAL TRAILER // REEL
