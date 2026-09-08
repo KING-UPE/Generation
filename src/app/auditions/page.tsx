@@ -82,24 +82,28 @@ function FormButton({ form }: { form: Form }) {
       target="_blank"
       rel="noopener noreferrer"
       data-cursor="link"
-      className="cut-btn-outline group w-full flex-col"
+      className="cut-btn-outline group w-full flex-wrap justify-between gap-x-3 gap-y-1.5 sm:flex-col sm:gap-2"
     >
-      <span className="flex w-full items-center gap-3 text-left">
+      <span className="flex items-center gap-3 whitespace-nowrap text-left sm:w-full">
         <span className="text-red-hot">{form.index}</span>
         {form.title}
       </span>
 
-      {/* On its own line because it does not fit beside the title: the longest
-          row, "07 Art & Photography", is 210px and the label another 80, so one
-          line needs 324px against a cell that is at most 259.
+      {/* Beside the title on a phone, under it everywhere else.
+          
+          A phone shows one button per row, 290px of interior, and the longest
+          title -- "07 Art & Photography" -- is 178px against an 80px label:
+          292px for one line, two over. Tightening the label's tracking from
+          0.2em to 0.14em buys back seven, so the full width gets used instead
+          of the button growing a second line it does not need.
 
-          w-full rather than items-start -- .cut-btn-outline sets
-          align-items:center in unlayered CSS, which beats the utility, so the
-          row is stretched to the button instead and its contents fall left on
-          their own. The arrow sits with the label: they are one control, and at
-          opposite ends of the row the gap between them read as a mistake. */}
-      <span className="flex w-full items-center gap-2 text-red-hot">
-        <span className="text-[11px] tracking-[0.2em]">Apply now</span>
+          From sm up the grid takes over and a cell is 227-259px, where one
+          line cannot fit, so it stacks. w-full there rather than items-start:
+          .cut-btn-outline sets align-items:center in unlayered CSS, which
+          beats the utility, so the row is stretched to the button instead and
+          its contents fall left on their own. */}
+      <span className="flex shrink-0 items-center gap-2 text-red-hot sm:w-full">
+        <span className="text-[11px] tracking-[0.14em]">Apply now</span>
 
         <svg
           aria-hidden
