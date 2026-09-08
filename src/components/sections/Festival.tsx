@@ -190,7 +190,9 @@ const EASE = "all 0.5s cubic-bezier(0.16, 1, 0.3, 1)";
 export default function Festival() {
   const rootRef = useRef<HTMLElement>(null);
   const deckRef = useRef<HTMLDivElement>(null);
+  const mobileScrollRef = useRef<HTMLDivElement>(null);
   const [hovered, setHovered] = useState<number | null>(null);
+  const [mobileIndex, setMobileIndex] = useState(0);
 
   /**
    * Scattered tilt is applied on desktop viewports.
@@ -206,8 +208,49 @@ export default function Festival() {
 
   useReveal(deckRef, { children: true, stagger: 0.12 });
 
-  // Only active when hovered; no card is permanently active by default
+  // Only active when hovered on desktop; no card is permanently active by default
   const activeIndex = hovered;
+
+  // Mobile carousel navigation
+  const scrollToSlide = (index: number) => {
+    const container = mobileScrollRef.current;
+    if (!container) return;
+    const cards = container.children;
+    if (cards[index]) {
+      const card = cards[index] as HTMLElement;
+      const targetLeft = card.offsetLeft - (container.clientWidth - card.clientWidth) / 2;
+      container.scrollTo({ left: targetLeft, behavior: "smooth" });
+      setMobileIndex(index);
+    }
+  };
+
+  const prevSlide = () => {
+    const next = (mobileIndex - 1 + STALLS.length) % STALLS.length;
+    scrollToSlide(next);
+  };
+
+  const nextSlide = () => {
+    const next = (mobileIndex + 1) % STALLS.length;
+    scrollToSlide(next);
+  };
+
+  const handleMobileScroll = () => {
+    const container = mobileScrollRef.current;
+    if (!container) return;
+    const center = container.scrollLeft + container.clientWidth / 2;
+    let closestIdx = 0;
+    let minDiff = Infinity;
+    for (let i = 0; i < container.children.length; i++) {
+      const el = container.children[i] as HTMLElement;
+      const elCenter = el.offsetLeft + el.clientWidth / 2;
+      const diff = Math.abs(center - elCenter);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestIdx = i;
+      }
+    }
+    setMobileIndex(closestIdx);
+  };
 
   return (
     <section
@@ -228,12 +271,12 @@ export default function Festival() {
           The show is one part of the night. The grounds are the rest.
         </ScrollCopy>
 
-        {/* ── Asymmetrically Scattered & Rotated 3-Card Deck ────── */}
+        {/* ── Desktop View: Asymmetrically Scattered & Rotated 3-Card Deck ────── */}
         <div
           ref={deckRef}
-          className="mt-14 flex w-full items-center justify-start overflow-x-auto pb-10 pt-8 no-scrollbar md:mt-24 md:justify-center md:overflow-visible md:pb-16"
+          className="mt-20 hidden w-full items-center justify-center md:flex md:pb-16"
         >
-          <div className="flex items-center px-4 md:px-0 md:-space-x-8 lg:-space-x-12">
+          <div className="flex items-center md:-space-x-8 lg:-space-x-12">
             {STALLS.map((stall, i) => {
               const active = activeIndex === i;
               return (
@@ -242,7 +285,7 @@ export default function Festival() {
                   onMouseEnter={() => setHovered(i)}
                   onMouseLeave={() => setHovered(null)}
                   onClick={() => setHovered(i)}
-                  className="group relative flex h-[360px] w-[270px] shrink-0 cursor-pointer flex-col items-center justify-between overflow-hidden rounded-[26px] p-6 text-center select-none sm:h-[390px] sm:w-[300px] md:h-[410px] md:w-[320px] md:p-8"
+                  className="group relative flex h-[410px] w-[320px] shrink-0 cursor-pointer flex-col items-center justify-between overflow-hidden rounded-[26px] p-8 text-center select-none"
                   style={{
                     background: active ? CARD_LIT : CARD_BASE,
                     boxShadow: active
@@ -252,9 +295,7 @@ export default function Festival() {
                       ? `rotate(${active ? 0 : stall.rotate}deg) translateY(${
                           active ? stall.drop - 26 : stall.drop
                         }px) scale(${active ? 1.05 : 0.98})`
-                      : active
-                      ? "scale(1.02)"
-                      : "scale(0.98)",
+                      : "none",
                     zIndex: active ? 50 : stall.zIndex,
                     transition: EASE,
                   }}
@@ -283,10 +324,10 @@ export default function Festival() {
                   </span>
 
                   {/* Upper wireframe geometric glyph */}
-                  <div className="relative mt-2 flex h-20 w-20 items-center justify-center sm:h-24 sm:w-24">
+                  <div className="relative mt-2 flex h-24 w-24 items-center justify-center">
                     <span
                       aria-hidden
-                      className="inline-flex h-16 w-16 items-center justify-center transition-all duration-500 sm:h-18 sm:w-18"
+                      className="inline-flex h-18 w-18 items-center justify-center transition-all duration-500"
                       style={{
                         color: active ? "var(--red-hot)" : "var(--muted)",
                         transform: active ? "scale(1.12)" : "scale(1)",
@@ -333,6 +374,141 @@ export default function Festival() {
                 </div>
               );
             })}
+          </div>
+        </div>
+
+        {/* ── Mobile View: Centered Carousel with Side Peek & Controls ────── */}
+        <div className="mt-12 block w-full md:hidden">
+          {/* Scroll snap track with peeking edges */}
+          <div
+            ref={mobileScrollRef}
+            onScroll={handleMobileScroll}
+            className="flex w-full snap-x snap-mandatory items-center gap-4 overflow-x-auto px-[10vw] py-6 no-scrollbar"
+            style={{ scrollSnapType: "x mandatory" }}
+          >
+            {STALLS.map((stall, i) => {
+              const isCurrent = mobileIndex === i;
+              return (
+                <div
+                  key={stall.title}
+                  onClick={() => scrollToSlide(i)}
+                  className="relative flex h-[390px] w-[80vw] max-w-[320px] shrink-0 snap-center cursor-pointer flex-col items-center justify-between overflow-hidden rounded-[28px] p-7 text-center select-none transition-all duration-500"
+                  style={{
+                    background: isCurrent ? CARD_LIT : CARD_BASE,
+                    boxShadow: isCurrent
+                      ? "0 24px 60px rgba(0,0,0,0.85), 0 0 0 1px rgba(237,237,240,0.18) inset, 0 0 28px rgba(255,59,47,0.18)"
+                      : "0 14px 36px rgba(0,0,0,0.6), 0 0 0 1px rgba(237,237,240,0.06) inset",
+                    opacity: isCurrent ? 1 : 0.45,
+                    transform: isCurrent ? "scale(1)" : "scale(0.95)",
+                  }}
+                >
+                  {/* Faint technical grid interior */}
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0"
+                    style={{
+                      backgroundImage: GRID,
+                      backgroundSize: "32px 32px",
+                      maskImage: "linear-gradient(to bottom, #000 0%, transparent 68%)",
+                      WebkitMaskImage: "linear-gradient(to bottom, #000 0%, transparent 68%)",
+                      opacity: isCurrent ? 0.9 : 0.3,
+                    }}
+                  />
+
+                  {/* Index badge */}
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute right-6 top-6 font-mono-ui text-[11px] tracking-[0.24em]"
+                    style={{ color: isCurrent ? "var(--muted)" : "var(--dim)" }}
+                  >
+                    {stall.index}
+                  </span>
+
+                  {/* Upper icon glyph */}
+                  <div className="relative mt-3 flex h-20 w-20 items-center justify-center">
+                    <span
+                      aria-hidden
+                      className="inline-flex h-16 w-16 items-center justify-center transition-all duration-500"
+                      style={{
+                        color: isCurrent ? "var(--red-hot)" : "var(--muted)",
+                        transform: isCurrent ? "scale(1.1)" : "scale(1)",
+                        filter: isCurrent ? "drop-shadow(0 0 16px rgba(255,59,47,0.45))" : "none",
+                      }}
+                    >
+                      {stall.icon}
+                    </span>
+                  </div>
+
+                  {/* Lower Title & Copy block */}
+                  <div className="relative flex flex-col items-center justify-center w-full">
+                    <h3
+                      className="font-display text-2xl leading-tight tracking-[-0.01em]"
+                      style={{ color: isCurrent ? "var(--bone)" : "var(--bone-muted)" }}
+                    >
+                      {stall.title}
+                    </h3>
+
+                    <span
+                      className="mt-1 font-mono-ui text-[10px] uppercase tracking-[0.16em]"
+                      style={{ color: isCurrent ? "var(--red-hot)" : "var(--dim)" }}
+                    >
+                      {stall.spec}
+                    </span>
+
+                    <p className="mt-3 max-w-[26ch] font-sans text-xs leading-relaxed text-muted">
+                      {stall.line}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Carousel Controls: Circular navigation buttons (left) & Pagination index (right) */}
+          <div className="mx-auto mt-4 flex w-full max-w-[340px] items-center justify-between px-3">
+            <div className="flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={prevSlide}
+                aria-label="Previous card"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/[0.04] text-white/80 transition-all active:scale-90 active:bg-white/10"
+              >
+                <svg
+                  className="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={nextSlide}
+                aria-label="Next card"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/[0.04] text-white/80 transition-all active:scale-90 active:bg-white/10"
+              >
+                <svg
+                  className="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Pagination indicator matching screenshot (e.g. 1 / 3) */}
+            <span className="font-mono-ui text-xs tracking-[0.24em] text-white/50">
+              {mobileIndex + 1} / {STALLS.length}
+            </span>
           </div>
         </div>
 
