@@ -7,10 +7,36 @@ import { clamp } from "@/lib/scroll-state";
 const TAU = Math.PI * 2;
 
 /** Points sampled along each wave, and around the mass. */
-const SAMPLES = 56;
+const SAMPLES = 112;
 const MASS_SAMPLES = 72;
 /** How far past each edge the paths run, so the blur has material to work with. */
 const BLEED = 0.12;
+
+/**
+ * The distortion riding on top of the crests.
+ *
+ * Two fast, incommensurable ripples per edge, at a fraction of the wave's own
+ * amplitude — enough to make the band's edge unstable and its thickness
+ * uneven, which is what reads as distorted rather than merely wavy. The top and
+ * bottom of each ribbon get different phases, so the two edges never agree and
+ * the band breathes as well as travels.
+ *
+ * Done in the path maths rather than with an SVG filter. The paths are rewritten
+ * every frame regardless, so this is a handful of sine calls; feTurbulence and
+ * feDisplacementMap over a field this size, under a 28px blur, is not.
+ *
+ * SAMPLES doubled to carry it. At 56 the ripple is faster than the sampling and
+ * comes out as aliasing rather than distortion.
+ *
+ * The amplitude has to clear the blur or there is no point to it: at 0.03 of the
+ * height the ripple was about 16px against a 28px radius, which the blur simply
+ * removed. 0.062 puts it just past that, so what survives is a ragged edge
+ * rather than a smooth one.
+ */
+const WARP = 0.062;
+const WARP_FREQ = 23.7;
+const WARP_FREQ2 = 47.3;
+const WARP_SPEED = 1.7;
 
 type Wave = {
   /** Centre line, as a share of the field height. */
@@ -216,8 +242,15 @@ export default function GlowField({ blur = 28, className = "" }: Props) {
               y += outward * Math.exp(-d * d) * BUMP_LIFT * h * state.strength;
             }
 
-            top.push(`${x.toFixed(1)} ${(y - half).toFixed(1)}`);
-            bottom.push(`${x.toFixed(1)} ${(y + half).toFixed(1)}`);
+            /* Each edge warped on its own phase — see WARP. */
+            const warp = (phase: number) =>
+              (Math.sin(u * WARP_FREQ + time * WARP_SPEED + phase) * 0.62 +
+                Math.sin(u * WARP_FREQ2 - time * WARP_SPEED * 0.8 + phase * 1.7) * 0.38) *
+              WARP *
+              h;
+
+            top.push(`${x.toFixed(1)} ${(y - half + warp(i * 2.1)).toFixed(1)}`);
+            bottom.push(`${x.toFixed(1)} ${(y + half + warp(i * 2.1 + 3.3)).toFixed(1)}`);
           }
 
           path.setAttribute("d", `M${top.join("L")}L${bottom.reverse().join("L")}Z`);
