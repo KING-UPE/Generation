@@ -95,8 +95,8 @@ export default function VisionAbout() {
    * not leaving.
    */
   const stillInside = (e: React.PointerEvent) => {
-    const to = e.relatedTarget as Node | null;
-    return !!to && e.currentTarget.contains(to);
+    const to = e.relatedTarget;
+    return !!(to && to instanceof Node && e.currentTarget?.contains(to));
   };
 
   /*
