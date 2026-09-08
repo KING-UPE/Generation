@@ -2,7 +2,9 @@
 "use client";
 
 import { useRef } from "react";
+import { useState } from "react";
 import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
+import Lightbox, { type Shot } from "@/components/ui/Lightbox";
 
 /*
  * Ordered against RATIOS below, not by preference: the two cycle together, so
@@ -15,23 +17,24 @@ import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
  * venue shot placed nine slots from its twin, which is most of a pass of the
  * tunnel — far enough apart not to read as the same picture twice.
  */
-const SLOTS = [
-  "/img/photos/IAP07571.jpg", // open-air crowd from the stage
-  "/img/photos/IAP07479.jpg", // singer, arm out
-  "/img/photos/IAP08180.jpg", // full stage under the LED wall
-  "/img/photos/IAP07837.jpg", // kandyan dancers, pair
-  "/img/photos/IAP08008.jpg", // the floor lit by phone torches
-  "/img/photos/IAP07942.jpg", // beam wash over the venue
-  "/img/photos/IAP06765.jpg", // singer mid-phrase
-  "/img/photos/IAP06905.jpg", // crowd, shoulders up
-  "/img/photos/IAP07843.jpg", // kandyan dancer, arm raised
-  "/img/photos/IAP08596.jpg", // sparklers behind the singer
-  "/img/photos/IAP09052.jpg", // dance troupe in line
-  "/img/photos/IAP06665.jpg", // singer against the green wash
-  "/img/photos/IAP07600.jpg", // stage and the crowd beside it
-  "/img/photos/IAP07586.jpg", // silhouette in the haze
-  "/img/photos/IAP07942.jpg", // beam wash again, a pass away
+const SLOTS: Shot[] = [
+  { src: "/img/photos/IAP07571.jpg", alt: "A performer facing a full open-air crowd at dusk" },
+  { src: "/img/photos/IAP07479.jpg", alt: "A singer with one arm out against a lit backdrop" },
+  { src: "/img/photos/IAP08180.jpg", alt: "The full stage under the LED wall" },
+  { src: "/img/photos/IAP07837.jpg", alt: "Two dancers in Kandyan costume mid-routine" },
+  { src: "/img/photos/IAP08008.jpg", alt: "The floor lit end to end by phone torches" },
+  { src: "/img/photos/IAP07942.jpg", alt: "Beams fanning down over the venue" },
+  { src: "/img/photos/IAP06765.jpg", alt: "A singer mid-phrase at the microphone" },
+  { src: "/img/photos/IAP06905.jpg", alt: "The crowd, shoulders up, one phone raised" },
+  { src: "/img/photos/IAP07843.jpg", alt: "A Kandyan dancer with an arm raised" },
+  { src: "/img/photos/IAP08596.jpg", alt: "Sparks falling behind a singer on stage" },
+  { src: "/img/photos/IAP09052.jpg", alt: "A dance troupe in line across the stage" },
+  { src: "/img/photos/IAP06665.jpg", alt: "A singer against a green stage wash" },
+  { src: "/img/photos/IAP07600.jpg", alt: "The stage and the crowd along its edge" },
+  { src: "/img/photos/IAP07586.jpg", alt: "A performer in silhouette through the haze" },
+  { src: "/img/photos/IAP07942.jpg", alt: "Beams fanning down over the venue" },
 ];
+
 const RATIOS = ["4 / 3", "3 / 4", "1 / 1", "3 / 4", "4 / 3"];
 
 /** How many full passes of the field the fly-through covers. */
@@ -102,7 +105,7 @@ const ITEMS = Array.from({ length: COUNT }, (_, i) => {
   /* A floor on the radius keeps a print clear of the middle once it is big. */
   const radius = 0.44 + ((i * PHI) % 1) * 0.42;
   return {
-    src: SLOTS[i % SLOTS.length],
+    ...SLOTS[i % SLOTS.length],
     ratio: RATIOS[i % RATIOS.length],
     bx: Math.cos(angle) * radius,
     by: Math.sin(angle) * radius,
@@ -114,6 +117,7 @@ const ITEMS = Array.from({ length: COUNT }, (_, i) => {
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
 export default function GalleryFlow() {
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
   const sectionRef = useRef<HTMLElement>(null);
   const fieldRef = useRef<HTMLDivElement>(null);
   const chromeRef = useRef<HTMLDivElement>(null);
@@ -299,8 +303,11 @@ export default function GalleryFlow() {
               className="absolute left-1/2 top-1/2 will-change-transform"
               style={{ width: `calc(var(--gs, 1) * ${it.w}vw)`, opacity: 0 }}
             >
-              <div
-                className="cut-shape-sm relative overflow-hidden bg-ink-2 backdrop-blur-sm"
+              <button
+                type="button"
+                onClick={() => setOpenIndex(i)}
+                aria-label={`View: ${it.alt}`}
+                className="cut-shape-sm relative block w-full overflow-hidden bg-ink-2 backdrop-blur-sm"
                 style={{
                   aspectRatio: it.ratio,
                   boxShadow: "0 20px 60px rgba(0,0,0,0.8), 0 0 20px hsl(var(--red-hot-c) / 0.15)",
@@ -308,10 +315,17 @@ export default function GalleryFlow() {
               >
                 <img src={it.src} alt="" loading="lazy" className="h-full w-full object-cover" />
                 <div className="pointer-events-none absolute inset-0 border border-hairline/60" />
-              </div>
+              </button>
             </div>
           ))}
         </div>
+
+        <Lightbox
+          shots={ITEMS}
+          index={openIndex}
+          onClose={() => setOpenIndex(null)}
+          onIndex={setOpenIndex}
+        />
 
         <header
           ref={chromeRef}
