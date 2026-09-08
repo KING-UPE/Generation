@@ -158,17 +158,32 @@ const STALLS = [
   },
 ];
 
-const CARD_BASE = "linear-gradient(168deg, #131317 0%, #0B0B0F 52%, #060608 100%)";
+/*
+ * The resting surface is the ink scale — --ink-3 to --ink-2 to --ink — rather
+ * than the greys it was built with. Off-token it sat a shade lighter than every
+ * other dark surface on the page, which reads as a different black beside the
+ * starfield.
+ *
+ * The lit surface below is the only place a literal survives: it is those two
+ * tokens raised a step to read as picked up, and there is no token for that.
+ */
+const CARD_BASE =
+  "linear-gradient(168deg, var(--ink-3) 0%, var(--ink-2) 52%, var(--ink) 100%)";
 
-/** The lift: a soft specular spotlight on the active card */
+/**
+ * The lift: a soft specular spotlight on the active card. The warm stop is
+ * --red-hot at 8%; it was #FF5A3C, which is the lightest stop of --grad-red and
+ * a hair orange on its own.
+ */
 const CARD_LIT =
-  "radial-gradient(125% 95% at 28% 0%, rgba(255,255,255,0.14) 0%, rgba(255,59,47,0.08) 36%, transparent 68%), " +
-  "linear-gradient(168deg, #1A1A22 0%, #0E0E14 52%, #07070B 100%)";
+  "radial-gradient(125% 95% at 28% 0%, rgba(237,237,240,0.14) 0%, rgba(255,59,47,0.08) 36%, transparent 68%), " +
+  "linear-gradient(168deg, #17171E 0%, #0D0D12 52%, var(--ink) 100%)";
 
-/** Faint technical grid ruling */
+/** Faint technical ruling, drawn in the hairline's own colour at a third of
+ *  its weight — the same off-white every rule on the site is drawn in. */
 const GRID =
-  "linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px), " +
-  "linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px)";
+  "linear-gradient(to right, rgba(237,237,240,0.05) 1px, transparent 1px), " +
+  "linear-gradient(to bottom, rgba(237,237,240,0.05) 1px, transparent 1px)";
 
 const EASE = "all 0.5s cubic-bezier(0.16, 1, 0.3, 1)";
 
@@ -227,12 +242,12 @@ export default function Festival() {
                   onMouseEnter={() => setHovered(i)}
                   onMouseLeave={() => setHovered(null)}
                   onClick={() => setHovered(i)}
-                  className="group relative flex h-[360px] w-[270px] shrink-0 cursor-pointer flex-col items-center justify-between overflow-hidden rounded-[28px] p-6 text-center select-none sm:h-[390px] sm:w-[300px] md:h-[410px] md:w-[320px] md:p-8"
+                  className="group relative flex h-[360px] w-[270px] shrink-0 cursor-pointer flex-col items-center justify-between overflow-hidden rounded-[26px] p-6 text-center select-none sm:h-[390px] sm:w-[300px] md:h-[410px] md:w-[320px] md:p-8"
                   style={{
                     background: active ? CARD_LIT : CARD_BASE,
                     boxShadow: active
-                      ? "0 36px 85px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.18) inset, 0 0 32px rgba(255,59,47,0.18)"
-                      : "0 18px 46px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.06) inset",
+                      ? "0 36px 85px rgba(0,0,0,0.85), 0 0 0 1px rgba(237,237,240,0.18) inset, 0 0 32px rgba(255,59,47,0.18)"
+                      : "0 18px 46px rgba(0,0,0,0.65), 0 0 0 1px rgba(237,237,240,0.08) inset",
                     transform: wide
                       ? `rotate(${active ? 0 : stall.rotate}deg) translateY(${
                           active ? stall.drop - 26 : stall.drop
@@ -262,7 +277,7 @@ export default function Festival() {
                   <span
                     aria-hidden
                     className="pointer-events-none absolute right-6 top-6 font-mono-ui text-[11px] tracking-[0.26em] transition-colors duration-300"
-                    style={{ color: active ? "rgba(255,255,255,0.65)" : "rgba(255,255,255,0.25)" }}
+                    style={{ color: active ? "var(--muted)" : "var(--dim)" }}
                   >
                     {stall.index}
                   </span>
@@ -273,7 +288,7 @@ export default function Festival() {
                       aria-hidden
                       className="inline-flex h-16 w-16 items-center justify-center transition-all duration-500 sm:h-18 sm:w-18"
                       style={{
-                        color: active ? "#FF3B2F" : "rgba(255,255,255,0.78)",
+                        color: active ? "var(--red-hot)" : "var(--muted)",
                         transform: active ? "scale(1.12)" : "scale(1)",
                         filter: active ? "drop-shadow(0 0 16px rgba(255,59,47,0.5))" : "none",
                       }}
@@ -288,7 +303,7 @@ export default function Festival() {
                       className="font-display leading-tight tracking-[-0.01em] transition-colors duration-300"
                       style={{
                         fontSize: "clamp(1.5rem, 2.6vw, 2.1rem)",
-                        color: active ? "#FFFFFF" : "#D4D4D8",
+                        color: active ? "var(--bone)" : "var(--bone-muted)",
                       }}
                     >
                       {stall.title}
@@ -296,10 +311,8 @@ export default function Festival() {
 
                     {/* Telemetry badge / spec from proposal presentation */}
                     <span
-                      className="mt-1 font-mono-ui text-[10px] uppercase tracking-[0.18em] transition-all duration-300"
-                      style={{
-                        color: active ? "rgba(255,90,74,0.9)" : "rgba(255,255,255,0.28)",
-                      }}
+                      className="mt-1 font-mono-ui text-[11px] uppercase tracking-[0.18em] transition-all duration-300"
+                      style={{ color: active ? "var(--red-hot)" : "var(--dim)" }}
                     >
                       {stall.spec}
                     </span>
@@ -307,7 +320,7 @@ export default function Festival() {
                     {/* Description copy - revealed smoothly on the active card */}
                     <div className="mt-2.5 min-h-[52px]">
                       <p
-                        className="max-w-[24ch] font-sans text-xs leading-relaxed text-white/60 transition-all duration-500 sm:text-[13px]"
+                        className="max-w-[24ch] font-sans text-xs leading-relaxed text-muted transition-all duration-500 sm:text-[13px]"
                         style={{
                           opacity: active ? 1 : 0,
                           transform: active ? "translateY(0)" : "translateY(10px)",
