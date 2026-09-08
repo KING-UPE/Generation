@@ -18,21 +18,21 @@ import Lightbox, { type Shot } from "@/components/ui/Lightbox";
  * tunnel — far enough apart not to read as the same picture twice.
  */
 const SLOTS: Shot[] = [
-  { src: "/img/photos/IAP07571.jpg", alt: "A performer facing a full open-air crowd at dusk" },
-  { src: "/img/photos/IAP07479.jpg", alt: "A singer with one arm out against a lit backdrop" },
-  { src: "/img/photos/IAP08180.jpg", alt: "The full stage under the LED wall" },
-  { src: "/img/photos/IAP07837.jpg", alt: "Two dancers in Kandyan costume mid-routine" },
-  { src: "/img/photos/IAP08008.jpg", alt: "The floor lit end to end by phone torches" },
-  { src: "/img/photos/IAP07942.jpg", alt: "Beams fanning down over the venue" },
-  { src: "/img/photos/IAP06765.jpg", alt: "A singer mid-phrase at the microphone" },
-  { src: "/img/photos/IAP06905.jpg", alt: "The crowd, shoulders up, one phone raised" },
-  { src: "/img/photos/IAP07843.jpg", alt: "A Kandyan dancer with an arm raised" },
-  { src: "/img/photos/IAP08596.jpg", alt: "Sparks falling behind a singer on stage" },
-  { src: "/img/photos/IAP09052.jpg", alt: "A dance troupe in line across the stage" },
-  { src: "/img/photos/IAP06665.jpg", alt: "A singer against a green stage wash" },
-  { src: "/img/photos/IAP07600.jpg", alt: "The stage and the crowd along its edge" },
-  { src: "/img/photos/IAP07586.jpg", alt: "A performer in silhouette through the haze" },
-  { src: "/img/photos/IAP07942.jpg", alt: "Beams fanning down over the venue" },
+  { src: "/img/photos/IAP07571.webp", alt: "A performer facing a full open-air crowd at dusk" },
+  { src: "/img/photos/IAP07479.webp", alt: "A singer with one arm out against a lit backdrop" },
+  { src: "/img/photos/IAP08180.webp", alt: "The full stage under the LED wall" },
+  { src: "/img/photos/IAP07837.webp", alt: "Two dancers in Kandyan costume mid-routine" },
+  { src: "/img/photos/IAP08008.webp", alt: "The floor lit end to end by phone torches" },
+  { src: "/img/photos/IAP07942.webp", alt: "Beams fanning down over the venue" },
+  { src: "/img/photos/IAP06765.webp", alt: "A singer mid-phrase at the microphone" },
+  { src: "/img/photos/IAP06905.webp", alt: "The crowd, shoulders up, one phone raised" },
+  { src: "/img/photos/IAP07843.webp", alt: "A Kandyan dancer with an arm raised" },
+  { src: "/img/photos/IAP08596.webp", alt: "Sparks falling behind a singer on stage" },
+  { src: "/img/photos/IAP09052.webp", alt: "A dance troupe in line across the stage" },
+  { src: "/img/photos/IAP06665.webp", alt: "A singer against a green stage wash" },
+  { src: "/img/photos/IAP07600.webp", alt: "The stage and the crowd along its edge" },
+  { src: "/img/photos/IAP07586.webp", alt: "A performer in silhouette through the haze" },
+  { src: "/img/photos/IAP07942.webp", alt: "Beams fanning down over the venue" },
 ];
 
 const RATIOS = ["4 / 3", "3 / 4", "1 / 1", "3 / 4", "4 / 3"];
