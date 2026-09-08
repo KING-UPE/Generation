@@ -8,6 +8,13 @@ import {
   IconArrowUpRight,
 } from "@/components/ui/icons";
 
+/** The three most-asked-for forms. The rest live on /auditions. */
+const FORMS = [
+  { title: "Singing", href: "https://forms.gle/Rn31tLkLLpUdeTWx6" },
+  { title: "Dancing", href: "https://forms.gle/UjFWe64ufTXyCmYx6" },
+  { title: "Organizing Team", href: "https://forms.gle/G1RGdgCAx7HNsK7F8" },
+];
+
 export default function Footer() {
   return (
     <footer className="relative z-10 border-t border-hairline bg-ink-2 text-bone">
@@ -42,40 +49,31 @@ export default function Footer() {
             <span className="font-mono uppercase text-dim tracking-[0.18em] text-[11px] mb-5 block">
               Auditions
             </span>
+            {/* Four entries, four destinations. They all pointed at /auditions
+                before, which reads as a list of choices and behaves as one
+                link; the named ones now open the form they name. */}
             <ul className="space-y-3 font-medium text-xs sm:text-sm">
               <li>
                 <Link
                   href="/auditions"
                   className="hover:text-red-hot transition-colors duration-200 flex items-center gap-1 group"
                 >
-                  <span>Talent Forms</span>
+                  <span>All Talent Forms</span>
                   <IconArrowUpRight className="h-3.5 w-3.5 text-red-hot transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                 </Link>
               </li>
-              <li>
-                <Link
-                  href="/auditions"
-                  className="hover:text-red-hot transition-colors duration-200"
-                >
-                  Singing & Dancing
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/auditions"
-                  className="hover:text-red-hot transition-colors duration-200"
-                >
-                  Drama & Acting
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/auditions"
-                  className="hover:text-red-hot transition-colors duration-200"
-                >
-                  Organizing Team
-                </Link>
-              </li>
+              {FORMS.map((f) => (
+                <li key={f.href}>
+                  <a
+                    href={f.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="hover:text-red-hot transition-colors duration-200"
+                  >
+                    {f.title}
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -128,7 +126,7 @@ export default function Footer() {
         {/* Bottom Attribution & Copyright Bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between text-xs font-mono text-dim uppercase tracking-wider mt-10 pt-6 border-t border-hairline/60 gap-4">
           <p className="text-center sm:text-left">
-            © 2017 – 2026 Generation. All rights reserved.{" "}
+            © 2023 – 2026 Generation. All rights reserved.{" "}
             <span className="mx-2 hidden sm:inline text-hairline">/</span> Produced by ECheM
           </p>
 
@@ -138,7 +136,7 @@ export default function Footer() {
               href="https://w3s.lk/"
               target="_blank"
               rel="noreferrer"
-              className="underline text-white hover:text-red-hot transition-colors duration-200 decoration-hairline hover:decoration-red-hot underline-offset-4"
+              className="underline text-bone hover:text-red-hot transition-colors duration-200 decoration-hairline hover:decoration-red-hot underline-offset-4"
             >
               W3S Solutions
             </a>
