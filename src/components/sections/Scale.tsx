@@ -39,7 +39,7 @@ type Card = {
 const CARDS: Card[] = [
   {
     value: 20000,
-    label: "Students",
+    label: "Students Across Batches",
     icon: <IconStudents />,
     from: "var(--red-hot)",
     to: "var(--red-deep)",
@@ -48,7 +48,7 @@ const CARDS: Card[] = [
   },
   {
     value: 325000,
-    label: "YouTube",
+    label: "YouTube Community",
     icon: <IconYouTube />,
     from: "hsl(calc(var(--brand-h) - 3) calc(var(--brand-s) - 9%) 54%)",
     to: "hsl(calc(var(--brand-h) - 12) calc(var(--brand-s) - 4%) 22%)",
@@ -57,7 +57,7 @@ const CARDS: Card[] = [
   },
   {
     value: 209000,
-    label: "Telegram",
+    label: "Telegram Community",
     icon: <IconTelegram />,
     from: "var(--red)",
     to: "hsl(calc(var(--brand-h) - 15) calc(var(--brand-s) - 5%) 15%)",
@@ -66,7 +66,7 @@ const CARDS: Card[] = [
   },
   {
     value: 86000,
-    label: "Facebook",
+    label: "Facebook Community",
     icon: <IconFacebook />,
     from: "hsl(calc(var(--brand-h) - 11) calc(var(--brand-s) - 13%) 41%)",
     to: "hsl(calc(var(--brand-h) - 14) calc(var(--brand-s) - 6%) 12%)",
@@ -75,7 +75,7 @@ const CARDS: Card[] = [
   },
   {
     value: 41000,
-    label: "TikTok",
+    label: "TikTok Community",
     icon: <IconTikTok />,
     from: "hsl(calc(var(--brand-h) - 12) calc(var(--brand-s) - 5%) 32%)",
     to: "hsl(calc(var(--brand-h) - 14) calc(var(--brand-s) - 19%) 8%)",
@@ -163,9 +163,16 @@ function ScaleCard({
       {/* The platform names the figure here rather than under it. Pinned top and
           bottom with nothing between, the card was mostly empty gradient. */}
       <div>
+        {/* Wrapped to whatever the fan actually leaves visible. The deck
+            overlaps, so a label wider than the exposed strip slides under the
+            next card -- "Students Across Batches" did. The phone grid, where
+            nothing overlaps, gets the full width. */}
         <h3
-          className="font-display leading-none tracking-[-0.01em] text-white/95"
-          style={{ fontSize: "clamp(1rem, 1.6vw, 1.3rem)" }}
+          className="font-display leading-[1.05] tracking-[-0.01em] text-white/95"
+          style={{
+            fontSize: "clamp(1rem, 1.6vw, 1.3rem)",
+            maxWidth: "var(--label-max, 100%)",
+          }}
         >
           {card.label}
         </h3>
@@ -197,12 +204,14 @@ export default function Scale() {
 
         <div className="mt-6">
           <LitTitle className={TITLE_SIZE} radius={340} weight={1.9}>
-            Scale
+            Built at Scale
           </LitTitle>
         </div>
 
         <ScrollCopy className="mt-5 max-w-[42ch] text-[clamp(0.875rem,1.05vw,1.15rem)] font-medium leading-[1.65] text-bone">
-          They already show up. Every day, on every screen.
+          ECheM&apos;s strength goes beyond classroom attendance. Our physical and
+          digital platforms create continuous connections with students throughout
+          their A/L journey.
         </ScrollCopy>
 
         {/* ── The fan. Wide screens only: 1060px of deck needs the room. ── */}
@@ -220,6 +229,9 @@ export default function Scale() {
                 className="h-[250px] shrink-0 cursor-pointer"
                 style={{
                   width: CARD_W,
+                  /* The card is 260 wide but only STRIP of it is uncovered, and
+                     the padding eats into that. */
+                  ["--label-max" as string]: `${STRIP - 24}px`,
                   marginLeft: i === 0 ? 0 : STRIP - CARD_W,
                   zIndex: lifted ? 20 : i + 1,
                   transformOrigin: "bottom center",
@@ -247,8 +259,12 @@ export default function Scale() {
           ))}
         </div>
 
+        {/* The proposal's sixth cell. It carries no figure, so it stays a line
+            rather than a card -- but it keeps both halves of what the slide
+            says, the claim and what the claim covers. */}
         <p className="eyebrow mt-14 text-center md:mt-16">
-          Island-wide <span className="text-red-hot">·</span> physical and digital
+          Island-Wide <span className="text-red-hot">·</span> Physical + Digital
+          Student Reach
         </p>
       </div>
     </section>
