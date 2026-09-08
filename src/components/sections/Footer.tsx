@@ -2,7 +2,6 @@
 
 import React, { useEffect, useRef } from "react";
 import Link from "next/link";
-import { brandColor } from "@/lib/brand";
 import {
   IconWhatsApp,
   IconTelegram,
@@ -44,12 +43,6 @@ export default function Footer() {
 
     let frame = 0;
     let offset = 0;
-    let accent = brandColor("--red-hot", 0.32);
-    const reReadBrand = () => {
-      accent = brandColor("--red-hot", 0.32);
-    };
-    window.addEventListener("brand:change", reReadBrand);
-
     let width = 0;
     let height = 0;
     const measure = () => {
@@ -74,42 +67,64 @@ export default function Footer() {
       if (onScreen && width > 0) {
         ctx.clearRect(0, 0, width, height);
 
-        /* Centre sits outside the panel, so only the shoulder of the field
-           reaches into it. */
-        const cx = width * 0.95;
-        const cy = height * 1.05;
-        const lineCount = 52;
-        const spacing = 15;
-        const startR = 30;
+        /*
+         * Flow lines running the full width, not arcs around a corner.
+         *
+         * The reference this is modelled on is a tall panel, where a radial
+         * field from one corner fills the frame. A footer is wide and short:
+         * swept from a corner, most of every arc lands outside it and only a
+         * patch near one edge survives. These run edge to edge instead, and
+         * are displaced by a field that grows towards the right, so they still
+         * fan out from that side.
+         */
+        const lines = 150;
+        const steps = 90;
+        const spread = height * 1.7;
+        const top = -height * 0.35;
 
-        ctx.lineWidth = 1.25;
+        /* Spacing is modulated rather than constant -- lines drawing together
+           into bands and opening out again is what reads as silk instead of
+           ruling. The weights are normalised, so the set always fills the
+           band however the pattern drifts. */
+        const weights: number[] = [];
+        let weightSum = 0;
+        for (let i = 0; i < lines; i++) {
+          const band =
+            Math.sin(i * 0.15 + offset * 0.9) * 0.5 + Math.sin(i * 0.037 - offset * 0.35) * 0.5;
+          const w = 0.3 + (band * 0.5 + 0.5);
+          weights.push(w);
+          weightSum += w;
+        }
 
-        for (let i = 0; i < lineCount; i++) {
+        let acc = 0;
+        for (let i = 0; i < lines; i++) {
+          acc += weights[i];
+          const y0 = top + (acc / weightSum) * spread;
+          if (y0 < -40 || y0 > height + 40) continue;
+
+          /* Tight bands read brighter, which is what gives the sheen. */
+          const sheen = Math.max(0, 1 - (weights[i] - 0.3) / 1.0);
+          const alpha = 0.05 + 0.5 * sheen * sheen;
+
+          ctx.strokeStyle = `rgba(255,255,255,${alpha.toFixed(3)})`;
+          ctx.lineWidth = 0.7 + sheen * 0.8;
           ctx.beginPath();
-          const baseR = startR + i * spacing;
-
-          if (i % 8 === 0) {
-            ctx.strokeStyle = accent;
-          } else {
-            ctx.strokeStyle = `rgba(255,255,255,${(0.04 + (i / lineCount) * 0.14).toFixed(3)})`;
-          }
-
-          const startAngle = Math.PI * 1.04;
-          const endAngle = -Math.PI * 0.54;
-          const steps = 70;
-          const step = (endAngle - startAngle) / steps;
 
           for (let j = 0; j <= steps; j++) {
-            const theta = startAngle + j * step;
-            const wave =
-              Math.sin(theta * 3.5 + offset + i * 0.1) * 18 +
-              Math.cos(theta * 2.2 - offset * 0.7) * 12 +
-              Math.sin(baseR * 0.015 + offset * 0.4) * 8;
+            const u = j / steps;
+            const x = -30 + (width + 60) * u;
 
-            const rx = (baseR + wave) * 1.45;
-            const ry = (baseR + wave) * 0.88;
-            const x = cx + rx * Math.cos(theta);
-            const y = cy + ry * Math.sin(theta);
+            /* Three harmonics: the slow one bends the whole run, the faster
+               two ripple along it. Keyed to y0 as well as x so neighbouring
+               lines drift apart instead of moving as one ribbon. */
+            const disp =
+              Math.sin(u * 3.1 + offset * 0.8 + y0 * 0.006) * 26 +
+              Math.sin(u * 6.7 - offset * 0.5 + y0 * 0.011) * 12 +
+              Math.cos(u * 1.4 + offset * 0.3 + y0 * 0.003) * 18;
+
+            /* The fan: displacement is slight at the left edge and full at the
+               right, so the field opens towards the corner. */
+            const y = y0 + disp * (0.25 + u * u * 1.35);
 
             if (j === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
@@ -117,7 +132,7 @@ export default function Footer() {
           ctx.stroke();
         }
 
-        if (!reduced) offset += 0.005;
+        if (!reduced) offset += 0.004;
       }
 
       frame = requestAnimationFrame(draw);
@@ -128,7 +143,6 @@ export default function Footer() {
     return () => {
       cancelAnimationFrame(frame);
       ro.disconnect();
-      window.removeEventListener("brand:change", reReadBrand);
     };
   }, []);
 
@@ -138,7 +152,7 @@ export default function Footer() {
       <canvas ref={canvasRef} aria-hidden className="pointer-events-none absolute inset-0 h-full w-full" />
 
       {/* Reads the lines down towards the left, so the type never sits on them. */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-ink-2 via-ink-2/85 to-transparent" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-ink-2 via-ink-2/70 to-transparent" />
 
       {/* Subtle ambient warm red glow on bottom-left */}
       <div className="absolute -bottom-12 -left-12 h-44 w-44 rounded-full bg-red-hot/10 blur-3xl pointer-events-none" />
