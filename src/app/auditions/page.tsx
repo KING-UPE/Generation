@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import RevealText from "@/components/ui/RevealText";
 import Magnetic from "@/components/ui/Magnetic";
 import { IconTelegram, IconWhatsApp } from "@/components/ui/icons";
@@ -119,36 +120,84 @@ export default function AuditionsPage() {
         <span className="badge-pill whitespace-nowrap">Colombo · 2026</span>
       </header>
 
-      <section className="mx-auto w-full max-w-(--maxw) px-(--gutter) pt-16 md:pt-24">
-        <RevealText
-          as="h1"
-          type="chars"
-          stagger={0.038}
-          y={104}
-          className="font-display select-none text-[clamp(2.75rem,11vw,10rem)] leading-[0.85] tracking-[-0.015em] text-bone"
-        >
-          Auditions
-        </RevealText>
+      <section className="mx-auto w-full max-w-(--maxw) px-(--gutter) pt-14 md:pt-20">
+        <div className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-center lg:gap-14">
+          {/* Left Column: Heading, intro & requirements */}
+          <div>
+            <RevealText
+              as="h1"
+              type="chars"
+              stagger={0.038}
+              y={104}
+              className="font-display select-none text-[clamp(2.75rem,10vw,8.5rem)] leading-[0.85] tracking-[-0.015em] text-bone"
+            >
+              Auditions
+            </RevealText>
 
-        <div className="font-sinhala mt-10 flex max-w-[62ch] flex-col gap-5 text-[clamp(0.95rem,1.1vw,1.15rem)] leading-[1.9] text-bone-muted md:mt-14">
-          <p>
-            දෙසැම්බර් මාසේ 2026 ළමයින්ගේ විශේෂම මාසේ වෙන්න යන්නේ ඔන්න. 2026
-            දෙසැම්බර් 12 වැනිදා, නෙළුම් කුළුණ එළිමහන් රංග පිටියේදී.
-          </p>
-          <p>අපි අද ඉඳලාම ඔයාලගේ හැකියාවන් එකතු කරන්න පටන් ගන්නවා.</p>
-          <p>
-            පහළින් එක එක දක්ෂතා සහ Generation 26 එකට සම්බන්ධ වෙන්න පුළුවන් ආකාර
-            දක්වලා Google Forms දාලා තියෙනවා.
-          </p>
-        </div>
+            <div className="font-sinhala mt-8 flex flex-col gap-4 text-[clamp(0.95rem,1.1vw,1.12rem)] leading-[1.85] text-bone-muted md:mt-12">
+              <p>
+                දෙසැම්බර් මාසේ 2026 ළමයින්ගේ විශේෂම මාසේ වෙන්න යන්නේ ඔන්න. 2026
+                දෙසැම්බර් 12 වැනිදා, නෙළුම් කුළුණ එළිමහන් රංග පිටියේදී.
+              </p>
+              <p>අපි අද ඉඳලාම ඔයාලගේ හැකියාවන් එකතු කරන්න පටන් ගන්නවා.</p>
+              <p>
+                පහළින් එක එක දක්ෂතා සහ Generation 26 එකට සම්බන්ධ වෙන්න පුළුවන් ආකාර
+                දක්වලා Google Forms දාලා තියෙනවා.
+              </p>
+            </div>
 
-        <div className="cut-card-red mt-10 max-w-[62ch] p-6 md:p-7">
-          <p className="eyebrow">Required on every form</p>
-          <p className="font-sinhala mt-3 text-[clamp(0.88rem,1.02vw,1.02rem)] leading-[1.8] text-bone">
-            එහි ඔබගේ නම, Contact Number, පන්තියට සහභාගී වූ ආකාරය (Online ලෙස හෝ
-            භෞතිකව නම් සම්බන්ධ වූ ආයතනය), Batch එක සහ Student ID එක අනිවාර්යයෙන්
-            සඳහන් කරන්න.
-          </p>
+            <div className="cut-card-red mt-8 p-6 md:p-7">
+              <p className="eyebrow">Required on every form</p>
+              <p className="font-sinhala mt-3 text-[clamp(0.88rem,1.02vw,1.02rem)] leading-[1.8] text-bone">
+                එහි ඔබගේ නම, Contact Number, පන්තියට සහභාගී වූ ආකාරය (Online ලෙස හෝ
+                භෞතිකව නම් සම්බන්ධ වූ ආයතනය), Batch එක සහ Student ID එක අනිවාර්යයෙන්
+                සඳහන් කරන්න.
+              </p>
+            </div>
+          </div>
+
+          {/* Right Column: Hero Stage Image */}
+          <div className="relative mx-auto mt-4 w-full max-w-[440px] lg:mt-0 lg:max-w-none">
+            {/* Ambient crimson glow */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -inset-4 bg-red-hot/15 blur-3xl"
+            />
+
+            {/* Chamfered, not rounded: every card on this page is cut, and a
+                rounded panel beside them reads as borrowed from somewhere else. */}
+            <div className="cut-shape relative isolate overflow-hidden border border-hairline bg-ink-3 shadow-[0_24px_60px_rgba(0,0,0,0.85)]">
+              <div className="relative aspect-[3/4] w-full overflow-hidden sm:aspect-[4/5] lg:aspect-[3/4]">
+                <Image
+                  src="/img/auditions/hero.jpg"
+                  alt="Live stage audition performance at Generation Lotus Tower"
+                  fill
+                  priority
+                  sizes="(min-width: 1024px) 40vw, 90vw"
+                  className="object-cover object-center transition-transform duration-700 ease-out hover:scale-105"
+                />
+
+                {/* Cinematic bottom gradient fade */}
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent" />
+
+
+                {/* Bottom caption */}
+                <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between">
+                  <div>
+                    <span className="font-mono-ui text-[11px] uppercase tracking-[0.2em] text-red-hot">
+                      December 12, 2026
+                    </span>
+                    <p className="font-display text-lg tracking-[-0.01em] text-bone sm:text-xl">
+                      Lotus Tower Open Arena
+                    </p>
+                  </div>
+                  <span className="font-mono-ui text-[11px] tracking-[0.2em] text-dim">
+                    GEN &apos;26
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
