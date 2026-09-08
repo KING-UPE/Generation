@@ -545,11 +545,11 @@ export default function Film() {
           <RevealText
             as="p"
             /* Balanced so the line cannot break with a single word stranded
-               on its own -- "...to watch the / cinematic arena unfold." */
+               on its own */
             className="mt-6 max-w-[36ch] text-balance text-lead text-bone"
             start="top 92%"
           >
-            One stage. Pure frequency. Scroll to watch the cinematic arena unfold.
+            One stage. Pure frequency. Relive the night a generation showed up loud.
           </RevealText>
         </div>
 
