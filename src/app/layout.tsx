@@ -6,6 +6,7 @@ import SmoothScroll from "@/components/providers/SmoothScroll";
 import Cursor from "@/components/ui/Cursor";
 import Grain from "@/components/ui/Grain";
 import Starfield from "@/components/ui/Starfield";
+import ThemeTuner from "@/components/ui/ThemeTuner";
 import dynamic from "next/dynamic";
 
 /**
@@ -212,6 +213,9 @@ export default function RootLayout({
         <Grain />
         {/* Delete this line and the component once the scroll feel is settled. */}
         <ScrollTuner />
+        {/* Ships. The point is for whoever is looking at the site to be able
+            to try a colour on it, not just whoever is building it. */}
+        <ThemeTuner />
       </body>
     </html>
   );

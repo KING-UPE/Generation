@@ -2,9 +2,46 @@
 
 /* ------------------------------------------------------------------
    GENARATION — design tokens
-   Black canvas, red gradient energy, editorial minimalism.
+   Black canvas, hot-pink gradient energy, editorial minimalism.
 ------------------------------------------------------------------ */
 :root {
+  /* ================================================================
+     BRAND COLOUR — the only place the accent is written down.
+
+     Every accent, gradient, glow, shadow, cursor and canvas particle
+     on this site is derived from the two numbers below, so moving the
+     hue moves the whole site at once. Nothing else needs editing.
+
+       --brand-h   hue in degrees, 0-360
+                       3   the original red   (current)
+                     340   reddish hot pink
+                      20   orange
+                     280   violet
+                     190   cyan
+       --brand-s   saturation of the whole ramp; drop it to mute
+                   every accent on the site in one go
+
+     The ramp keeps its own spread around that hue — the light end
+     runs 9 degrees warm of it, the deep end 15 degrees cool — which
+     is what stops a gradient built from it reading as one flat
+     colour. Shifting --brand-h carries that spread along with it.
+     ================================================================ */
+  --brand-h: 3;
+  --brand-s: 100%;
+
+  /* Bare `H S L` triples, for anywhere an alpha is needed:
+       box-shadow: 0 0 20px hsl(var(--red-hot-c) / 0.35);
+     The solid tokens under them are the same values, ready to use. */
+  --tint-c:      calc(var(--brand-h) + 9)  var(--brand-s)            62%;
+  --red-hot-c:   var(--brand-h)            var(--brand-s)            59%;
+  --red-mid-c:   calc(var(--brand-h) - 3)  var(--brand-s)            59%;
+  --red-c:       calc(var(--brand-h) - 1)  var(--brand-s)            44%;
+  --red-deep-c:  calc(var(--brand-h) - 11) calc(var(--brand-s) - 4%) 28%;
+  --red-black-c: calc(var(--brand-h) - 15) calc(var(--brand-s) - 9%)  9%;
+  /* The warm stars in the starfield: the light end of the ramp, lifted, so
+     they read as embers of the accent rather than a second colour. */
+  --tint-soft-c: calc(var(--brand-h) + 9)  var(--brand-s)            71%;
+
   --ink:        #000000;
   --ink-2:      #08080B;
   --ink-3:      #101015;
@@ -16,13 +53,16 @@
   --muted:      #B3B3BF;
   --dim:        #858594;
 
-  --red-hot:    #FF3B2F;
-  --red:        #E10600;
-  --red-deep:   #8B0212;
-  --red-black:  #2A0207;
+  --tint:       hsl(var(--tint-c));
+  --tint-soft:  hsl(var(--tint-soft-c));
+  --red-hot:    hsl(var(--red-hot-c));
+  --red-mid:    hsl(var(--red-mid-c));
+  --red:        hsl(var(--red-c));
+  --red-deep:   hsl(var(--red-deep-c));
+  --red-black:  hsl(var(--red-black-c));
 
-  --grad-red:   linear-gradient(135deg, #FF5A3C 0%, #FF2E2E 28%, #E10600 58%, #8B0212 100%);
-  --grad-red-h: linear-gradient(90deg,  #FF5A3C 0%, #FF2E2E 30%, #E10600 65%, #8B0212 100%);
+  --grad-red:   linear-gradient(135deg, var(--tint) 0%, var(--red-mid) 28%, var(--red) 58%, var(--red-deep) 100%);
+  --grad-red-h: linear-gradient(90deg,  var(--tint) 0%, var(--red-mid) 30%, var(--red) 65%, var(--red-deep) 100%);
   --grad-card:  linear-gradient(180deg, rgba(20, 20, 28, 0.85) 0%, rgba(10, 10, 14, 0.95) 100%);
 
   --ease-out:   cubic-bezier(0.16, 1, 0.3, 1);
@@ -40,7 +80,9 @@
   --color-bone-muted: var(--bone-muted);
   --color-muted:     var(--muted);
   --color-dim:       var(--dim);
+  --color-tint:      var(--tint);
   --color-red-hot:   var(--red-hot);
+  --color-red-mid:   var(--red-mid);
   --color-red:       var(--red);
   --color-red-deep:  var(--red-deep);
   --color-hairline:  var(--hairline);
@@ -151,7 +193,7 @@ html.lenis, html.lenis body { height: auto; }
           drop-shadow(-1px 0 0 var(--red-hot))
           drop-shadow(0 1px 0 var(--red-hot))
           drop-shadow(0 -1px 0 var(--red-hot))
-          drop-shadow(0 0 16px rgba(255, 59, 47, 0.4));
+          drop-shadow(0 0 16px hsl(var(--red-hot-c) / 0.4));
   color: #fff;
 }
 
@@ -269,16 +311,16 @@ html.lenis, html.lenis body { height: auto; }
 }
 
 .cut-card:hover {
-  filter: drop-shadow(1px 0 0 rgba(255, 59, 47, 0.7))
-          drop-shadow(-1px 0 0 rgba(255, 59, 47, 0.7))
-          drop-shadow(0 1px 0 rgba(255, 59, 47, 0.7))
-          drop-shadow(0 -1px 0 rgba(255, 59, 47, 0.7))
-          drop-shadow(0 8px 24px rgba(255, 59, 47, 0.25));
+  filter: drop-shadow(1px 0 0 hsl(var(--red-hot-c) / 0.7))
+          drop-shadow(-1px 0 0 hsl(var(--red-hot-c) / 0.7))
+          drop-shadow(0 1px 0 hsl(var(--red-hot-c) / 0.7))
+          drop-shadow(0 -1px 0 hsl(var(--red-hot-c) / 0.7))
+          drop-shadow(0 8px 24px hsl(var(--red-hot-c) / 0.25));
 }
 
 .cut-card-red {
   position: relative;
-  background: linear-gradient(135deg, rgba(42, 2, 7, 0.8) 0%, rgba(14, 14, 18, 0.95) 100%);
+  background: linear-gradient(135deg, hsl(var(--red-black-c) / 0.8) 0%, rgba(14, 14, 18, 0.95) 100%);
   --cut-tl: clamp(0.75rem, 1.5vw, 1.25rem);
   --cut-br: clamp(1.1rem, 2.2vw, 1.75rem);
   clip-path: polygon(
@@ -289,11 +331,11 @@ html.lenis, html.lenis body { height: auto; }
     0 100%,
     0 var(--cut-tl)
   );
-  filter: drop-shadow(1px 0 0 rgba(255, 59, 47, 0.6))
-          drop-shadow(-1px 0 0 rgba(255, 59, 47, 0.6))
-          drop-shadow(0 1px 0 rgba(255, 59, 47, 0.6))
-          drop-shadow(0 -1px 0 rgba(255, 59, 47, 0.6))
-          drop-shadow(0 6px 24px rgba(255, 59, 47, 0.25));
+  filter: drop-shadow(1px 0 0 hsl(var(--red-hot-c) / 0.6))
+          drop-shadow(-1px 0 0 hsl(var(--red-hot-c) / 0.6))
+          drop-shadow(0 1px 0 hsl(var(--red-hot-c) / 0.6))
+          drop-shadow(0 -1px 0 hsl(var(--red-hot-c) / 0.6))
+          drop-shadow(0 6px 24px hsl(var(--red-hot-c) / 0.25));
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
@@ -304,7 +346,7 @@ html.lenis, html.lenis body { height: auto; }
           drop-shadow(-1px 0 0 var(--red-hot))
           drop-shadow(0 1px 0 var(--red-hot))
           drop-shadow(0 -1px 0 var(--red-hot))
-          drop-shadow(0 8px 32px rgba(255, 59, 47, 0.45));
+          drop-shadow(0 8px 32px hsl(var(--red-hot-c) / 0.45));
 }
 
 .cut-btn {
@@ -329,12 +371,12 @@ html.lenis, html.lenis body { height: auto; }
     0 100%,
     0 var(--cut-tl)
   );
-  box-shadow: 0 4px 20px rgba(225, 6, 0, 0.35);
+  box-shadow: 0 4px 20px hsl(var(--red-c) / 0.35);
   transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .cut-btn:hover {
-  box-shadow: 0 8px 30px rgba(255, 59, 47, 0.6);
+  box-shadow: 0 8px 30px hsl(var(--red-hot-c) / 0.6);
   transform: translateY(-2px);
 }
 
@@ -389,7 +431,7 @@ html.lenis, html.lenis body { height: auto; }
           drop-shadow(-1px 0 0 var(--red-hot))
           drop-shadow(0 1px 0 var(--red-hot))
           drop-shadow(0 -1px 0 var(--red-hot))
-          drop-shadow(0 0 24px rgba(255, 59, 47, 0.4));
+          drop-shadow(0 0 24px hsl(var(--red-hot-c) / 0.4));
   color: #fff;
 }
 
@@ -493,8 +535,8 @@ html.lenis, html.lenis body { height: auto; }
     circle var(--lit-r, 260px) at var(--mx, 50%) var(--my, 50%),
     #000 0%, #000 30%, transparent 74%
   );
-  filter: drop-shadow(0 0 14px rgba(255, 59, 47, 0.55))
-          drop-shadow(0 0 44px rgba(225, 6, 0, 0.30));
+  filter: drop-shadow(0 0 14px hsl(var(--red-hot-c) / 0.55))
+          drop-shadow(0 0 44px hsl(var(--red-c) / 0.30));
 }
 
 /* Firefox has no -webkit-text-stroke: fall back to a hairline-dim fill. */
@@ -516,3 +558,35 @@ html.lenis, html.lenis body { height: auto; }
   .pull-into-title { margin-top: calc(-1 * var(--title-pull)); }
   .pull-into-title-half { margin-top: calc(-0.5 * var(--title-pull)); }
 }
+
+/* ------------------------------------------------------------------
+   Film stage responsive frame variables
+   Mobile: centered portrait phone mockup below text
+   Tablet: centered preview
+   Desktop (>= 1024px): right-aligned tablet mockup alongside text
+------------------------------------------------------------------ */
+.film-stage {
+  --ft-base: 42%;
+  --fr-base: 16%;
+  --fb-base: 10%;
+  --fl-base: 16%;
+}
+
+@media (min-width: 48rem) and (max-width: 63.99rem) {
+  .film-stage {
+    --ft-base: 38%;
+    --fr-base: 22%;
+    --fb-base: 12%;
+    --fl-base: 22%;
+  }
+}
+
+@media (min-width: 64rem) {
+  .film-stage {
+    --ft-base: 28%;
+    --fr-base: 6%;
+    --fb-base: 28%;
+    --fl-base: 50%;
+  }
+}
+

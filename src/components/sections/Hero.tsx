@@ -161,7 +161,7 @@ export default function Hero() {
                 }
                 style={{
                   backgroundImage:
-                    "radial-gradient(circle 250px at var(--mx, 50%) var(--my, 50%), #FF5A3C 0%, #FF2E2E 32%, #E10600 52%, transparent 72%)",
+                    "radial-gradient(circle 250px at var(--mx, 50%) var(--my, 50%), var(--tint) 0%, var(--red-mid) 32%, var(--red) 52%, transparent 72%)",
                   WebkitBackgroundClip: "text",
                   backgroundClip: "text",
                   color: "transparent",
