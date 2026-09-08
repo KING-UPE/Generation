@@ -330,33 +330,41 @@ export default function VisionAbout() {
                       const isOtherHovered = frontHovered !== null && frontHovered !== i;
 
                       /* The resting place, and it never moves: this is the
-                         box the pointer gets tested against. */
+                         box the pointer gets tested against.
+
+                         Opened up from the 5%/6% it used to fan by. At that
+                         spread the front card covered all but a 33px strip of
+                         the one behind it, which reads as one card with a
+                         strange edge rather than two photographs. */
                       const rest =
                         i === 0
-                          ? "translate(-5%, 6%) rotate(-3.5deg) scale(0.94)"
-                          : "translate(5%, -4%) rotate(3deg) scale(1)";
+                          ? "translate(-16%, 12%) rotate(-7deg) scale(0.86)"
+                          : "translate(10%, -7%) rotate(4deg) scale(1)";
 
                       /* Everything hover does, stated relative to that. Composed
-                         with `rest` on the parent it lands where it always did. */
+                         with `rest` on the parent it lands where it belongs. */
                       let lift = "none";
                       let zIndex = i + 1;
-                      let opacity = 1;
                       let filter = "none";
 
                       if (isHovered) {
                         zIndex = 20;
                         lift =
                           i === 0
-                            ? "translate(3%, -9%) rotate(2.5deg) scale(1.117)"
-                            : "translate(-3%, 1%) rotate(-2deg) scale(1.05)";
+                            ? "translate(12%, -14%) rotate(5deg) scale(1.163)"
+                            : "translate(-4%, -3%) rotate(-2deg) scale(1.06)";
                         filter = "drop-shadow(0 16px 36px hsl(var(--red-hot-c) / 0.45))";
                       } else if (isOtherHovered) {
                         zIndex = 1;
-                        opacity = 0.45;
+                        /* Dimmed, not faded. Dropping the opacity made the card
+                           see-through, so wherever it overlapped its neighbour
+                           you looked straight through one photograph into the
+                           other. Brightness recedes it and keeps it solid. */
+                        filter = "brightness(0.45) saturate(0.75)";
                         lift =
                           i === 0
-                            ? "translate(-3%, 3%) rotate(-2.5deg) scale(0.957)"
-                            : "translate(3%, 13%) rotate(3deg) scale(0.9)";
+                            ? "translate(-7%, 5%) rotate(-3deg) scale(0.93)"
+                            : "translate(6%, 5%) rotate(3deg) scale(0.9)";
                       }
 
                       return (
@@ -371,7 +379,6 @@ export default function VisionAbout() {
                             className="h-full w-full"
                             style={{
                               transform: lift,
-                              opacity,
                               filter,
                               transition: "all 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
                             }}
@@ -389,32 +396,31 @@ export default function VisionAbout() {
                       const isHovered = backHovered === i;
                       const isOtherHovered = backHovered !== null && backHovered !== i;
 
-                      /* Same split as the front deck: a still hit area, and
-                         the movement one level inside it. See the note there. */
+                      /* Same split and the same spread as the front deck,
+                         mirrored. See the notes there. */
                       const rest =
                         i === 0
-                          ? "translate(5%, 6%) rotate(3.5deg) scale(0.94)"
-                          : "translate(-5%, -4%) rotate(-3deg) scale(1)";
+                          ? "translate(16%, 12%) rotate(7deg) scale(0.86)"
+                          : "translate(-10%, -7%) rotate(-4deg) scale(1)";
 
                       let lift = "none";
                       let zIndex = i + 1;
-                      let opacity = 1;
                       let filter = "none";
 
                       if (isHovered) {
                         zIndex = 20;
                         lift =
                           i === 0
-                            ? "translate(-3%, -9%) rotate(-2.5deg) scale(1.117)"
-                            : "translate(3%, 1%) rotate(2deg) scale(1.05)";
+                            ? "translate(-12%, -14%) rotate(-5deg) scale(1.163)"
+                            : "translate(4%, -3%) rotate(2deg) scale(1.06)";
                         filter = "drop-shadow(0 16px 36px hsl(var(--red-hot-c) / 0.45))";
                       } else if (isOtherHovered) {
                         zIndex = 1;
-                        opacity = 0.45;
+                        filter = "brightness(0.45) saturate(0.75)";
                         lift =
                           i === 0
-                            ? "translate(3%, 3%) rotate(2.5deg) scale(0.957)"
-                            : "translate(-3%, 13%) rotate(-3deg) scale(0.9)";
+                            ? "translate(7%, 5%) rotate(3deg) scale(0.93)"
+                            : "translate(-6%, 5%) rotate(-3deg) scale(0.9)";
                       }
 
                       return (
@@ -429,7 +435,6 @@ export default function VisionAbout() {
                             className="h-full w-full"
                             style={{
                               transform: lift,
-                              opacity,
                               filter,
                               transition: "all 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
                             }}
