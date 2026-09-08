@@ -13,12 +13,19 @@ import {
   IconElsewhere,
 } from "@/components/ui/icons";
 
-/** The 26 outlook, broken out of the headline figure. */
+/**
+ * The 26 outlook, broken out of the headline figure.
+ *
+ * Labelled exactly as the sponsorship proposal labels them. They were
+ * shortened here -- "In the room", "Social", "Elsewhere" -- which reads more
+ * tightly but stops a sponsor matching a figure on the page to the figure in
+ * the deck they were sent.
+ */
 const SPLIT = [
-  { value: 13500, label: "In the room", icon: <IconRoom /> },
-  { value: 240000, label: "Livestream", icon: <IconLivestream /> },
-  { value: 300000, label: "Social", icon: <IconSocial /> },
-  { value: 200000, label: "Elsewhere", icon: <IconElsewhere /> },
+  { value: 13500, label: "In-Person Attendees", icon: <IconRoom /> },
+  { value: 240000, label: "Livestream Viewers", icon: <IconLivestream /> },
+  { value: 300000, label: "Social Media Engagement", icon: <IconSocial /> },
+  { value: 200000, label: "Others", icon: <IconElsewhere /> },
 ];
 
 const TITLE_SIZE = "text-[clamp(2.4rem,6.4vw,7rem)] leading-[0.9] tracking-[-0.025em]";
@@ -51,7 +58,7 @@ export default function Projection() {
               <span className="badge-pill">Generation 26</span>
 
               <h2 className={"font-display mt-6 select-none text-bone " + TITLE_SIZE}>
-                Projection
+                Projections
               </h2>
 
               <ScrollCopy className="mt-5 max-w-[34ch] text-[clamp(0.875rem,1.05vw,1.15rem)] font-medium leading-[1.65] text-bone">
@@ -64,7 +71,7 @@ export default function Projection() {
                 value={650000}
                 icon={<IconReach />}
                 iconSize="clamp(3rem, 5vw, 4.25rem)"
-                label="Total reach and engagement"
+                label="Total Reach and Engagement"
                 size="clamp(2.75rem, 6.4vw, 5.5rem)"
               />
 

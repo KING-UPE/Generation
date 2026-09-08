@@ -17,7 +17,7 @@ const MARKERS = [
   { id: "about", index: "06", label: "About" },
   { id: "film", index: "07", label: "After Movie" },
   { id: "scale", index: "08", label: "Scale" },
-  { id: "projection", index: "09", label: "Projection" },
+  { id: "projection", index: "09", label: "Projections" },
   { id: "festival", index: "10", label: "Festival" },
   { id: "flow", index: "11", label: "Gallery" },
 ];
