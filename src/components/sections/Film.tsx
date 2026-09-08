@@ -77,10 +77,10 @@ const FRAME_VARS = {
      breakpoint: equal left and right below 64rem, so the screen sits in the
      middle of a phone; the 50/6 pair above it, which puts it in the right-hand
      half beside the title. The fallbacks are the phone values. */
-  "--ft": "calc(var(--fp) * var(--ft-base, 42%))",
-  "--fr": "calc(var(--fp) * var(--fr-base, 16%))",
-  "--fb": "calc(var(--fp) * var(--fb-base, 10%))",
-  "--fl": "calc(var(--fp) * var(--fl-base, 16%))",
+  "--ft": "calc(var(--fp) * var(--ft-base))",
+  "--fr": "calc(var(--fp) * var(--fr-base))",
+  "--fb": "calc(var(--fp) * var(--fb-base))",
+  "--fl": "calc(var(--fp) * var(--fl-base))",
   "--bez": "calc(var(--fp) * 13px)",
   /* Square. The rounded pair -- 9px on the screen, 22px on the body -- read as
      a tablet held up to the camera; the closed frame is meant to be a plain
@@ -523,13 +523,11 @@ export default function Film() {
           /* Top-left on a phone: centring it there leaves the top of the screen
              empty while the device takes the side. Desktop keeps it centred,
              where it balances the tablet across the fold. */
-          /* Pushed right on desktop, still ranged left.
-             The block was as wide as its half of the stage, but the text is
-             not: the widest line, "Movie", ended at 442 against a frame
-             starting at 720, so the copy sat nearly 280px adrift with the gap
-             all inside the title's own box. Indenting the block moves the text
-             across without touching how it is set. */
-          className="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-full max-w-(--maxw) flex-col justify-start px-(--gutter) pt-24 lg:w-[52%] lg:justify-center lg:pt-0 lg:pl-[21.5vw]"
+          /* In the column, ranged left, like every other section's copy. The
+             right padding keeps it clear of the frame, which occupies the
+             column's right 46%. */
+          className="pointer-events-none absolute inset-y-0 left-1/2 z-10 flex w-full max-w-(--maxw) -translate-x-1/2 flex-col justify-start px-(--gutter) pt-24 lg:justify-center lg:pt-0"
+          style={{ paddingRight: "calc(var(--gutter) + var(--cw) * 0.5)" }}
         >
           <div className="badge-pill border-red-hot/40 bg-red-black/50 text-red-hot mb-4 w-fit">
             ✦ OFFICIAL TRAILER // REEL

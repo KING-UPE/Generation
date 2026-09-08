@@ -566,27 +566,52 @@ html.lenis, html.lenis body { height: auto; }
    Desktop (>= 1024px): right-aligned tablet mockup alongside text
 ------------------------------------------------------------------ */
 .film-stage {
-  --ft-base: 42%;
-  --fr-base: 16%;
-  --fb-base: 10%;
-  --fl-base: 16%;
+  /* The page's column, resolved the same way every other section resolves it:
+     the container capped at --maxw, inset by a gutter each side. --pad is the
+     distance from the viewport edge to the column's content edge. */
+  --col: min(100%, var(--maxw));
+  --pad: calc((100% - var(--col)) / 2 + var(--gutter));
+  --cw: calc(var(--col) - 2 * var(--gutter));
+
+  /* The same width again on a viewport basis. The pair above use `100%`, which
+     a clip-path inset resolves against the box's width -- correct for the
+     horizontal insets, and free of the scrollbar that 100vw still counts. The
+     height cannot borrow them: it is a vertical inset, where `100%` would
+     resolve against the height instead. */
+  --cw-v: calc(min(100vw, var(--maxw)) - 2 * var(--gutter));
+
+  /* The frame is a width and an aspect, not four percentages of the viewport.
+     Percentages made its height a share of the screen and its width a share of
+     the stage, so the rectangle changed shape with the window. */
+  --bw: calc(var(--cw) * 0.94);
+  --bh: calc(var(--cw-v) * 0.94 / 1.6);
+
+  /* Phone and tablet: centred across the column, sitting low so the title and
+     copy have the top of the screen to themselves. */
+  --fl-base: calc((100% - var(--bw)) / 2);
+  --fr-base: calc((100% - var(--bw)) / 2);
+  --fb-base: calc(100svh * 0.1);
+  --ft-base: calc(100svh - var(--bh) - 100svh * 0.1);
 }
 
 @media (min-width: 48rem) and (max-width: 63.99rem) {
   .film-stage {
-    --ft-base: 38%;
-    --fr-base: 22%;
-    --fb-base: 12%;
-    --fl-base: 22%;
+    --bw: calc(var(--cw) * 0.78);
+    --bh: calc(var(--cw-v) * 0.78 / 1.6);
   }
 }
 
 @media (min-width: 64rem) {
   .film-stage {
-    --ft-base: 28%;
-    --fr-base: 6%;
-    --fb-base: 28%;
-    --fl-base: 50%;
+    /* Desktop: ranged right inside the column, level with the title beside it.
+       --fr-base is the column's own inset, so the frame's right edge lands on
+       the column's right edge exactly. */
+    --bw: calc(var(--cw) * 0.46);
+    --bh: calc(var(--cw-v) * 0.46 / 1.6);
+    --fl-base: calc(100% - var(--pad) - var(--bw));
+    --fr-base: var(--pad);
+    --ft-base: calc((100svh - var(--bh)) / 2);
+    --fb-base: calc((100svh - var(--bh)) / 2);
   }
 }
 
