@@ -580,6 +580,11 @@ html.lenis, html.lenis body { height: auto; }
      resolve against the height instead. */
   --cw-v: calc(min(100vw, var(--maxw)) - 2 * var(--gutter));
 
+  /* Room the title block keeps clear on its right for the frame. Nothing below
+     desktop: there the frame sits under the copy, not beside it, so reserving
+     half the column just squeezed the text into the left half of the screen. */
+  --text-reserve: 0px;
+
   /* The frame is a width and an aspect, not four percentages of the viewport.
      Percentages made its height a share of the screen and its width a share of
      the stage, so the rectangle changed shape with the window. */
@@ -608,6 +613,7 @@ html.lenis, html.lenis body { height: auto; }
        the column's right edge exactly. */
     --bw: calc(var(--cw) * 0.46);
     --bh: calc(var(--cw-v) * 0.46 / 1.6);
+    --text-reserve: calc(var(--cw) * 0.5);
     --fl-base: calc(100% - var(--pad) - var(--bw));
     --fr-base: var(--pad);
     --ft-base: calc((100svh - var(--bh)) / 2);

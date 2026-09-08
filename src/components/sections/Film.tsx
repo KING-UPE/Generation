@@ -527,7 +527,7 @@ export default function Film() {
              right padding keeps it clear of the frame, which occupies the
              column's right 46%. */
           className="pointer-events-none absolute inset-y-0 left-1/2 z-10 flex w-full max-w-(--maxw) -translate-x-1/2 flex-col justify-start px-(--gutter) pt-24 lg:justify-center lg:pt-0"
-          style={{ paddingRight: "calc(var(--gutter) + var(--cw) * 0.5)" }}
+          style={{ paddingRight: "calc(var(--gutter) + var(--text-reserve))" }}
         >
           <div className="badge-pill border-red-hot/40 bg-red-black/50 text-red-hot mb-4 w-fit">
             ✦ OFFICIAL TRAILER // REEL
