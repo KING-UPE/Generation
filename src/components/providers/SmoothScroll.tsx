@@ -51,6 +51,20 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
   }, []);
 
   /**
+   * Re-measure once the preloader lets the page go.
+   *
+   * It holds the scroll while the footage downloads, so every trigger built
+   * during that hold measured a locked document — and nothing was correcting
+   * them afterwards. Start scrolling before the loader finishes and the page
+   * keeps those bounds, which is how it ends up unable to reach the bottom.
+   */
+  useEffect(() => {
+    const refresh = () => ScrollTrigger.refresh();
+    window.addEventListener("preloader:complete", refresh, { once: true });
+    return () => window.removeEventListener("preloader:complete", refresh);
+  }, []);
+
+  /**
    * Top of the page on every route change, and a fresh set of trigger bounds.
    *
    * Lenis outlives navigation — it is created once, up here in the layout — so

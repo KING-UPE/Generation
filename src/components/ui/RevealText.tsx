@@ -49,9 +49,27 @@ export default function RevealText({
           type === "chars" ? split.chars : type === "words" ? split.words : split.lines;
 
         if (targets && targets.length > 0) {
-          anim = gsap.from(targets, {
-            yPercent: y,
-            opacity: 0,
+          /*
+           * Set the hidden state, then tween away from it — deliberately not a
+           * `from`.
+           *
+           * A `from` tween owns the hidden state: it applies it on creation and
+           * only gives it back by playing forward. Its trigger runs `once`, so
+           * the moment that trigger is gone there is nothing left that can
+           * restore the text, and any later refresh re-renders the tween at its
+           * start and parks the characters back under their masks for good.
+           * Caught on the hero: ten characters at translate(0%, 104%), none of
+           * them visible, with the pointer-lit duplicate on top still fading in
+           * — which is why the wordmark appeared only under the cursor.
+           *
+           * Split in two, a refresh has nothing to rewind: the `to` has already
+           * run and the characters stay where it put them.
+           */
+          gsap.set(targets, { yPercent: y, opacity: 0 });
+
+          anim = gsap.to(targets, {
+            yPercent: 0,
+            opacity: 1,
             duration: 1.05,
             ease: "gen",
             stagger,

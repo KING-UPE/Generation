@@ -629,6 +629,13 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
 
       const playIntro = (p: number) => {
         if (introDone || introRunning) return;
+        /*
+         * Something else already owns the scroll — the preloader holds it while
+         * the footage downloads. Taking the lock here would mean handing it back
+         * on this clock and releasing a page that is not ready yet, and the shot
+         * would play to nobody behind the loading panel.
+         */
+        if (smoothScroll.current?.isStopped) return;
         introRunning = true;
         introAtP = Math.min(p, 0.9);
 
