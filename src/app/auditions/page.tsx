@@ -4,6 +4,7 @@ import Image from "next/image";
 import RevealText from "@/components/ui/RevealText";
 import Magnetic from "@/components/ui/Magnetic";
 import { IconTelegram, IconWhatsApp } from "@/components/ui/icons";
+import Footer from "@/components/sections/Footer";
 
 const DESCRIPTION =
   "Auditions for Generation 26 — singing, dancing, drama, announcing, instruments, " +
@@ -252,16 +253,17 @@ export default function AuditionsPage() {
         </div>
       </section>
 
-      <footer className="mx-auto mt-20 w-full max-w-(--maxw) border-t border-hairline px-(--gutter) pt-8 md:mt-28">
-        <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-4">
-          <p className="font-mono-ui text-[11px] tracking-[0.22em] text-dim">
+      <div className="mt-20 md:mt-28">
+        <div className="mx-auto mb-8 w-full max-w-(--maxw) px-(--gutter) flex flex-wrap items-center justify-between gap-x-8 gap-y-4">
+          <p className="font-mono text-[11px] tracking-[0.22em] text-dim">
             {TAGS.join("  ")}
           </p>
           <p className="font-sinhala text-[11px] tracking-[0.12em] text-dim">
             Chemistry | අමිල දසනායක
           </p>
         </div>
-      </footer>
+        <Footer />
+      </div>
     </div>
   );
 }

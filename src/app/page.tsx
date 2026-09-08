@@ -6,6 +6,7 @@ import Scale from "@/components/sections/Scale";
 import Projection from "@/components/sections/Projection";
 import Festival from "@/components/sections/Festival";
 import GalleryFlow from "@/components/sections/GalleryFlow";
+import Footer from "@/components/sections/Footer";
 import ScrollRail from "@/components/ui/ScrollRail";
 import Preloader from "@/components/ui/Preloader";
 
@@ -36,6 +37,7 @@ export default function Home() {
       <Projection />
       <Festival />
       <GalleryFlow />
+      <Footer />
     </>
   );
 }
