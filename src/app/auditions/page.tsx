@@ -82,26 +82,39 @@ function FormButton({ form }: { form: Form }) {
       target="_blank"
       rel="noopener noreferrer"
       data-cursor="link"
-      className="cut-btn-outline group w-full justify-between"
+      className="cut-btn-outline group w-full flex-col"
     >
-      <span className="flex items-center gap-3 text-left">
+      <span className="flex w-full items-center gap-3 text-left">
         <span className="text-red-hot">{form.index}</span>
         {form.title}
       </span>
 
-      <svg
-        aria-hidden
-        className="h-4 w-4 shrink-0 text-red-hot transition-transform duration-300 group-hover:translate-x-1"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <line x1="5" y1="12" x2="19" y2="12" />
-        <polyline points="12 5 19 12 12 19" />
-      </svg>
+      {/* On its own line because it does not fit beside the title: the longest
+          row, "07 Art & Photography", is 210px and the label another 80, so one
+          line needs 324px against a cell that is at most 259.
+
+          w-full rather than items-start -- .cut-btn-outline sets
+          align-items:center in unlayered CSS, which beats the utility, so the
+          row is stretched to the button instead and its contents fall left on
+          their own. The arrow sits with the label: they are one control, and at
+          opposite ends of the row the gap between them read as a mistake. */}
+      <span className="flex w-full items-center gap-2 text-red-hot">
+        <span className="text-[11px] tracking-[0.2em]">Apply now</span>
+
+        <svg
+          aria-hidden
+          className="h-3.5 w-3.5 shrink-0 transition-transform duration-300 group-hover:translate-x-1"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <line x1="5" y1="12" x2="19" y2="12" />
+          <polyline points="12 5 19 12 12 19" />
+        </svg>
+      </span>
     </a>
   );
 }
@@ -204,7 +217,9 @@ export default function AuditionsPage() {
 
       <section className="mx-auto w-full max-w-(--maxw) px-(--gutter) pt-20 md:pt-28">
         <p className="eyebrow">Talents</p>
-        <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Four across only once a cell can hold the longest title: at 1024
+            a quarter of the row leaves 170px of interior for a 210px line. */}
+        <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {AUDITIONS.map((f) => (
             <FormButton key={f.href} form={f} />
           ))}
