@@ -65,46 +65,42 @@ const TAGS = ["#8th_Batch", "#Generation26", "#Talents_By_ECHEM"];
 
 type Form = { index: string; title: string; href: string };
 
-function FormCard({ form }: { form: Form }) {
+/**
+ * A form link, built as a button rather than a card.
+ *
+ * These are the one thing on the page a reader is meant to press, and as cards
+ * — a number, a title and an arrow in a panel — they read as something to look
+ * at. `cut-btn-outline` is the site's own button: chamfered, hairline-ringed,
+ * uppercase mono, and it goes red under the pointer, so there is no question
+ * what it is. Full width and spread, so it fills its cell in the grid.
+ */
+function FormButton({ form }: { form: Form }) {
   return (
     <a
       href={form.href}
       target="_blank"
       rel="noopener noreferrer"
       data-cursor="link"
-      className="cut-card group flex items-end justify-between gap-5 p-6 md:p-7"
+      className="cut-btn-outline group w-full justify-between"
     >
-      <span className="flex flex-col gap-2.5">
-        <span
-          className="font-display leading-none text-red-hot"
-          style={{ fontSize: "clamp(1.35rem, 2vw, 1.75rem)" }}
-        >
-          {form.index}
-        </span>
-        <span
-          className="font-display leading-none tracking-[-0.01em] text-bone"
-          style={{ fontSize: "clamp(1.15rem, 2.2vw, 1.6rem)" }}
-        >
-          {form.title}
-        </span>
+      <span className="flex items-center gap-3 text-left">
+        <span className="text-red-hot">{form.index}</span>
+        {form.title}
       </span>
-      <span
+
+      <svg
         aria-hidden
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-red-hot/40 bg-red-hot/15 text-red-hot transition-all duration-300 group-hover:scale-110 group-hover:border-red-hot group-hover:bg-red-hot group-hover:text-white group-hover:shadow-[0_0_16px_rgba(255,59,47,0.6)]"
+        className="h-4 w-4 shrink-0 text-red-hot transition-transform duration-300 group-hover:translate-x-1"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       >
-        <svg
-          className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <line x1="5" y1="12" x2="19" y2="12" />
-          <polyline points="12 5 19 12 12 19" />
-        </svg>
-      </span>
+        <line x1="5" y1="12" x2="19" y2="12" />
+        <polyline points="12 5 19 12 12 19" />
+      </svg>
     </a>
   );
 }
@@ -165,10 +161,12 @@ export default function AuditionsPage() {
             {/* Ambient crimson glow */}
             <div
               aria-hidden
-              className="pointer-events-none absolute -inset-4 rounded-[36px] bg-red-hot/15 blur-3xl"
+              className="pointer-events-none absolute -inset-4 bg-red-hot/15 blur-3xl"
             />
 
-            <div className="relative isolate overflow-hidden rounded-[28px] border border-white/10 bg-[#0E0E14] shadow-[0_24px_60px_rgba(0,0,0,0.85)]">
+            {/* Chamfered, not rounded: every card on this page is cut, and a
+                rounded panel beside them reads as borrowed from somewhere else. */}
+            <div className="cut-shape relative isolate overflow-hidden border border-hairline bg-ink-3 shadow-[0_24px_60px_rgba(0,0,0,0.85)]">
               <div className="relative aspect-[3/4] w-full overflow-hidden sm:aspect-[4/5] lg:aspect-[3/4]">
                 <Image
                   src="/img/auditions/hero.jpg"
@@ -184,22 +182,22 @@ export default function AuditionsPage() {
 
                 {/* Top badge */}
                 <div className="absolute left-5 top-5 flex items-center gap-2">
-                  <span className="badge-pill bg-black/65 backdrop-blur-md">
-                    Live Stage · Lotus Tower
-                  </span>
+                  {/* `.badge-pill` sets its own background and blur, and it is
+                      unlayered — a Tailwind bg here never applied. */}
+                  <span className="badge-pill">Live Stage · Lotus Tower</span>
                 </div>
 
                 {/* Bottom caption */}
                 <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between">
                   <div>
-                    <span className="font-mono-ui text-[10px] uppercase tracking-[0.2em] text-red-hot">
+                    <span className="font-mono-ui text-[11px] uppercase tracking-[0.2em] text-red-hot">
                       December 12, 2026
                     </span>
                     <p className="font-display text-lg tracking-[-0.01em] text-bone sm:text-xl">
                       Lotus Tower Open Arena
                     </p>
                   </div>
-                  <span className="font-mono-ui text-[11px] tracking-[0.2em] text-white/50">
+                  <span className="font-mono-ui text-[11px] tracking-[0.2em] text-dim">
                     GEN &apos;26
                   </span>
                 </div>
@@ -213,7 +211,7 @@ export default function AuditionsPage() {
         <p className="eyebrow">Talents</p>
         <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {AUDITIONS.map((f) => (
-            <FormCard key={f.href} form={f} />
+            <FormButton key={f.href} form={f} />
           ))}
         </div>
       </section>
@@ -222,7 +220,7 @@ export default function AuditionsPage() {
         <p className="eyebrow">Behind it</p>
         <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {JOIN.map((f) => (
-            <FormCard key={f.href} form={f} />
+            <FormButton key={f.href} form={f} />
           ))}
         </div>
       </section>
