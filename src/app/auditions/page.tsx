@@ -88,15 +88,20 @@ function FormButton({ form }: { form: Form }) {
         {form.title}
       </span>
 
-      {/* On its own row rather than beside the title: "Art & Photography" plus
-          the label overruns a 304px cell on one line, and the grid is four wide
-          because eight of these in three columns leaves a ragged last row. */}
-      <span className="flex w-full items-center justify-between text-red-hot">
+      {/* The label and the arrow are one thing, so they sit together on the
+          left rather than at opposite ends of the row. "07 Art & Photography"
+          is 210px and the label another 80px, which is why the call to action
+          drops to a second line at all: on one it needs 324px, and the widest
+          cell this grid ever offers is 259px. */}
+      {/* w-full, not items-start: .cut-btn-outline sets align-items:center in
+          unlayered CSS, which beats the utility, so the row is stretched to the
+          button instead and its contents fall left on their own. */}
+      <span className="flex w-full items-center gap-2 text-red-hot">
         <span className="text-[11px] tracking-[0.2em]">Apply now</span>
 
         <svg
           aria-hidden
-          className="h-4 w-4 shrink-0 transition-transform duration-300 group-hover:translate-x-1"
+          className="h-3.5 w-3.5 shrink-0 transition-transform duration-300 group-hover:translate-x-1"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -210,7 +215,9 @@ export default function AuditionsPage() {
 
       <section className="mx-auto w-full max-w-(--maxw) px-(--gutter) pt-20 md:pt-28">
         <p className="eyebrow">Talents</p>
-        <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Four across only once the cell can hold the longest title: at 1024
+            a quarter of the row leaves 170px of interior for a 210px line. */}
+        <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {AUDITIONS.map((f) => (
             <FormButton key={f.href} form={f} />
           ))}
