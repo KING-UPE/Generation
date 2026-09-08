@@ -340,7 +340,7 @@ export default function VisionAbout() {
                           i === 0
                             ? "translate(-2%, -3%) rotate(-1deg) scale(1.05)"
                             : "translate(2%, -3%) rotate(1deg) scale(1.05)";
-                        filter = "drop-shadow(0 16px 36px rgba(255, 59, 47, 0.45))";
+                        filter = "drop-shadow(0 16px 36px hsl(var(--red-hot-c) / 0.45))";
                       } else if (isOtherHovered) {
                         zIndex = 1;
                         opacity = 0.45;
@@ -390,7 +390,7 @@ export default function VisionAbout() {
                           i === 0
                             ? "translate(2%, -3%) rotate(1deg) scale(1.05)"
                             : "translate(-2%, -3%) rotate(-1deg) scale(1.05)";
-                        filter = "drop-shadow(0 16px 36px rgba(255, 59, 47, 0.45))";
+                        filter = "drop-shadow(0 16px 36px hsl(var(--red-hot-c) / 0.45))";
                       } else if (isOtherHovered) {
                         zIndex = 1;
                         opacity = 0.45;

@@ -1329,7 +1329,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
                       target="_blank"
                       rel="noreferrer noopener"
                       data-cursor="link"
-                      className="cut-btn-outline pointer-events-auto mt-6 w-fit text-xs hover:shadow-[0_4px_16px_rgba(255,59,47,0.3)]"
+                      className="cut-btn-outline pointer-events-auto mt-6 w-fit text-xs hover:shadow-[0_4px_16px_hsl(var(--red-hot-c)/0.3)]"
                     >
                       <span>VIEW EVENT ARCHIVE</span> <span aria-hidden>↗</span>
                     </a>

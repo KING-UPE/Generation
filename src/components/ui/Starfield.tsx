@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { gsap } from "@/lib/gsap";
+import { brandColor } from "@/lib/brand";
 
 type Star = {
   x: number;      // 0..1 of width
@@ -50,7 +51,8 @@ export default function Starfield() {
     let dpr = 1;
     let stars: Star[] = [];
     const glowCool = makeGlow("rgba(226,238,250,0.55)", 64);
-    const glowWarm = makeGlow("rgba(255,90,60,0.55)", 64);
+    const glowWarm = makeGlow(brandColor("--tint", 0.55), 64);
+    const starWarm = brandColor("--tint-soft");
 
     const build = () => {
       dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -118,7 +120,7 @@ export default function Starfield() {
         }
 
         ctx.globalAlpha = alpha;
-        ctx.fillStyle = s.warm ? "#FF8A6B" : "#E6EEFA";
+        ctx.fillStyle = s.warm ? starWarm : "#E6EEFA";
         ctx.beginPath();
         ctx.arc(x, y, s.r, 0, Math.PI * 2);
         ctx.fill();

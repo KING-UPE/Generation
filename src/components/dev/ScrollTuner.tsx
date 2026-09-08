@@ -149,7 +149,7 @@ export default function ScrollTuner() {
       >
         <span className="font-bold tracking-wider text-white/90">
           SCROLL FEEL
-          {dirty && <span className="ml-2 text-[#FF3B2F]">•</span>}
+          {dirty && <span className="ml-2 text-red-hot">•</span>}
         </span>
         <span className="text-white/40">{open ? "▾" : "▸"}</span>
       </button>
@@ -173,7 +173,7 @@ export default function ScrollTuner() {
                 onChange={(e) =>
                   setValues((v) => ({ ...v, [f.key]: Number(e.target.value) }))
                 }
-                className="mt-1 w-full accent-[#FF3B2F]"
+                className="mt-1 w-full accent-red-hot"
               />
               <span className="block text-[10px] leading-tight text-white/35">
                 {f.hint}
@@ -196,7 +196,7 @@ export default function ScrollTuner() {
                 setCopied(true);
                 setTimeout(() => setCopied(false), 1200);
               }}
-              className="flex-1 rounded border border-[#FF3B2F]/60 bg-[#FF3B2F]/15 py-1.5 font-bold text-white hover:bg-[#FF3B2F]/25"
+              className="flex-1 rounded border border-red-hot/60 bg-red-hot/15 py-1.5 font-bold text-white hover:bg-red-hot/25"
             >
               {copied ? "Copied" : "Copy"}
             </button>
