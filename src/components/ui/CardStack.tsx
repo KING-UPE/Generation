@@ -189,7 +189,14 @@ export default function CardStack({ cards, className = "", parallax = 40, mirror
                so it must not capture — the clipped card inside does. */
             className="pointer-events-none absolute inset-0 will-change-transform"
           >
-            <CutCard src={c.src} alt={c.alt} delay={0.42 + i * 0.11} />
+            <CutCard
+              src={c.src}
+              alt={c.alt}
+              delay={0.42 + i * 0.11}
+              /* The wrapper above is pointer-events-none by design; the card
+                 itself is what should be reachable. */
+              className="pointer-events-auto"
+            />
           </div>
         ))}
       </div>

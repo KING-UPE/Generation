@@ -418,12 +418,21 @@ export default function VisionAbout() {
                       return (
                         <div
                           key={c.src}
-                          className="pointer-events-none absolute inset-0"
+                          data-card-index={i}
+                          /* The hit target is this element, which sits at `rest`
+                             and never moves. Hanging it on the inner one put the
+                             box that decides hover back inside the thing hover
+                             moves, which oscillates as the pointer crosses it.
+
+                             No pointer-events class here or below: the deck
+                             switches its half off while it faces away, and any
+                             `auto` underneath would override that and leave the
+                             hidden deck swallowing the pointer. */
+                          className="absolute inset-0 cursor-pointer"
                           style={{ transform: rest, zIndex }}
                         >
                           <div
-                            data-card-index={i}
-                            className="pointer-events-auto h-full w-full cursor-pointer"
+                            className="h-full w-full"
                             style={{
                               transform: lift,
                               filter,
@@ -479,12 +488,21 @@ export default function VisionAbout() {
                       return (
                         <div
                           key={c.src}
-                          className="pointer-events-none absolute inset-0"
+                          data-card-index={i}
+                          /* The hit target is this element, which sits at `rest`
+                             and never moves. Hanging it on the inner one put the
+                             box that decides hover back inside the thing hover
+                             moves, which oscillates as the pointer crosses it.
+
+                             No pointer-events class here or below: the deck
+                             switches its half off while it faces away, and any
+                             `auto` underneath would override that and leave the
+                             hidden deck swallowing the pointer. */
+                          className="absolute inset-0 cursor-pointer"
                           style={{ transform: rest, zIndex }}
                         >
                           <div
-                            data-card-index={i}
-                            className="pointer-events-auto h-full w-full cursor-pointer"
+                            className="h-full w-full"
                             style={{
                               transform: lift,
                               filter,

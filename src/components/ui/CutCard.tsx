@@ -100,7 +100,7 @@ export default function CutCard({ src, alt, delay = 0, className = "" }: Props) 
   return (
     <div
       ref={rootRef}
-      className={"cut-shape pointer-events-auto relative h-full w-full overflow-hidden bg-ink-2 " + className}
+      className={"cut-shape relative h-full w-full overflow-hidden bg-ink-2 " + className}
     >
       <div ref={imgWrapRef} className="absolute inset-0 will-change-transform">
         {/* Placeholder art — swap `src` for a real photo, layout is unchanged. */}
