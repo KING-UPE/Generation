@@ -462,11 +462,23 @@ export default function Film() {
     <section id="film" ref={sectionRef as React.RefObject<HTMLElement>} className="relative h-[135vh]">
       <div
         ref={stageRef}
-        /* Full width on purpose: the frame is inset within it while closed,
-           and opening it is meant to fill the screen. Holding the stage to the
-           site's column capped that, so the footage never went full screen. */
-        className="film-stage sticky top-0 h-[100svh] w-full overflow-hidden"
-        style={FRAME_VARS}
+        /* The stage itself is what travels.
+           
+           Closed it is the site's column, so the frame inside it sits on the
+           same measure as the title beside it. Open it is the viewport, so the
+           footage fills the screen. A fixed-width stage could only ever give
+           one of those: full width let the closed frame drift outside the
+           column on a wide screen, where the column stops growing at --maxw
+           and the viewport does not; column width capped the open state.
+
+           --fp already runs 1 to 0 across the same scroll, so the width simply
+           reads from it. */
+        className="film-stage sticky top-0 mx-auto h-[100svh] overflow-hidden"
+        style={{
+          ...FRAME_VARS,
+          width:
+            "calc(var(--fp) * (min(100%, var(--maxw)) - 2 * var(--gutter)) + (1 - var(--fp)) * 100%)",
+        }}
       >
         {/* ── the tablet body ─────────────────────────────────── */}
         <div ref={chromeRef} aria-hidden className="absolute inset-0">
