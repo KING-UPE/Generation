@@ -462,23 +462,15 @@ export default function Film() {
     <section id="film" ref={sectionRef as React.RefObject<HTMLElement>} className="relative h-[135vh]">
       <div
         ref={stageRef}
-        /* The stage itself is what travels.
-           
-           Closed it is the site's column, so the frame inside it sits on the
-           same measure as the title beside it. Open it is the viewport, so the
-           footage fills the screen. A fixed-width stage could only ever give
-           one of those: full width let the closed frame drift outside the
-           column on a wide screen, where the column stops growing at --maxw
-           and the viewport does not; column width capped the open state.
+        /* Full width, and the frame is inset within it.
 
-           --fp already runs 1 to 0 across the same scroll, so the width simply
-           reads from it. */
-        className="film-stage sticky top-0 mx-auto h-[100svh] overflow-hidden"
-        style={{
-          ...FRAME_VARS,
-          width:
-            "calc(var(--fp) * (min(100%, var(--maxw)) - 2 * var(--gutter)) + (1 - var(--fp)) * 100%)",
-        }}
+           Interpolating the stage from the column to the viewport looked like
+           the way to keep the closed frame on the page's measure, but the
+           frame's width is a share of the stage while its height is a share of
+           the viewport -- so shrinking the stage squashed the rectangle from
+           1.60 to about 1.40. The frame's proportions have to come first. */
+        className="film-stage sticky top-0 h-[100svh] w-full overflow-hidden"
+        style={FRAME_VARS}
       >
         {/* ── the tablet body ─────────────────────────────────── */}
         <div ref={chromeRef} aria-hidden className="absolute inset-0">
@@ -548,7 +540,9 @@ export default function Film() {
 
           <RevealText
             as="p"
-            className="mt-6 max-w-[36ch] text-lead text-bone"
+            /* Balanced so the line cannot break with a single word stranded
+               on its own -- "...to watch the / cinematic arena unfold." */
+            className="mt-6 max-w-[36ch] text-balance text-lead text-bone"
             start="top 92%"
           >
             One stage. Pure frequency. Scroll to watch the cinematic arena unfold.
