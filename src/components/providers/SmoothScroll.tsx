@@ -38,6 +38,8 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
     });
 
     smoothScroll.current = lenis;
+    /* Asked for before this existed — see `held`. */
+    if (smoothScroll.held) lenis.stop();
 
     const raf = (time: number) => lenis.raf(time * 1000);
     gsap.ticker.add(raf);

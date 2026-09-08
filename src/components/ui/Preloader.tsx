@@ -52,8 +52,22 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
   const openScrollRef = useRef<() => void>(() => {});
 
   useEffect(() => {
-    // Lock scrolling while preloader is active
-    if (smoothScroll.current) smoothScroll.current.stop();
+    /*
+     * Lock scrolling while the preloader is active.
+     *
+     * This used to be a bare `if (smoothScroll.current) stop()`, and it was
+     * doing nothing at all. Effects run deepest-first, and SmoothScroll wraps
+     * this component from the layout — so on the first pass Lenis does not
+     * exist yet, the guard falls through, and the page spends the whole load
+     * with a live scroller behind the panel. Everything that moved it then left
+     * the hero's scrubbed timeline holding the progress it reached, which is
+     * why the wordmark, the badges and the button were all still faded once the
+     * panel lifted.
+     *
+     * Take the lock the moment Lenis appears instead.
+     */
+    smoothScroll.held = true;
+    smoothScroll.current?.stop();
     document.body.style.overflow = "hidden";
 
     /*
@@ -279,9 +293,11 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
       clearInterval(stallGuard);
       window.removeEventListener("tower:ready", onTowerReady);
       clearTimeout(fallbackTimer);
+      smoothScroll.held = false;
       /* Unmounting mid-load must not leave the page refusing to scroll. */
       openScroll();
       document.body.style.overflow = "";
+      smoothScroll.current?.start();
     };
   }, []);
 
@@ -309,6 +325,7 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
         onComplete: () => {
           setIsDone(true);
           openScrollRef.current();
+          smoothScroll.held = false;
           document.body.style.overflow = "";
           window.scrollTo(0, 0);
           if (smoothScroll.current) {
