@@ -81,18 +81,22 @@ function FormButton({ form }: { form: Form }) {
       target="_blank"
       rel="noopener noreferrer"
       data-cursor="link"
-      className="cut-btn-outline group w-full justify-between gap-3"
+      className="cut-btn-outline group w-full flex-col"
     >
-      <span className="flex items-center gap-2.5 text-left">
+      <span className="flex w-full items-center gap-3 text-left">
         <span className="text-red-hot">{form.index}</span>
-        <span>{form.title}</span>
+        {form.title}
       </span>
 
-      <span className="flex items-center gap-1.5 shrink-0 text-[11px] font-mono-ui uppercase tracking-[0.14em] text-red-hot transition-colors group-hover:text-white">
-        <span>Apply Now</span>
+      {/* On its own row rather than beside the title: "Art & Photography" plus
+          the label overruns a 304px cell on one line, and the grid is four wide
+          because eight of these in three columns leaves a ragged last row. */}
+      <span className="flex w-full items-center justify-between text-red-hot">
+        <span className="text-[11px] tracking-[0.2em]">Apply now</span>
+
         <svg
           aria-hidden
-          className="h-3.5 w-3.5 shrink-0 transition-transform duration-300 group-hover:translate-x-1"
+          className="h-4 w-4 shrink-0 transition-transform duration-300 group-hover:translate-x-1"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
