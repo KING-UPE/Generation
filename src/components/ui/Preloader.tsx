@@ -406,7 +406,7 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
               GENERATION
             </h1>
             <span
-              className="font-display ml-2 text-[clamp(1.8rem,6vw,4.5rem)] text-red-hot drop-shadow-[0_0_16px_hsl(var(--red-hot-c)/0.5)]"
+              className="font-display ml-2 text-[clamp(1.8rem,6vw,4.5rem)] text-red-hot drop-shadow-[0_0_16px_rgba(255,59,47,0.5)]"
             >
               26
             </span>
@@ -439,7 +439,7 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
               className="h-full bg-gradient-to-r from-red-dark via-red-hot to-red-bright transition-all duration-150 ease-out"
               style={{
                 width: `${progress}%`,
-                boxShadow: "0 0 12px hsl(var(--red-hot-c) / 0.8), 0 0 4px var(--red-hot)",
+                boxShadow: "0 0 12px rgba(255, 59, 47, 0.8), 0 0 4px #FF3B2F",
               }}
             />
           </div>

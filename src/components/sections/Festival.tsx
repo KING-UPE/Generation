@@ -158,91 +158,26 @@ const STALLS = [
   },
 ];
 
-/* ── Volumetric Sunbeam Light Rays Layer (Soft Spreading Light Cone) ───── */
-function SunRaysLayer({ active }: { active: boolean }) {
-  return (
-    <div
-      aria-hidden
-      className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]"
-    >
-      {/* 1. Soft Ambient Sun Corona in Top-Right Corner */}
-      <div
-        className="absolute -right-16 -top-16 h-64 w-64 rounded-full transition-all duration-700 ease-out"
-        style={{
-          background: active
-            ? "radial-gradient(circle at 75% 25%, rgba(255, 255, 255, 0.28) 0%, rgba(240, 242, 250, 0.12) 35%, rgba(220, 225, 240, 0.03) 65%, transparent 80%)"
-            : "radial-gradient(circle at 75% 25%, rgba(255, 255, 255, 0.14) 0%, rgba(240, 242, 250, 0.06) 35%, rgba(220, 225, 240, 0.01) 65%, transparent 80%)",
-          filter: "blur(20px)",
-          transform: active ? "scale(1.25)" : "scale(1)",
-        }}
-      />
-
-      {/* 2. Soft Spread Volumetric Light Shafts (God Rays) */}
-      <svg
-        viewBox="0 0 400 500"
-        fill="none"
-        className="absolute -right-10 -top-10 h-[145%] w-[145%] origin-top-right transition-all duration-700 ease-out"
-        style={{
-          filter: active ? "blur(16px)" : "blur(14px)",
-          transform: active ? "rotate(-4deg) scale(1.06)" : "rotate(0deg) scale(1)",
-          opacity: active ? 0.95 : 0.65,
-          mixBlendMode: "screen",
-        }}
-      >
-        <defs>
-          <linearGradient id="ray-grad-1" x1="100%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#ffffff" stopOpacity={active ? "0.32" : "0.18"} />
-            <stop offset="40%" stopColor="#ffffff" stopOpacity={active ? "0.16" : "0.08"} />
-            <stop offset="75%" stopColor="#e8eaf0" stopOpacity={active ? "0.05" : "0.02"} />
-            <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
-          </linearGradient>
-
-          <linearGradient id="ray-grad-2" x1="100%" y1="0%" x2="15%" y2="100%">
-            <stop offset="0%" stopColor="#ffffff" stopOpacity={active ? "0.26" : "0.14"} />
-            <stop offset="45%" stopColor="#f0f2f8" stopOpacity={active ? "0.12" : "0.06"} />
-            <stop offset="80%" stopColor="#ffffff" stopOpacity="0" />
-          </linearGradient>
-
-          <linearGradient id="ray-grad-wide" x1="100%" y1="0%" x2="0%" y2="80%">
-            <stop offset="0%" stopColor="#ffffff" stopOpacity={active ? "0.20" : "0.10"} />
-            <stop offset="50%" stopColor="#e2e5f0" stopOpacity={active ? "0.07" : "0.03"} />
-            <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-
-        {/* Ambient Wide Light Fan */}
-        <polygon points="380,20 80,460 340,500" fill="url(#ray-grad-wide)" opacity="0.6" />
-
-        {/* Distinct Volumetric Ray Shafts spreading outward */}
-        <polygon points="380,20 30,280 80,400" fill="url(#ray-grad-1)" />
-        <polygon points="380,20 110,440 180,490" fill="url(#ray-grad-1)" />
-        <polygon points="380,20 210,480 270,500" fill="url(#ray-grad-2)" />
-        <polygon points="380,20 70,180 130,260" fill="url(#ray-grad-2)" opacity="0.75" />
-      </svg>
-
-      {/* 3. Soft Atmospheric Light Gradient Sweep */}
-      <div
-        className="absolute inset-0 transition-opacity duration-700 ease-out"
-        style={{
-          background: active
-            ? "radial-gradient(ellipse 100% 80% at 95% 5%, rgba(255, 255, 255, 0.12) 0%, rgba(240, 245, 255, 0.04) 40%, transparent 68%)"
-            : "radial-gradient(ellipse 100% 80% at 95% 5%, rgba(255, 255, 255, 0.06) 0%, rgba(240, 245, 255, 0.02) 40%, transparent 68%)",
-          opacity: active ? 1 : 0.7,
-        }}
-      />
-    </div>
-  );
-}
-
+/*
+ * The resting surface is the ink scale — --ink-3 to --ink-2 to --ink — rather
+ * than the greys it was built with. Off-token it sat a shade lighter than every
+ * other dark surface on the page, which reads as a different black beside the
+ * starfield.
+ *
+ * The lit surface below is the only place a literal survives: it is those two
+ * tokens raised a step to read as picked up, and there is no token for that.
+ */
 const CARD_BASE =
-  "linear-gradient(168deg, #15151B 0%, #0C0C10 52%, var(--ink) 100%)";
+  "linear-gradient(168deg, var(--ink-3) 0%, var(--ink-2) 52%, var(--ink) 100%)";
 
 /**
- * The lit surface: subtle specular spotlight on active card.
+ * The lift: a soft specular spotlight on the active card. The warm stop is
+ * --red-hot at 8%; it was #FF5A3C, which is the lightest stop of --grad-red and
+ * a hair orange on its own.
  */
 const CARD_LIT =
-  "radial-gradient(120% 90% at 85% 0%, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.03) 38%, transparent 70%), " +
-  "linear-gradient(168deg, #1B1B24 0%, #0F0F16 52%, var(--ink) 100%)";
+  "radial-gradient(125% 95% at 28% 0%, rgba(237,237,240,0.14) 0%, rgba(255,59,47,0.08) 36%, transparent 68%), " +
+  "linear-gradient(168deg, #17171E 0%, #0D0D12 52%, var(--ink) 100%)";
 
 /** Faint technical ruling, drawn in the hairline's own colour at a third of
  *  its weight — the same off-white every rule on the site is drawn in. */
@@ -354,8 +289,8 @@ export default function Festival() {
                   style={{
                     background: active ? CARD_LIT : CARD_BASE,
                     boxShadow: active
-                      ? "0 36px 85px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.18) inset, 0 0 28px rgba(255,255,255,0.06)"
-                      : "0 18px 46px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.08) inset",
+                      ? "0 36px 85px rgba(0,0,0,0.85), 0 0 0 1px rgba(237,237,240,0.18) inset, 0 0 32px rgba(255,59,47,0.18)"
+                      : "0 18px 46px rgba(0,0,0,0.65), 0 0 0 1px rgba(237,237,240,0.08) inset",
                     transform: wide
                       ? `rotate(${active ? 0 : stall.rotate}deg) translateY(${
                           active ? stall.drop - 26 : stall.drop
@@ -365,9 +300,6 @@ export default function Festival() {
                     transition: EASE,
                   }}
                 >
-                  {/* Dynamic Volumetric Light Rays coming from top-right */}
-                  <SunRaysLayer active={active} />
-
                   {/* Faint technical grid interior */}
                   <span
                     aria-hidden
@@ -386,7 +318,7 @@ export default function Festival() {
                   <span
                     aria-hidden
                     className="pointer-events-none absolute right-6 top-6 font-mono-ui text-[11px] tracking-[0.26em] transition-colors duration-300"
-                    style={{ color: active ? "var(--bone-muted)" : "var(--dim)" }}
+                    style={{ color: active ? "var(--muted)" : "var(--dim)" }}
                   >
                     {stall.index}
                   </span>
@@ -397,11 +329,9 @@ export default function Festival() {
                       aria-hidden
                       className="inline-flex h-18 w-18 items-center justify-center transition-all duration-500"
                       style={{
-                        color: active ? "#FFFFFF" : "var(--muted)",
+                        color: active ? "var(--red-hot)" : "var(--muted)",
                         transform: active ? "scale(1.12)" : "scale(1)",
-                        filter: active
-                          ? "drop-shadow(0 0 14px rgba(255, 255, 255, 0.4))"
-                          : "none",
+                        filter: active ? "drop-shadow(0 0 16px rgba(255,59,47,0.5))" : "none",
                       }}
                     >
                       {stall.icon}
@@ -423,7 +353,7 @@ export default function Festival() {
                     {/* Telemetry badge / spec from proposal presentation */}
                     <span
                       className="mt-1 font-mono-ui text-[11px] uppercase tracking-[0.18em] transition-all duration-300"
-                      style={{ color: active ? "var(--bone-muted)" : "var(--dim)" }}
+                      style={{ color: active ? "var(--red-hot)" : "var(--dim)" }}
                     >
                       {stall.spec}
                     </span>
@@ -466,15 +396,12 @@ export default function Festival() {
                   style={{
                     background: isCurrent ? CARD_LIT : CARD_BASE,
                     boxShadow: isCurrent
-                      ? "0 24px 60px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.18) inset, 0 0 22px rgba(255,255,255,0.06)"
-                      : "0 14px 36px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06) inset",
+                      ? "0 24px 60px rgba(0,0,0,0.85), 0 0 0 1px rgba(237,237,240,0.18) inset, 0 0 28px rgba(255,59,47,0.18)"
+                      : "0 14px 36px rgba(0,0,0,0.6), 0 0 0 1px rgba(237,237,240,0.06) inset",
                     opacity: isCurrent ? 1 : 0.45,
                     transform: isCurrent ? "scale(1)" : "scale(0.95)",
                   }}
                 >
-                  {/* Dynamic Volumetric Light Rays coming from top-right */}
-                  <SunRaysLayer active={isCurrent} />
-
                   {/* Faint technical grid interior */}
                   <span
                     aria-hidden
@@ -492,7 +419,7 @@ export default function Festival() {
                   <span
                     aria-hidden
                     className="pointer-events-none absolute right-6 top-6 font-mono-ui text-[11px] tracking-[0.24em]"
-                    style={{ color: isCurrent ? "var(--bone-muted)" : "var(--dim)" }}
+                    style={{ color: isCurrent ? "var(--muted)" : "var(--dim)" }}
                   >
                     {stall.index}
                   </span>
@@ -503,11 +430,9 @@ export default function Festival() {
                       aria-hidden
                       className="inline-flex h-16 w-16 items-center justify-center transition-all duration-500"
                       style={{
-                        color: isCurrent ? "#FFFFFF" : "var(--muted)",
+                        color: isCurrent ? "var(--red-hot)" : "var(--muted)",
                         transform: isCurrent ? "scale(1.1)" : "scale(1)",
-                        filter: isCurrent
-                          ? "drop-shadow(0 0 14px rgba(255, 255, 255, 0.4))"
-                          : "none",
+                        filter: isCurrent ? "drop-shadow(0 0 16px rgba(255,59,47,0.45))" : "none",
                       }}
                     >
                       {stall.icon}
@@ -525,7 +450,7 @@ export default function Festival() {
 
                     <span
                       className="mt-1 font-mono-ui text-[10px] uppercase tracking-[0.16em]"
-                      style={{ color: isCurrent ? "var(--bone-muted)" : "var(--dim)" }}
+                      style={{ color: isCurrent ? "var(--red-hot)" : "var(--dim)" }}
                     >
                       {stall.spec}
                     </span>
@@ -588,7 +513,7 @@ export default function Festival() {
         </div>
 
         <p className="eyebrow mt-12 text-center md:mt-16">
-          Inside the same footprint <span className="text-white/40">·</span> as the stage
+          Inside the same footprint <span className="text-red-hot">·</span> as the stage
         </p>
       </div>
     </section>

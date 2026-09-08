@@ -6,7 +6,21 @@ import SmoothScroll from "@/components/providers/SmoothScroll";
 import Cursor from "@/components/ui/Cursor";
 import Grain from "@/components/ui/Grain";
 import Starfield from "@/components/ui/Starfield";
-import ThemeTuner from "@/components/ui/ThemeTuner";
+import dynamic from "next/dynamic";
+
+/**
+ * The scroll-feel panel, kept out of production entirely.
+ *
+ * A plain import plus a `NODE_ENV` guard around the JSX is not enough — the
+ * guard drops the element but the module stays in the graph, and it was
+ * measurably shipping in a chunk the built page referenced. Behind a dynamic
+ * import the ternary resolves at build time and the production branch has no
+ * import to follow.
+ */
+const ScrollTuner =
+  process.env.NODE_ENV === "production"
+    ? () => null
+    : dynamic(() => import("@/components/dev/ScrollTuner"));
 
 const anton = Anton({
   subsets: ["latin"],
@@ -170,9 +184,7 @@ export default function RootLayout({
           is scroll-driven: every animation on it reads a scroll position. The
           page would come up at the old offset with the hero timeline already at
           its end -- wordmark, badges and button faded out, the tower seeked to a
-          late frame -- and only then get pulled to the top. Measured at 220ms of
-          it, and whether the hero came back depended on whether ScrollTrigger
-          was told about the correction in time.
+          late frame -- and only then get pulled to the top.
 
           SmoothScroll asks for `manual` too, but it asks from an effect: by then
           the restore has already happened, and the router sets the flag back to
@@ -198,9 +210,8 @@ export default function RootLayout({
         </SmoothScroll>
         <Cursor />
         <Grain />
-        {/* Ships. The point is for whoever is looking at the site to be able
-            to try a colour on it, not just whoever is building it. */}
-        <ThemeTuner />
+        {/* Delete this line and the component once the scroll feel is settled. */}
+        <ScrollTuner />
       </body>
     </html>
   );

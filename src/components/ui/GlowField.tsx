@@ -59,9 +59,9 @@ type Wave = {
  * edges are the same travelling wave, so the light reads as a crest moving
  * through the panel rather than a lamp sitting in it.
  *
- * Built only from the middle of the ramp — --red-mid down to --red-deep. The
- * light end, --tint, is fine as a sliver in a gradient but pulls the whole
- * field towards its own hue once it is carrying an area this size.
+ * Built only from the palette's reds — #FF2E2E, #E10600, #8B0212. The lightest
+ * stop of `--grad-red` is #FF5A3C, which is fine as a sliver in a gradient but
+ * swings the whole field orange once it is carrying an area this size.
  *
  * Fills are kept low. Bands at full strength flood the panel into an even red
  * and the crests stop reading at all.
@@ -81,7 +81,7 @@ const WAVES: Wave[] = [
     freq: 0.9,
     freq2: 1.7,
     speed: 0.24,
-    fill: "hsl(var(--red-mid-c) / 0.4)",
+    fill: "rgba(255,46,46,0.4)",
   },
   {
     y: 0.40,
@@ -91,7 +91,7 @@ const WAVES: Wave[] = [
     freq: 1.25,
     freq2: 2.3,
     speed: -0.3,
-    fill: "hsl(var(--red-c) / 0.42)",
+    fill: "rgba(225,6,0,0.42)",
   },
   {
     y: 0.74,
@@ -101,7 +101,7 @@ const WAVES: Wave[] = [
     freq: 0.7,
     freq2: 1.9,
     speed: 0.2,
-    fill: "hsl(calc(var(--brand-h) - 10) calc(var(--brand-s) - 5%) 43% / 0.48)",
+    fill: "rgba(214,6,28,0.48)",
   },
   {
     y: 0.98,
@@ -111,7 +111,7 @@ const WAVES: Wave[] = [
     freq: 1.5,
     freq2: 2.6,
     speed: -0.27,
-    fill: "hsl(calc(var(--brand-h) - 10) calc(var(--brand-s) - 3%) 33% / 0.44)",
+    fill: "rgba(168,3,22,0.44)",
   },
 ];
 
@@ -370,7 +370,8 @@ export default function GlowField({ blur = 28, className = "" }: Props) {
             ref={(el) => {
               pathRefs.current[i] = el;
             }}
-            style={{ fill: wv.fill, opacity: REST }}
+            fill={wv.fill}
+            style={{ opacity: REST }}
           />
         ))}
 

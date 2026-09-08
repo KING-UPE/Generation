@@ -292,7 +292,7 @@ export default function GalleryFlow() {
                 className="cut-shape-sm relative overflow-hidden bg-ink-2 backdrop-blur-sm"
                 style={{
                   aspectRatio: it.ratio,
-                  boxShadow: "0 20px 60px rgba(0,0,0,0.8), 0 0 20px hsl(var(--red-hot-c) / 0.15)",
+                  boxShadow: "0 20px 60px rgba(0,0,0,0.8), 0 0 20px rgba(255,59,47,0.15)",
                 }}
               >
                 <img src={it.src} alt="" loading="lazy" className="h-full w-full object-cover" />

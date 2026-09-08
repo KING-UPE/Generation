@@ -75,7 +75,7 @@ export default function Cursor() {
       <div
         ref={dotRef}
         className="absolute left-0 top-0 rounded-full bg-white"
-        style={{ width: 8, height: 8, boxShadow: "0 0 10px var(--red-hot), 0 0 3px var(--bone)" }}
+        style={{ width: 8, height: 8, boxShadow: "0 0 10px #FF3B2F, 0 0 3px #FFFFFF" }}
       />
     </div>
   );

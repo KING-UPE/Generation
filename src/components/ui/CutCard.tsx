@@ -117,9 +117,9 @@ export default function CutCard({ src, alt, delay = 0, className = "" }: Props) 
         >
           <defs>
             <linearGradient id={uid} x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" style={{ stopColor: "var(--tint)" }} />
-              <stop offset="50%" style={{ stopColor: "var(--red-mid)" }} />
-              <stop offset="100%" style={{ stopColor: "var(--red-deep)" }} />
+              <stop offset="0%" stopColor="#FF5A3C" />
+              <stop offset="50%" stopColor="#FF2E2E" />
+              <stop offset="100%" stopColor="#8B0212" />
             </linearGradient>
           </defs>
           <path ref={pathRef} d={outline} stroke={"url(#" + uid + ")"} strokeWidth={1.25} />

@@ -89,7 +89,7 @@ export default function Spotlight({ size = 900, className = "", opacity = 0.5 }:
         width: size,
         height: size,
         background:
-          "radial-gradient(circle, hsl(var(--red-mid-c) / 0.30) 0%, hsl(var(--red-c) / 0.14) 32%, hsl(var(--red-deep-c) / 0.05) 55%, transparent 70%)",
+          "radial-gradient(circle, rgba(255,46,46,0.30) 0%, rgba(225,6,0,0.14) 32%, rgba(139,2,18,0.05) 55%, transparent 70%)",
         filter: "blur(28px)",
       }}
     />

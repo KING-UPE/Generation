@@ -31,18 +31,16 @@ type Card = {
  *
  * The gradients run bright to deep left to right, so the fan reads as one
  * graded sweep rather than five cards that happen to be red. Each is still
- * built from the ramp — --red-hot down through --red-deep and past it — with
- * the card's own black underneath, which is what keeps them apart without
- * reaching for a second hue. Every stop is stated as an offset from
- * --brand-h, so the fan follows the site's accent wherever it is set.
+ * built from the palette — #FF3B2F through #8B0212 — with the card's own black
+ * underneath, which is what keeps them apart without reaching for a second hue.
  */
 const CARDS: Card[] = [
   {
     value: 20000,
     label: "Students",
     icon: <IconStudents />,
-    from: "var(--red-hot)",
-    to: "var(--red-deep)",
+    from: "#FF3B2F",
+    to: "#8B0212",
     rotate: -14,
     drop: 46,
   },
@@ -50,8 +48,8 @@ const CARDS: Card[] = [
     value: 325000,
     label: "YouTube",
     icon: <IconYouTube />,
-    from: "hsl(calc(var(--brand-h) - 3) calc(var(--brand-s) - 9%) 54%)",
-    to: "hsl(calc(var(--brand-h) - 12) calc(var(--brand-s) - 4%) 22%)",
+    from: "#F42020",
+    to: "#6E0212",
     rotate: -7,
     drop: 13,
   },
@@ -59,8 +57,8 @@ const CARDS: Card[] = [
     value: 209000,
     label: "Telegram",
     icon: <IconTelegram />,
-    from: "var(--red)",
-    to: "hsl(calc(var(--brand-h) - 15) calc(var(--brand-s) - 5%) 15%)",
+    from: "#E10600",
+    to: "#4A0210",
     rotate: 0,
     drop: 0,
   },
@@ -68,8 +66,8 @@ const CARDS: Card[] = [
     value: 86000,
     label: "Facebook",
     icon: <IconFacebook />,
-    from: "hsl(calc(var(--brand-h) - 11) calc(var(--brand-s) - 13%) 41%)",
-    to: "hsl(calc(var(--brand-h) - 14) calc(var(--brand-s) - 6%) 12%)",
+    from: "#C40E26",
+    to: "#3A020C",
     rotate: 7,
     drop: 13,
   },
@@ -77,8 +75,8 @@ const CARDS: Card[] = [
     value: 41000,
     label: "TikTok",
     icon: <IconTikTok />,
-    from: "hsl(calc(var(--brand-h) - 12) calc(var(--brand-s) - 5%) 32%)",
-    to: "hsl(calc(var(--brand-h) - 14) calc(var(--brand-s) - 19%) 8%)",
+    from: "#A0041A",
+    to: "#26040A",
     rotate: 14,
     drop: 46,
   },
@@ -141,7 +139,7 @@ function ScaleCard({
         className
       }
       style={{
-        background: `linear-gradient(158deg, ${card.from} 0%, ${card.to} 58%, hsl(calc(var(--brand-h) - 20) 38% 3%) 100%)`,
+        background: `linear-gradient(158deg, ${card.from} 0%, ${card.to} 58%, #0B0509 100%)`,
         boxShadow: lifted
           ? "0 26px 60px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.16) inset"
           : "0 18px 44px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.10) inset",
