@@ -15,8 +15,8 @@ const VISION_CARDS = [
 ];
 
 const ABOUT_CARDS = [
-  { src: "/img/photos/IAP09052.jpg", alt: "A dance troupe in line across the stage" },
   { src: "/img/photos/IAP08596.jpg", alt: "A singer on stage behind a curtain of sparks" },
+  { src: "/img/photos/IAP09052.jpg", alt: "A dance troupe in line across the stage" },
 ];
 
 const TITLE_SIZE = "text-[clamp(2.6rem,7.5vw,8.5rem)] leading-[0.9] tracking-[-0.025em]";
@@ -329,28 +329,34 @@ export default function VisionAbout() {
                       const isHovered = frontHovered === i;
                       const isOtherHovered = frontHovered !== null && frontHovered !== i;
 
-                      let transform =
+                      /* The resting place, and it never moves: this is the
+                         box the pointer gets tested against. */
+                      const rest =
                         i === 0
                           ? "translate(-5%, 6%) rotate(-3.5deg) scale(0.94)"
                           : "translate(5%, -4%) rotate(3deg) scale(1)";
+
+                      /* Everything hover does, stated relative to that. Composed
+                         with `rest` on the parent it lands where it always did. */
+                      let lift = "none";
                       let zIndex = i + 1;
                       let opacity = 1;
                       let filter = "none";
 
                       if (isHovered) {
                         zIndex = 20;
-                        transform =
+                        lift =
                           i === 0
-                            ? "translate(-2%, -3%) rotate(-1deg) scale(1.05)"
-                            : "translate(2%, -3%) rotate(1deg) scale(1.05)";
+                            ? "translate(3%, -9%) rotate(2.5deg) scale(1.117)"
+                            : "translate(-3%, 1%) rotate(-2deg) scale(1.05)";
                         filter = "drop-shadow(0 16px 36px hsl(var(--red-hot-c) / 0.45))";
                       } else if (isOtherHovered) {
                         zIndex = 1;
                         opacity = 0.45;
-                        transform =
+                        lift =
                           i === 0
-                            ? "translate(-8%, 9%) rotate(-6deg) scale(0.9)"
-                            : "translate(8%, 9%) rotate(6deg) scale(0.9)";
+                            ? "translate(-3%, 3%) rotate(-2.5deg) scale(0.957)"
+                            : "translate(3%, 13%) rotate(3deg) scale(0.9)";
                       }
 
                       return (
@@ -359,15 +365,19 @@ export default function VisionAbout() {
                           onMouseEnter={() => setFrontHovered(i)}
                           onMouseLeave={() => setFrontHovered(null)}
                           className="absolute inset-0 cursor-pointer"
-                          style={{
-                            transform,
-                            zIndex,
-                            opacity,
-                            filter,
-                            transition: "all 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
-                          }}
+                          style={{ transform: rest, zIndex }}
                         >
-                          <CutCard src={c.src} alt={c.alt} />
+                          <div
+                            className="h-full w-full"
+                            style={{
+                              transform: lift,
+                              opacity,
+                              filter,
+                              transition: "all 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
+                            }}
+                          >
+                            <CutCard src={c.src} alt={c.alt} />
+                          </div>
                         </div>
                       );
                     })}
@@ -379,28 +389,32 @@ export default function VisionAbout() {
                       const isHovered = backHovered === i;
                       const isOtherHovered = backHovered !== null && backHovered !== i;
 
-                      let transform =
+                      /* Same split as the front deck: a still hit area, and
+                         the movement one level inside it. See the note there. */
+                      const rest =
                         i === 0
                           ? "translate(5%, 6%) rotate(3.5deg) scale(0.94)"
                           : "translate(-5%, -4%) rotate(-3deg) scale(1)";
+
+                      let lift = "none";
                       let zIndex = i + 1;
                       let opacity = 1;
                       let filter = "none";
 
                       if (isHovered) {
                         zIndex = 20;
-                        transform =
+                        lift =
                           i === 0
-                            ? "translate(2%, -3%) rotate(1deg) scale(1.05)"
-                            : "translate(-2%, -3%) rotate(-1deg) scale(1.05)";
+                            ? "translate(-3%, -9%) rotate(-2.5deg) scale(1.117)"
+                            : "translate(3%, 1%) rotate(2deg) scale(1.05)";
                         filter = "drop-shadow(0 16px 36px hsl(var(--red-hot-c) / 0.45))";
                       } else if (isOtherHovered) {
                         zIndex = 1;
                         opacity = 0.45;
-                        transform =
+                        lift =
                           i === 0
-                            ? "translate(8%, 9%) rotate(6deg) scale(0.9)"
-                            : "translate(-8%, 9%) rotate(-6deg) scale(0.9)";
+                            ? "translate(3%, 3%) rotate(2.5deg) scale(0.957)"
+                            : "translate(-3%, 13%) rotate(-3deg) scale(0.9)";
                       }
 
                       return (
@@ -409,15 +423,19 @@ export default function VisionAbout() {
                           onMouseEnter={() => setBackHovered(i)}
                           onMouseLeave={() => setBackHovered(null)}
                           className="absolute inset-0 cursor-pointer"
-                          style={{
-                            transform,
-                            zIndex,
-                            opacity,
-                            filter,
-                            transition: "all 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
-                          }}
+                          style={{ transform: rest, zIndex }}
                         >
-                          <CutCard src={c.src} alt={c.alt} />
+                          <div
+                            className="h-full w-full"
+                            style={{
+                              transform: lift,
+                              opacity,
+                              filter,
+                              transition: "all 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
+                            }}
+                          >
+                            <CutCard src={c.src} alt={c.alt} />
+                          </div>
                         </div>
                       );
                     })}

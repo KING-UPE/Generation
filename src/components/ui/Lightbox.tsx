@@ -41,30 +41,51 @@ export default function Lightbox({ shots, index, onClose, onIndex }: Props) {
     [index, onIndex, shots.length],
   );
 
+  /*
+   * Opening and closing only.
+   *
+   * Deliberately not keyed on the index: `go` changes with every step, and
+   * with the whole thing in one effect a prev/next tore this down and replayed
+   * it -- which fades the backdrop from zero, so the page behind flashed
+   * through between photographs. The backdrop is put up once and stays up
+   * until it comes down.
+   */
   useEffect(() => {
     if (!open) return;
 
     /* Animated rather than transitioned from React state: a state flag set on
        open is a render inside an effect, and the entrance is one tween. */
     gsap.fromTo(overlayRef.current, { opacity: 0 }, { opacity: 1, duration: 0.32, ease: "gen" });
-    gsap.fromTo(figureRef.current, { scale: 0.97 }, { scale: 1, duration: 0.42, ease: "gen" });
     closeRef.current?.focus();
 
     const lenis = smoothScroll.current;
     lenis?.stop();
+    return () => {
+      lenis?.start();
+    };
+  }, [open]);
 
+  /* Rebinding a listener as the index moves costs nothing and shows nothing. */
+  useEffect(() => {
+    if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
       else if (e.key === "ArrowRight") go(1);
       else if (e.key === "ArrowLeft") go(-1);
     };
     window.addEventListener("keydown", onKey);
-
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      lenis?.start();
-    };
+    return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose, go]);
+
+  /* The photograph changes, the backdrop does not. */
+  useEffect(() => {
+    if (index === null) return;
+    gsap.fromTo(
+      figureRef.current,
+      { opacity: 0.4, scale: 0.985 },
+      { opacity: 1, scale: 1, duration: 0.3, ease: "gen" },
+    );
+  }, [index]);
 
   /* Nothing to portal into on the server -- and by the time this is open, a
      click has happened, so the document is certainly there. */
