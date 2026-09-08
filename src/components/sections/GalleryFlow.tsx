@@ -55,7 +55,13 @@ const CYCLES = 1.05;
  * the range instead — shallower depth, but every print is legible.
  */
 const FAR = 0.05;
-const FAR_NARROW = 0.45;
+/* 0.45 left a hole. A print's distance from the centre is its radius times
+   its scale, and the radius has a 0.44 floor, so starting at 0.45 scale meant
+   nothing ever came closer than about 60px to the middle of a 375px screen --
+   the field arrived already fanned out, with an empty core. 0.22 lets prints
+   emerge from the centre the way they do on a desktop while still reaching the
+   viewer at a readable size. */
+const FAR_NARROW = 0.22;
 const NEAR = 1;
 /**
  * How far off centre a print drifts as it comes forward. Narrow screens get a
