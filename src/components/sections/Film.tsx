@@ -520,7 +520,7 @@ export default function Film() {
             weight={1.8}
             start="top 92%"
           >
-            Film
+            After Movie
           </LitTitle>
 
           <RevealText

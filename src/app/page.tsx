@@ -15,7 +15,7 @@ const MARKERS = [
   { id: "timeline", index: "04", label: "Events" },
   { id: "vision", index: "05", label: "Vision" },
   { id: "about", index: "06", label: "About" },
-  { id: "film", index: "07", label: "Film" },
+  { id: "film", index: "07", label: "After Movie" },
   { id: "scale", index: "08", label: "Scale" },
   { id: "projection", index: "09", label: "Projection" },
   { id: "festival", index: "10", label: "Festival" },
