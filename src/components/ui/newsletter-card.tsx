@@ -45,25 +45,41 @@ export const NewsletterCard = React.forwardRef<HTMLDivElement, NewsletterCardPro
         ctx.fillStyle = "#0B0B0B";
         ctx.fillRect(0, 0, width, height);
 
-        // Draw the wave pattern seen in the screenshot
-        // This simulates the vertical flowing lines on the right side
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
-        ctx.lineWidth = 1.5;
+        // Center of concentric contour field on bottom-right
+        const cx = width * 0.95;
+        const cy = height * 1.05;
+        const lineCount = 50;
+        const spacing = 14;
+        const startR = 25;
 
-        const lineCount = 45;
-        const spacing = 12;
-        const startX = width * 0.4;
+        ctx.lineWidth = 1.25;
 
         for (let i = 0; i < lineCount; i++) {
           ctx.beginPath();
-          const xBase = startX + i * spacing;
+          const baseR = startR + i * spacing;
 
-          for (let y = 0; y <= height; y += 5) {
-            // Create the "S" curve distortion
-            const distortion = Math.sin(y * 0.005 + offset + i * 0.1) * 40;
-            const x = xBase + distortion + Math.pow(y / height, 2) * 150;
+          const alpha = 0.05 + (i / lineCount) * 0.14;
+          ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
 
-            if (y === 0) ctx.moveTo(x, y);
+          // Sweeping arc angles (pointing from bottom-left up to top-right)
+          const startAngle = Math.PI * 1.04;
+          const endAngle = -Math.PI * 0.54;
+          const steps = 70;
+          const step = (endAngle - startAngle) / steps;
+
+          for (let j = 0; j <= steps; j++) {
+            const theta = startAngle + j * step;
+            const wave =
+              Math.sin(theta * 3.5 + offset + i * 0.1) * 18 +
+              Math.cos(theta * 2.2 - offset * 0.7) * 12 +
+              Math.sin(baseR * 0.015 + offset * 0.4) * 8;
+
+            const rx = (baseR + wave) * 1.45;
+            const ry = (baseR + wave) * 0.88;
+            const x = cx + rx * Math.cos(theta);
+            const y = cy + ry * Math.sin(theta);
+
+            if (j === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
           }
           ctx.stroke();
