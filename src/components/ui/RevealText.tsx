@@ -67,15 +67,38 @@ export default function RevealText({
            */
           gsap.set(targets, { yPercent: y, opacity: 0 });
 
-          anim = gsap.to(targets, {
+          const play = {
             yPercent: 0,
             opacity: 1,
             duration: 1.05,
             ease: "gen",
             stagger,
             delay,
-            scrollTrigger: { trigger: el, start, once: true },
-          });
+          };
+
+          /*
+           * Anything already on screen plays on its own, with no trigger at all.
+           *
+           * For the hero this was never a scroll reveal — it is the entrance, and
+           * `start: "top 100%"` only ever meant "immediately" for a heading sitting
+           * at the top of the page. Routing it through a ScrollTrigger anyway made
+           * it depend on that trigger being evaluated, and when the evaluation was
+           * deferred — a refresh batched behind the preloader's hold, a first
+           * layout the trigger never saw — the characters simply waited, hidden,
+           * until a scroll event forced the trigger to run and the entrance played
+           * a screenful too late.
+           *
+           * Below the fold nothing changes: those still wait for the trigger,
+           * which is what it is for.
+           */
+          const onScreen = el.getBoundingClientRect().top < window.innerHeight;
+
+          anim = onScreen
+            ? gsap.to(targets, play)
+            : gsap.to(targets, {
+                ...play,
+                scrollTrigger: { trigger: el, start, once: true },
+              });
         }
       } catch {
         gsap.set(el, { opacity: 1 });
