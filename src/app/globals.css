@@ -588,15 +588,19 @@ html.lenis, html.lenis body { height: auto; }
   /* The frame is a width and an aspect, not four percentages of the viewport.
      Percentages made its height a share of the screen and its width a share of
      the stage, so the rectangle changed shape with the window. */
-  --bw: calc(var(--cw) * 0.94);
-  --bh: calc(var(--cw-v) * 0.94 / 1.6);
+  /* Portrait on a phone: the screen is tall, so a landscape frame wasted it.
+     3:4, and driven from the height rather than the width so it cannot grow
+     into the copy above it -- capped at whatever is left once the badge, title
+     and copy have taken their share of a short screen. */
+  --bh: min(calc(var(--cw-v) * 0.8 * 4 / 3), calc(100svh - 450px));
+  --bw: calc(var(--bh) * 0.75);
 
   /* Phone and tablet: centred across the column, sitting low so the title and
      copy have the top of the screen to themselves. */
   --fl-base: calc((100% - var(--bw)) / 2);
   --fr-base: calc((100% - var(--bw)) / 2);
-  --fb-base: calc(100svh * 0.1);
-  --ft-base: calc(100svh - var(--bh) - 100svh * 0.1);
+  --fb-base: calc(100svh * 0.05);
+  --ft-base: calc(100svh - var(--bh) - 100svh * 0.05);
 }
 
 @media (min-width: 48rem) and (max-width: 63.99rem) {
