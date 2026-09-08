@@ -73,10 +73,10 @@ const CLOSE_BEFORE = 50;
  */
 const FRAME_VARS = {
   "--fp": 1,
-  "--ft": "calc(var(--fp) * 28%)",
-  "--fr": "calc(var(--fp) * 6%)",
-  "--fb": "calc(var(--fp) * 28%)",
-  "--fl": "calc(var(--fp) * 50%)",
+  "--ft": "calc(var(--fp) * var(--ft-base, 42%))",
+  "--fr": "calc(var(--fp) * var(--fr-base, 16%))",
+  "--fb": "calc(var(--fp) * var(--fb-base, 10%))",
+  "--fl": "calc(var(--fp) * var(--fl-base, 16%))",
   "--bez": "calc(var(--fp) * 13px)",
   "--srad": "calc(var(--fp) * 9px)",
   "--brad": "calc(var(--fp) * 22px)",
@@ -178,27 +178,14 @@ export default function Film() {
         if (!lenis) return;
         locked = true;
 
-        /* Settle onto the exact lock point before freezing.
-         *
-         * `onUpdate` runs once a frame, and a fast flick covers a lot of
-         * ground inside one: by the time the threshold is seen the scroll is
-         * already past it — on a phone far enough to have come out from under
-         * the sticky stage and shown what sits below the video. Stopping there
-         * froze that overshoot, so where it locked depended on how hard the
-         * swipe was. Easing back to the computed position lands the same frame
-         * every time. */
+        /* Instantly halt Lenis momentum so fast scroll cannot overshoot
+           and bounce back and forth. */
+        lenis.stop();
+
         const st = tl.scrollTrigger;
         const y = st ? st.start + lockProgress() * (st.end - st.start) : null;
-        if (y !== null && Math.abs(lenis.animatedScroll - y) > 2) {
-          lenis.scrollTo(y, {
-            duration: 0.35,
-            lock: true,
-            force: true,
-            onComplete: () => {
-              if (locked) lenis.stop();
-            },
-          });
-        } else {
+        if (y !== null && Math.abs(lenis.animatedScroll - y) > 1) {
+          lenis.scrollTo(y, { immediate: true, force: true, lock: true });
           lenis.stop();
         }
 
@@ -400,7 +387,7 @@ export default function Film() {
           trigger: section,
           start: "top top",
           end: "bottom bottom",
-          scrub: 0.8,
+          scrub: 0.35,
           onEnter: () => {
             if (video.currentTime < (video.duration || 1) - 0.5) {
               finished = false;
@@ -414,14 +401,14 @@ export default function Film() {
             unlock();
           },
           onUpdate: (self) => {
-            if (self.progress <= 0.05) {
+            if (self.progress <= 0.02) {
               // In small tablet preview: pause and stay on first frame
               video.pause();
               video.currentTime = 0;
               finished = false;
               showEndCard(false);
-              unlock();
-            } else if (self.progress > 0.08 && !finished && video.paused) {
+              if (locked) unlock();
+            } else if (self.progress > 0.05 && !finished && video.paused) {
               void video.play().catch(() => {});
             }
 
@@ -451,10 +438,10 @@ export default function Film() {
   );
 
   return (
-    <section id="film" ref={sectionRef as React.RefObject<HTMLElement>} className="relative h-[135vh]">
+    <section id="film" ref={sectionRef as React.RefObject<HTMLElement>} className="relative h-[200vh]">
       <div
         ref={stageRef}
-        className="sticky top-0 h-[100svh] w-full overflow-hidden"
+        className="film-stage sticky top-0 h-[100svh] w-full overflow-hidden"
         style={FRAME_VARS}
       >
         {/* ── the tablet body ─────────────────────────────────── */}
@@ -508,14 +495,14 @@ export default function Film() {
           /* Top-left on a phone: centring it there leaves the top of the screen
              empty while the device takes the side. Desktop keeps it centred,
              where it balances the tablet across the fold. */
-          className="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-full max-w-(--maxw) flex-col justify-start px-(--gutter) pt-24 lg:w-[52%] lg:justify-center lg:pt-0"
+          className="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-full max-w-(--maxw) flex-col justify-start px-(--gutter) pt-16 sm:pt-20 lg:w-[52%] lg:justify-center lg:pt-0"
         >
-          <div className="badge-pill border-red-hot/40 bg-red-black/50 text-red-hot mb-4 w-fit">
+          <div className="badge-pill border-red-hot/40 bg-red-black/50 text-red-hot mb-3 w-fit text-xs sm:text-sm">
             ✦ OFFICIAL TRAILER // REEL
           </div>
 
           <LitTitle
-            className="text-[clamp(3.5rem,11vw,10rem)] leading-[0.9] tracking-[-0.02em]"
+            className="text-[clamp(2.75rem,8.5vw,10rem)] leading-[0.9] tracking-[-0.02em]"
             radius={280}
             weight={1.8}
             start="top 92%"
@@ -525,7 +512,7 @@ export default function Film() {
 
           <RevealText
             as="p"
-            className="mt-6 max-w-[36ch] text-lead text-bone"
+            className="mt-3 max-w-[34ch] text-sm sm:text-lead text-bone/90"
             start="top 92%"
           >
             One stage. Pure frequency. Scroll to watch the cinematic arena unfold.

@@ -516,3 +516,35 @@ html.lenis, html.lenis body { height: auto; }
   .pull-into-title { margin-top: calc(-1 * var(--title-pull)); }
   .pull-into-title-half { margin-top: calc(-0.5 * var(--title-pull)); }
 }
+
+/* ------------------------------------------------------------------
+   Film stage responsive frame variables
+   Mobile: centered portrait phone mockup below text
+   Tablet: centered preview
+   Desktop (>= 1024px): right-aligned tablet mockup alongside text
+------------------------------------------------------------------ */
+.film-stage {
+  --ft-base: 42%;
+  --fr-base: 16%;
+  --fb-base: 10%;
+  --fl-base: 16%;
+}
+
+@media (min-width: 48rem) and (max-width: 63.99rem) {
+  .film-stage {
+    --ft-base: 38%;
+    --fr-base: 22%;
+    --fb-base: 12%;
+    --fl-base: 22%;
+  }
+}
+
+@media (min-width: 64rem) {
+  .film-stage {
+    --ft-base: 28%;
+    --fr-base: 6%;
+    --fb-base: 28%;
+    --fl-base: 50%;
+  }
+}
+
