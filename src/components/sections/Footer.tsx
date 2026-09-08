@@ -3,10 +3,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
-  IconInstagram,
-  IconTikTok,
-  IconYouTube,
-  IconFacebook,
   IconWhatsApp,
   IconTelegram,
   IconArrowUpRight,
@@ -18,16 +14,17 @@ export default function Footer() {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
-  // Subtle ambient dot grid animation on the newsletter canvas
+  // Vertical flowing S-curve wave pattern animation
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    let animId: number;
-    let width = (canvas.width = canvas.parentElement?.offsetWidth || 450);
-    let height = (canvas.height = canvas.parentElement?.offsetHeight || 500);
+    let animationFrameId: number;
+    let offset = 0;
+    let width = (canvas.width = canvas.parentElement?.offsetWidth || 500);
+    let height = (canvas.height = canvas.parentElement?.offsetHeight || 420);
 
     const onResize = () => {
       if (!canvas.parentElement) return;
@@ -38,50 +35,51 @@ export default function Footer() {
     window.addEventListener("resize", onResize);
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    let tick = 0;
 
-    const render = () => {
+    const draw = () => {
       ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = "#09090C";
+      ctx.fillRect(0, 0, width, height);
 
-      const spacing = 28;
-      const cols = Math.ceil(width / spacing);
-      const rows = Math.ceil(height / spacing);
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
+      ctx.lineWidth = 1.4;
 
-      for (let x = 0; x < cols; x++) {
-        for (let y = 0; y < rows; y++) {
-          const posX = x * spacing + 14;
-          const posY = y * spacing + 14;
+      const lineCount = 38;
+      const spacing = 12;
+      const startX = width * 0.38;
 
-          // Gentle undulating wave factor
-          const wave = reduced
-            ? 0.3
-            : Math.sin(x * 0.2 + y * 0.2 + tick * 0.02) * 0.5 + 0.5;
+      for (let i = 0; i < lineCount; i++) {
+        ctx.beginPath();
+        const xBase = startX + i * spacing;
 
-          const alpha = 0.08 + wave * 0.18;
-          ctx.fillStyle = `rgba(237, 237, 240, ${alpha})`;
-
-          // Occasional warm ember accent dot
-          if ((x + y * 3) % 17 === 0) {
-            ctx.fillStyle = `rgba(255, 59, 47, ${alpha * 1.5})`;
-          }
-
-          ctx.beginPath();
-          ctx.arc(posX, posY, 1.2, 0, Math.PI * 2);
-          ctx.fill();
+        // Occasional faint red accent line
+        if (i % 9 === 0) {
+          ctx.strokeStyle = "rgba(255, 59, 47, 0.22)";
+        } else {
+          ctx.strokeStyle = "rgba(255, 255, 255, 0.10)";
         }
+
+        for (let y = 0; y <= height; y += 6) {
+          const distortion = Math.sin(y * 0.005 + offset + i * 0.1) * 36;
+          const x = xBase + distortion + Math.pow(y / height, 2) * 120;
+
+          if (y === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
       }
 
       if (!reduced) {
-        tick++;
-        animId = requestAnimationFrame(render);
+        offset += 0.004;
+        animationFrameId = requestAnimationFrame(draw);
       }
     };
 
-    render();
+    draw();
 
     return () => {
       window.removeEventListener("resize", onResize);
-      if (animId) cancelAnimationFrame(animId);
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
     };
   }, []);
 
@@ -93,50 +91,47 @@ export default function Footer() {
   };
 
   return (
-    <footer className="relative z-10 border-t border-hairline bg-ink-2/95 text-bone">
-      <div className="grid xl:grid-cols-[34%_66%] md:grid-cols-[45%_55%] grid-cols-1 relative">
-        {/* ── LEFT: Newsletter Section ──────────────────────────── */}
+    <footer className="relative z-10 border-t border-hairline bg-ink-2 text-bone">
+      <div className="grid xl:grid-cols-[42%_58%] lg:grid-cols-[45%_55%] grid-cols-1 relative">
+        {/* ── LEFT: Newsletter Section with Wave Canvas ─────────── */}
         <section
           id="newsletter"
-          className="relative flex flex-col justify-between p-7 sm:p-10 md:p-10 lg:p-12 border-b md:border-b-0 md:border-r border-hairline w-full overflow-hidden"
+          className="relative flex flex-col justify-between p-7 sm:p-9 md:p-10 lg:p-12 border-b lg:border-b-0 lg:border-r border-hairline w-full overflow-hidden"
         >
-          {/* Animated Matrix Canvas Background */}
-          <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-            <div className="w-full h-full">
-              <canvas ref={canvasRef} className="w-full h-full opacity-60" />
-            </div>
-            {/* Gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-tl from-transparent via-black/40 to-ink-2 pointer-events-none" />
-            {/* Ambient warm glow */}
-            <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-red-hot/15 blur-3xl pointer-events-none" />
-          </div>
+          {/* Background Canvas: Flowing S-curve lines */}
+          <canvas
+            ref={canvasRef}
+            className="absolute inset-0 h-full w-full pointer-events-none"
+          />
 
-          <div className="relative z-10">
-            <div className="badge-pill border-red-hot/30 bg-red-black/40 text-red-hot mb-4 w-fit text-[10px]">
-              ✦ STAY CONNECTED
-            </div>
+          {/* Gradient overlay to fade lines into the background */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#09090C] via-[#09090C]/80 to-transparent pointer-events-none" />
 
-            <h4 className="font-display text-2xl sm:text-3xl font-semibold tracking-[-0.01em] text-bone mb-3">
+          {/* Bottom-left glowing red corner accent */}
+          <div className="absolute bottom-0 left-0 w-[42px] h-[42px] bg-red-hot rounded-tr-[42px] opacity-75 blur-[2px] pointer-events-none" />
+
+          <div className="relative z-10 max-w-md">
+            <h4 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-bone mb-3">
               Want to stay in touch?
             </h4>
 
-            <p className="text-xs sm:text-sm text-dim leading-relaxed max-w-md font-mono font-light mb-6">
-              Join our newsletter to get the latest announcements, lineup reveals, and early-bird ticket access.
+            <p className="text-xs sm:text-sm text-dim leading-relaxed font-mono font-light mb-6">
+              Join our newsletter to get the latest news, updates and special offers.
             </p>
 
-            <form onSubmit={handleSubmit} className="relative z-10 mt-2 max-w-md">
+            <form onSubmit={handleSubmit} className="relative z-10 mt-2 w-full">
               <div className="relative flex items-center">
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your e-mail"
-                  className="w-full rounded-full bg-white/[0.07] border border-hairline py-3.5 pl-5 pr-32 font-mono text-xs uppercase tracking-wider text-bone placeholder:text-dim/70 focus:outline-none focus:border-red-hot focus:ring-1 focus:ring-red-hot/50 transition-all duration-300"
+                  placeholder="ENTER YOUR E-MAIL"
+                  className="w-full rounded-full bg-white/[0.06] border border-hairline py-3.5 pl-5 pr-32 font-mono text-xs uppercase tracking-wider text-bone placeholder:text-dim/60 focus:outline-none focus:border-red-hot focus:ring-1 focus:ring-red-hot/40 transition-all duration-300"
                 />
                 <button
                   type="submit"
-                  className="absolute right-1 top-1 bottom-1 w-[116px] rounded-full bg-red-hot hover:bg-red-mid text-white text-xs font-semibold uppercase tracking-wider cursor-pointer transition-all duration-300 hover:shadow-[0_0_18px_rgba(255,59,47,0.5)] flex items-center justify-center gap-1.5 overflow-hidden"
+                  className="absolute right-1 top-1 bottom-1 w-[112px] rounded-full bg-[#4A4A4A] hover:bg-red-hot text-white text-xs font-semibold uppercase tracking-wider cursor-pointer transition-all duration-300 flex items-center justify-center gap-1.5 overflow-hidden"
                 >
                   {submitted ? (
                     <>
@@ -150,101 +145,34 @@ export default function Footer() {
               </div>
 
               {submitted && (
-                <p className="mt-2.5 text-[11px] font-mono text-red-hot">
-                  ✦ You&apos;re subscribed. We will notify you when tickets drop.
+                <p className="mt-2.5 text-[11px] font-mono text-red-hot flex items-center gap-1.5">
+                  ✦ You&apos;re subscribed. Thank you for staying in touch.
                 </p>
               )}
             </form>
           </div>
 
-          {/* Bottom badge on newsletter column */}
-          <div className="relative z-10 mt-8 pt-6 border-t border-hairline/60 flex items-center justify-between text-[11px] font-mono text-dim">
+          <div className="relative z-10 mt-8 pt-6 border-t border-hairline/50 flex items-center justify-between text-[11px] font-mono text-dim">
             <span>COLOMBO, SRI LANKA</span>
-            <span className="text-red-hot font-medium">LOTUS TOWER ARENA</span>
+            <span className="text-red-hot font-medium tracking-wider">LOTUS TOWER ARENA</span>
           </div>
         </section>
 
-        {/* ── RIGHT: Navigation Links & Credits ─────────────────── */}
-        <div className="flex flex-col justify-between p-7 sm:p-10 md:p-10 lg:p-12">
-          {/* 4-column Links Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 sm:gap-6 w-full text-xs sm:text-sm">
-            {/* Column 1: Event */}
+        {/* ── RIGHT: Clean, Simple Links & Attribution ─────────── */}
+        <div className="flex flex-col justify-between p-7 sm:p-9 md:p-10 lg:p-12">
+          {/* Simple Columns Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 w-full text-xs sm:text-sm">
+            {/* Column 1: Auditions */}
             <div>
-              <span className="font-mono uppercase text-dim tracking-[0.16em] text-[11px] mb-5 block">
-                Event
-              </span>
-              <ul className="space-y-3 font-medium">
-                <li>
-                  <a href="/#hero" className="hover:text-red-hot transition-colors duration-200">
-                    Overview
-                  </a>
-                </li>
-                <li>
-                  <a href="/#timeline" className="hover:text-red-hot transition-colors duration-200">
-                    Events
-                  </a>
-                </li>
-                <li>
-                  <a href="/#vision" className="hover:text-red-hot transition-colors duration-200">
-                    Vision
-                  </a>
-                </li>
-                <li>
-                  <a href="/#about" className="hover:text-red-hot transition-colors duration-200">
-                    About
-                  </a>
-                </li>
-                <li>
-                  <a href="/#film" className="hover:text-red-hot transition-colors duration-200">
-                    After Movie
-                  </a>
-                </li>
-                <li>
-                  <a href="/#flow" className="hover:text-red-hot transition-colors duration-200">
-                    Gallery
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            {/* Column 2: Production */}
-            <div>
-              <span className="font-mono uppercase text-dim tracking-[0.16em] text-[11px] mb-5 block">
-                Production
-              </span>
-              <ul className="space-y-3 font-medium">
-                <li>
-                  <a href="/#scale" className="hover:text-red-hot transition-colors duration-200">
-                    Built at Scale
-                  </a>
-                </li>
-                <li>
-                  <a href="/#projection" className="hover:text-red-hot transition-colors duration-200">
-                    Projections
-                  </a>
-                </li>
-                <li>
-                  <a href="/#festival" className="hover:text-red-hot transition-colors duration-200">
-                    Festival Lineup
-                  </a>
-                </li>
-                <li>
-                  <span className="text-dim">10,000 Capacity</span>
-                </li>
-                <li>
-                  <span className="text-dim">Custom Stage</span>
-                </li>
-              </ul>
-            </div>
-
-            {/* Column 3: Auditions */}
-            <div>
-              <span className="font-mono uppercase text-dim tracking-[0.16em] text-[11px] mb-5 block">
+              <span className="font-mono uppercase text-dim tracking-[0.18em] text-[11px] mb-5 block">
                 Auditions
               </span>
               <ul className="space-y-3 font-medium">
                 <li>
-                  <Link href="/auditions" className="hover:text-red-hot transition-colors duration-200 flex items-center gap-1 group">
+                  <Link
+                    href="/auditions"
+                    className="hover:text-red-hot transition-colors duration-200 flex items-center gap-1 group"
+                  >
                     <span>Talent Forms</span>
                     <IconArrowUpRight className="h-3.5 w-3.5 text-red-hot transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                   </Link>
@@ -267,10 +195,10 @@ export default function Footer() {
               </ul>
             </div>
 
-            {/* Column 4: Socials */}
+            {/* Column 2: Social Channels (Only Telegram and WhatsApp) */}
             <div>
-              <span className="font-mono uppercase text-dim tracking-[0.16em] text-[11px] mb-5 block">
-                Socials
+              <span className="font-mono uppercase text-dim tracking-[0.18em] text-[11px] mb-5 block">
+                Channels
               </span>
               <ul className="space-y-3 font-medium">
                 <li>
@@ -280,7 +208,7 @@ export default function Footer() {
                     rel="noreferrer"
                     className="hover:text-red-hot transition-colors duration-200 flex items-center gap-2 group"
                   >
-                    <IconTelegram className="h-3.5 w-3.5 text-red-hot/80 group-hover:text-red-hot transition-colors" />
+                    <IconTelegram className="h-4 w-4 text-red-hot/80 group-hover:text-red-hot transition-colors" />
                     <span>Telegram</span>
                   </a>
                 </li>
@@ -291,66 +219,36 @@ export default function Footer() {
                     rel="noreferrer"
                     className="hover:text-red-hot transition-colors duration-200 flex items-center gap-2 group"
                   >
-                    <IconWhatsApp className="h-3.5 w-3.5 text-red-hot/80 group-hover:text-red-hot transition-colors" />
+                    <IconWhatsApp className="h-4 w-4 text-red-hot/80 group-hover:text-red-hot transition-colors" />
                     <span>WhatsApp</span>
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="https://tiktok.com"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="hover:text-red-hot transition-colors duration-200 flex items-center gap-2 group"
-                  >
-                    <IconTikTok className="h-3.5 w-3.5 text-red-hot/80 group-hover:text-red-hot transition-colors" />
-                    <span>TikTok</span>
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="https://youtube.com"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="hover:text-red-hot transition-colors duration-200 flex items-center gap-2 group"
-                  >
-                    <IconYouTube className="h-3.5 w-3.5 text-red-hot/80 group-hover:text-red-hot transition-colors" />
-                    <span>YouTube</span>
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="https://facebook.com"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="hover:text-red-hot transition-colors duration-200 flex items-center gap-2 group"
-                  >
-                    <IconFacebook className="h-3.5 w-3.5 text-red-hot/80 group-hover:text-red-hot transition-colors" />
-                    <span>Facebook</span>
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="https://instagram.com"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="hover:text-red-hot transition-colors duration-200 flex items-center gap-2 group"
-                  >
-                    <IconInstagram className="h-3.5 w-3.5 text-red-hot/80 group-hover:text-red-hot transition-colors" />
-                    <span>Instagram</span>
                   </a>
                 </li>
               </ul>
             </div>
+
+            {/* Column 3: Event Info */}
+            <div className="col-span-2 sm:col-span-1">
+              <span className="font-mono uppercase text-dim tracking-[0.18em] text-[11px] mb-5 block">
+                Event
+              </span>
+              <ul className="space-y-2 text-xs font-mono text-dim">
+                <li className="text-bone font-medium">Generation 26</li>
+                <li>Lotus Tower Open Arena</li>
+                <li>Colombo, Sri Lanka</li>
+                <li className="text-red-hot font-medium pt-1">Saturday, Dec 12, 2026</li>
+                <li>Produced by ECheM</li>
+              </ul>
+            </div>
           </div>
 
-          {/* Copyright & Attribution Bar */}
-          <div className="flex flex-col lg:flex-row items-center justify-between text-xs font-mono text-dim uppercase tracking-wider mt-10 pt-6 border-t border-hairline/60 gap-4">
-            <p className="text-center lg:text-left">
+          {/* Copyright & W3S Solutions Attribution Bar */}
+          <div className="flex flex-col sm:flex-row items-center justify-between text-xs font-mono text-dim uppercase tracking-wider mt-10 pt-6 border-t border-hairline/60 gap-4">
+            <p className="text-center sm:text-left">
               © 2017 – 2026 Generation. All rights reserved.{" "}
               <span className="mx-2 hidden sm:inline text-hairline">/</span> Produced by ECheM
             </p>
 
-            <p className="text-center lg:text-right">
+            <p className="text-center sm:text-right">
               Developed by{" "}
               <a
                 href="https://w3s.lk/"
