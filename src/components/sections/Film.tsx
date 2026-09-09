@@ -19,14 +19,13 @@ import { scrollState } from "@/lib/scroll-state";
  */
 const MAX_RATE_DESKTOP = 4.0;
 /*
- * 1.0 on a phone: never faster than the footage runs.
+ * The mobile ceiling, kept only for a touch device wide enough to be driving
+ * the rate at all -- see `rateFollowsScroll`, which switches the whole
+ * mechanism off wherever the pointer is coarse.
  *
- * 1.8 asked a mobile decoder for nearly twice real time on a page that is
- * being scrolled, and every change of rate makes the media pipeline resync on
- * top of that. On iOS the result is the picture juddering and then stopping
- * outright while the layout carries on. Held to natural speed the decoder has
- * nothing to catch up on. The scroll still drives the rate, between 0.6 and
- * 1.0, so it still answers the reader -- it just cannot outrun the hardware.
+ * It was 1.8, which asked a phone decoder for nearly twice real time on a page
+ * being scrolled. Lowering it to natural speed helped and did not fix
+ * anything: the cost is in the changing, not in the speed.
  */
 const MAX_RATE_MOBILE = 1.0;
 
@@ -169,6 +168,14 @@ export default function Film() {
       video.playsInline = true;
       video.setAttribute("playsinline", "true");
       video.setAttribute("webkit-playsinline", "true");
+      /* `defaultPlaybackRate` as well as the live one: the source arrives from
+         the preloader later and `load()` resets playback rate to the default,
+         so setting only the live rate here was undone the moment the film got
+         its blob. The rate loop used to paper over that by writing a corrected
+         rate on the next frame; with that loop off on touch devices, the
+         footage would simply have run at 1.0 instead of the slow motion the
+         section is built around. */
+      video.defaultPlaybackRate = RATE_SILENT;
       video.playbackRate = RATE_SILENT;
 
       let finished = false;
@@ -181,6 +188,25 @@ export default function Film() {
       const maxRate = window.matchMedia("(max-width: 767px)").matches
         ? MAX_RATE_MOBILE
         : MAX_RATE_DESKTOP;
+
+      /*
+       * Whether scrolling is allowed to drive the playback rate at all.
+       *
+       * On a mouse it is the good part of this section: push the page and the
+       * film runs on with you. On a phone it is the reason the film stops.
+       * Every write to `playbackRate` makes the media pipeline resync, and
+       * scrolling produces a stream of them -- on iOS the decoder does not
+       * absorb that while it is also being asked to keep up, and playback
+       * judders and then halts. Capping the rate lower helped and did not fix
+       * it, because the cost is in the changing, not in the speed.
+       *
+       * So a touch device gets one rate, set once, and never written again:
+       * the film simply plays, which is all it was ever being asked to do
+       * there. Skip is still the way out of it.
+       */
+      const rateFollowsScroll = !window.matchMedia(
+        "(hover: none), (pointer: coarse)",
+      ).matches;
 
       const showEndCard = (on: boolean) => {
         if (endRef.current) {
@@ -354,19 +380,21 @@ export default function Film() {
             void video.play().catch(() => {});
           }
 
-          // Decay manual wheel/touch boost
-          scrollBoost *= 0.88;
+          if (rateFollowsScroll) {
+            // Decay manual wheel/touch boost
+            scrollBoost *= 0.88;
 
-          // Combine real scroll velocity with active wheel boost
-          const vel = Math.abs(scrollState.velocity) + scrollBoost;
-          const targetSpeed = RATE_SILENT + Math.min(3.0, vel * 1.5);
+            // Combine real scroll velocity with active wheel boost
+            const vel = Math.abs(scrollState.velocity) + scrollBoost;
+            const targetSpeed = RATE_SILENT + Math.min(3.0, vel * 1.5);
 
-          currentRate += (targetSpeed - currentRate) * 0.14;
-          if (!video.paused && video.readyState >= 2) {
-            const next = Math.max(0.6, Math.min(maxRate, currentRate));
-            if (Math.abs(next - appliedRate) > RATE_EPSILON) {
-              appliedRate = next;
-              video.playbackRate = next;
+            currentRate += (targetSpeed - currentRate) * 0.14;
+            if (!video.paused && video.readyState >= 2) {
+              const next = Math.max(0.6, Math.min(maxRate, currentRate));
+              if (Math.abs(next - appliedRate) > RATE_EPSILON) {
+                appliedRate = next;
+                video.playbackRate = next;
+              }
             }
           }
         } else if (!inView) {
