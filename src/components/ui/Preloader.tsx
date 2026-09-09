@@ -234,7 +234,9 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
       clearInterval(releaseGuard);
       resolveMedia({});
       actualLoaded = 100;
-      towerReadyRef.current = true;
+      setTimeout(() => {
+        towerReadyRef.current = true;
+      }, 4000);
     }, 1000);
 
     // 3. Smooth animation ticker for progress counter
@@ -251,25 +253,26 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
          never be more than a fifth ahead of work actually done. */
       const warm = Math.min(1, (lastTickAt - startedAt) / WARMUP_MS) * WARMUP_CEILING;
 
-      // Cap at 95% until the DOM video is actually decoded and ready to render
-      const maxTarget = towerReadyRef.current
-        ? 100
-        : Math.min(95, Math.max(actualLoaded, warm));
+      // STRICT GATE:
+      // Preloader MUST NOT complete until Lotus Tower footage is fully loaded, decoded, and rendered!
+      // 1. While downloading media files (actualLoaded < 100):
+      //    maxTarget is strictly capped at 90% (tied to actual downloaded bytes).
+      // 2. Once all media is downloaded (actualLoaded >= 100):
+      //    If the Tower has not painted its initial frame yet,
+      //    maxTarget is capped at 95% and waits.
+      // 3. ONLY when actualLoaded >= 100 AND towerReadyRef.current is true:
+      //    maxTarget unlocks to 100%!
+      let maxTarget = 0;
+      if (actualLoaded < 100) {
+        maxTarget = Math.min(90, Math.max(actualLoaded, warm));
+      } else if (!towerReadyRef.current) {
+        maxTarget = 95;
+      } else {
+        maxTarget = 100;
+      }
 
-      /* Approach the cap; never cross it.
-       *
-       * `progressVal += Math.max(0.35, delta)` ignored the cap entirely: once
-       * the bar reached it, delta was zero or negative and the minimum step
-       * still added 0.35 every frame. The counter therefore climbed about 21%
-       * a second on frame count alone and reached 100 in roughly five seconds
-       * no matter how the download was going. A warm reload served the footage
-       * from cache inside that window so it looked correct; a cold one had the
-       * loader announce itself finished while the video was still arriving,
-       * and the tower then turned up several seconds into the page.
-       *
-       * The minimum step stays — it is what keeps the approach from crawling
-       * — but it can only ever move toward the cap. */
-      const step = Math.max(0.35, (maxTarget - progressVal.current) * 0.12);
+      const remaining = maxTarget - progressVal.current;
+      const step = remaining > 0 ? Math.max(0.25, remaining * 0.12) : 0;
       progressVal.current = Math.min(maxTarget, progressVal.current + step);
 
       if (progressVal.current >= 100) {
@@ -289,7 +292,11 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
       } else if (p < 85) {
         setStatusText("DECODING 1200 INTRA-FRAME KEYFRAMES");
       } else if (p < 99) {
-        setStatusText("SYNCHRONIZING 3D TOWER STAGE");
+        setStatusText(
+          !towerReadyRef.current
+            ? "SYNCHRONIZING LOTUS TOWER STAGE"
+            : "FINALIZING STAGE PRESENTATION"
+        );
       } else {
         setStatusText("GENERATION 26 · ALL SYSTEMS READY");
       }

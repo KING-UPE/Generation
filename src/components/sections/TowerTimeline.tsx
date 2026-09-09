@@ -364,81 +364,11 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
       video.muted = true;
       video.pause();
 
-      const markReady = () => {
-        if (typeof window !== "undefined") {
-          (window as any).__TOWER_READY = true;
-          window.dispatchEvent(new CustomEvent("tower:ready"));
-        }
-      };
-
-      /* If the preloaded blob will not decode — an unsupported type, memory
-         pressure, a revoked URL — fall back to the plain path once rather
-         than leaving the element with a source it cannot play. Losing the
-         preload costs a stall; losing this costs the whole video. */
-      let usedFallback = false;
-      const onSrcError = () => {
-        if (usedFallback) return;
-        usedFallback = true;
-        video.src = mediaPath("tower");
-        video.load();
-      };
-      video.addEventListener("error", onSrcError);
-
-      /* Wait for the preloader to settle, then take whatever it resolved —
-         an object URL over its own download, or the plain path if it could
-         not finish. It always settles, so this always runs. */
-      const stopWaiting = onMediaResolved(() => {
-        const src = mediaSrc("tower");
-        if (video.getAttribute("src") !== src) {
-          video.src = src;
-          video.load();
-        }
-      });
-
-      /**
-       * Ready means a frame exists, not that the header parsed.
-       *
-       * This used to also fire on `loadedmetadata`, which is readyState 1: the
-       * container has been read and nothing has been decoded. The preloader
-       * took that as done and lifted, so the page arrived with the tower still
-       * blank for a moment while the first frame was decoded — which looked
-       * like the video failing to load rather than the loader leaving early.
-       *
-       * `requestVideoFrameCallback` is the only signal that a frame has
-       * actually been presented; `loadeddata` (readyState 2, first frame
-       * available) is the fallback where it does not exist. A seek to 0 is
-       * issued alongside, because a paused element will happily sit on
-       * metadata without ever decoding anything to show.
-       */
-      type WithRVFC = HTMLVideoElement & {
-        requestVideoFrameCallback?: (cb: () => void) => number;
-      };
-      const armReady = () => {
-        if (video.readyState >= 2) {
-          markReady();
-          return;
-        }
-        const rvfc = (video as WithRVFC).requestVideoFrameCallback;
-        if (typeof rvfc === "function") {
-          rvfc.call(video, () => markReady());
-        }
-        video.addEventListener("loadeddata", markReady, { once: true });
-        video.addEventListener("canplay", markReady, { once: true });
-        /* Nudge the decoder into producing that first frame. */
-        video.addEventListener(
-          "loadedmetadata",
-          () => {
-            if (video.currentTime === 0) video.currentTime = 0.001;
-          },
-          { once: true },
-        );
-      };
-      armReady();
-
       let target = 0;
       let current = 0;
       let framingTarget = 0;
       const intro = { v: 1 };
+
 
       /**
        * How far the frame is offset sideways, as a % of its own width, so the
@@ -1104,10 +1034,109 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
        * re-entering would restart a 2s tween from wherever the first had got
        * to — stretching the entrance rather than leaving it alone.
        */
+      let isTowerReady = false;
+      const markReady = () => {
+        if (isTowerReady) return;
+        isTowerReady = true;
+        if (typeof window !== "undefined") {
+          (window as any).__TOWER_READY = true;
+          window.dispatchEvent(new CustomEvent("tower:ready"));
+        }
+      };
+
+      type WithRVFC = HTMLVideoElement & {
+        requestVideoFrameCallback?: (cb: () => void) => number;
+      };
+
+      const setupFirstFrame = () => {
+        if (isTowerReady) return;
+
+        const onFrameRendered = () => {
+          intro.v = 0;
+          frame(0, offset(0));
+          fit(0);
+          paint(0);
+          if (box) box.style.opacity = "1";
+          video.style.opacity = "1";
+          markReady();
+        };
+
+        const rvfc = (video as WithRVFC).requestVideoFrameCallback;
+
+        const requestPresentation = () => {
+          if (typeof rvfc === "function") {
+            rvfc.call(video, () => {
+              requestAnimationFrame(onFrameRendered);
+            });
+          } else {
+            requestAnimationFrame(() => {
+              requestAnimationFrame(onFrameRendered);
+            });
+          }
+        };
+
+        const onSeeked = () => {
+          requestPresentation();
+        };
+
+        const onLoaded = () => {
+          if (video.currentTime === 0) {
+            try {
+              video.currentTime = 0.001;
+            } catch {
+              requestPresentation();
+            }
+          } else {
+            requestPresentation();
+          }
+        };
+
+        video.addEventListener("seeked", onSeeked, { once: true });
+        video.addEventListener("loadeddata", onLoaded, { once: true });
+        video.addEventListener("canplay", onLoaded, { once: true });
+
+        if (video.readyState >= 2) {
+          onLoaded();
+        }
+      };
+
+      const applySource = (src: string) => {
+        if (!src) return;
+        if (video.getAttribute("src") !== src) {
+          video.src = src;
+          video.load();
+        }
+        setupFirstFrame();
+      };
+
+      let usedFallback = false;
+      const onSrcError = () => {
+        if (usedFallback) return;
+        usedFallback = true;
+        applySource(mediaPath("tower"));
+      };
+      video.addEventListener("error", onSrcError);
+
+      const stopWaiting = onMediaResolved(() => {
+        applySource(mediaSrc("tower"));
+      });
+
+      const initialSrc = mediaSrc("tower");
+      if (initialSrc) {
+        applySource(initialSrc);
+      }
+
       let introStarted = false;
       const startIntro = () => {
         if (introStarted) return;
         introStarted = true;
+        if (intro.v <= 0.01) {
+          intro.v = 0;
+          frame(0, offset(0));
+          if (box) box.style.opacity = "1";
+          video.style.opacity = "1";
+          return;
+        }
         gsap.to(intro, {
           v: 0,
           duration: 2.0,

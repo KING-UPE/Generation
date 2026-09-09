@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
 import { mediaPath, mediaSrc, onMediaResolved } from "@/lib/media-cache";
 import LitTitle from "@/components/ui/LitTitle";
@@ -126,6 +126,15 @@ export default function Film() {
   const barRef = useRef<HTMLSpanElement>(null);
   const timeRef = useRef<HTMLSpanElement>(null);
   const skipRef = useRef<HTMLButtonElement>(null);
+  const [downloadUrl, setDownloadUrl] = useState<string>("/Video.desktop.mp4");
+
+  useEffect(() => {
+    setDownloadUrl(mediaSrc("film"));
+    const stopWaiting = onMediaResolved(() => {
+      setDownloadUrl(mediaSrc("film"));
+    });
+    return stopWaiting;
+  }, []);
 
   useGSAP(
     () => {
@@ -541,6 +550,27 @@ export default function Film() {
           >
             One stage. Pure frequency. Relive the night a generation showed up loud.
           </RevealText>
+
+          <div className="mt-8 flex items-center gap-4 pointer-events-auto">
+            <a
+              href={downloadUrl}
+              download="Generation_26_AfterMovie.mp4"
+              onClick={(e) => e.stopPropagation()}
+              data-cursor="link"
+              className="cut-btn group flex items-center gap-2.5 px-5 py-2.5 text-xs font-mono tracking-[0.16em] uppercase font-bold text-white transition-all duration-300 hover:scale-[1.03] active:scale-[0.98]"
+            >
+              <svg
+                className="h-4 w-4 text-red-hot transition-transform duration-300 group-hover:translate-y-0.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2.2"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              <span>Download Reel</span>
+            </a>
+          </div>
         </div>
 
         {/* ── end card ────────────────────────────────────────── */}
@@ -549,6 +579,24 @@ export default function Film() {
           className="pointer-events-none absolute inset-x-0 bottom-[18%] z-20 flex flex-col items-center gap-4"
         >
           <span className="eyebrow text-bone">Scroll to continue</span>
+          <a
+            href={downloadUrl}
+            download="Generation_26_AfterMovie.mp4"
+            onClick={(e) => e.stopPropagation()}
+            data-cursor="link"
+            className="pointer-events-auto cut-btn group flex items-center gap-2.5 px-6 py-3 text-xs font-mono tracking-[0.18em] uppercase font-bold text-white transition-all duration-300 hover:scale-105"
+          >
+            <svg
+              className="h-4 w-4 text-red-hot transition-transform duration-300 group-hover:translate-y-0.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="2.2"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Download After Movie (HD)
+          </a>
           <span className="block h-10 w-px" style={{ background: "var(--grad-red)" }} />
         </div>
 
@@ -571,14 +619,36 @@ export default function Film() {
             </span>
           </div>
 
-          <button
-            ref={skipRef}
-            type="button"
-            data-cursor="link"
-            className="cut-btn-outline cursor-pointer px-4 py-1.5 text-xs transition-all duration-300 hover:border-red-hot hover:text-white"
-          >
-            Skip
-          </button>
+          <div className="flex items-center gap-3">
+            <a
+              href={downloadUrl}
+              download="Generation_26_AfterMovie.mp4"
+              onClick={(e) => e.stopPropagation()}
+              data-cursor="link"
+              title="Download After Movie"
+              className="cut-btn-outline flex items-center gap-2 cursor-pointer px-3.5 py-1.5 text-xs transition-all duration-300 hover:border-red-hot hover:text-white"
+            >
+              <svg
+                className="h-3.5 w-3.5 text-red-hot"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              <span>Download</span>
+            </a>
+
+            <button
+              ref={skipRef}
+              type="button"
+              data-cursor="link"
+              className="cut-btn-outline cursor-pointer px-4 py-1.5 text-xs transition-all duration-300 hover:border-red-hot hover:text-white"
+            >
+              Skip
+            </button>
+          </div>
         </div>
       </div>
     </section>
