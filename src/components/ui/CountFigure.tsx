@@ -72,11 +72,13 @@ export default function CountFigure({
 }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const numRef = useRef<HTMLSpanElement>(null);
+  const suffixRef = useRef<HTMLSpanElement>(null);
 
   useGSAP(
     () => {
       const root = rootRef.current;
       const num = numRef.current;
+      const suffix = suffixRef.current;
       if (!root || !num) return;
 
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -88,12 +90,26 @@ export default function CountFigure({
         num.textContent = FORMAT.format(Math.round(counter.n));
       };
       write();
+      if (suffix) {
+        gsap.set(suffix, { opacity: 0, scale: 0.2, transformOrigin: "center" });
+      }
 
       gsap.to(counter, {
         n: value,
         duration: 2.1,
         ease: "power2.out",
         onUpdate: write,
+        onComplete: () => {
+          num.textContent = FORMAT.format(value);
+          if (suffix) {
+            gsap.to(suffix, {
+              opacity: 1,
+              scale: 1.22,
+              duration: 0.45,
+              ease: "back.out(2.2)",
+            });
+          }
+        },
         scrollTrigger: { trigger: root, start: "top 88%", once: true },
       });
     },
@@ -126,7 +142,12 @@ export default function CountFigure({
             style={{ fontSize: size }}
           >
             <span ref={numRef}>{FORMAT.format(value)}</span>
-            <span className={`inline-block ml-[0.28em] scale-[1.22] origin-center text-red-hot ${suffixClassName}`.trim()}>{suffix}</span>
+            <span
+              ref={suffixRef}
+              className={`inline-block ml-[0.28em] scale-[1.22] origin-center text-red-hot ${suffixClassName}`.trim()}
+            >
+              {suffix}
+            </span>
           </p>
           {showLabel ? <p className="eyebrow mt-2">{label}</p> : null}
         </div>
