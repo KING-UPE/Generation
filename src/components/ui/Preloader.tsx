@@ -201,6 +201,17 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
           }),
         );
 
+        /* Every byte is in hand, whatever the headers claimed.
+         *
+         * The bar is driven by bytes read over bytes promised, and the promise
+         * is `content-length` -- or ESTIMATED_SIZE for both files when the
+         * server withholds it, which a proxy sending chunked responses does.
+         * Get that wrong and the ratio never reaches 100: the gate below holds
+         * at 90 waiting for a number that cannot arrive, the stall guard has
+         * already been cleared because the download did finish, and the loader
+         * sits there for good. Finishing is the authoritative signal, so it is
+         * the one that sets this. */
+        actualLoaded = 100;
         if (!isCancelled) resolveMedia(urls);
         /* Nothing left to give up on. Without this the guard keeps ticking
            against a `lastByteAt` that has stopped moving, and twelve seconds

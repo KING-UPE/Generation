@@ -1121,10 +1121,21 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         applySource(mediaSrc("tower"));
       });
 
-      const initialSrc = mediaSrc("tower");
-      if (initialSrc) {
-        applySource(initialSrc);
-      }
+      /* Deliberately no source until the preloader has one.
+       *
+       * `mediaSrc` falls back to the plain path when nothing has been resolved
+       * yet, so asking for it on mount handed the element /Tower.seek.mp4 and
+       * the browser began fetching all 12.5MB of it -- alongside the
+       * preloader's own fetch of exactly the same file, which is the download
+       * this whole arrangement exists to make unnecessary. Measured on a
+       * production build: two requests for the tower, the element's own one
+       * cancelled the moment the blob arrived, its bytes thrown away. On
+       * localhost that abort comes in a couple of hundred milliseconds; on a
+       * real connection the two are competing for the line the whole time.
+       *
+       * `onMediaResolved` always runs -- with the blob on success, and with
+       * the plain path when the preloader gives up -- so the element still
+       * ends up with a source either way, and only ever fetches once. */
 
       let introStarted = false;
       const startIntro = () => {
