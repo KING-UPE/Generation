@@ -1356,7 +1356,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
                           {e.crowd.endsWith("+") ? (
                             <>
                               <span>{e.crowd.slice(0, -1)}</span>
-                              <span className="inline-block ml-[0.25em] text-red-hot">+</span>
+                              <span className="inline-block ml-[0.28em] scale-[1.22] origin-center text-red-hot">+</span>
                             </>
                           ) : (
                             e.crowd

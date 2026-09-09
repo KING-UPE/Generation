@@ -126,7 +126,7 @@ export default function CountFigure({
             style={{ fontSize: size }}
           >
             <span ref={numRef}>{FORMAT.format(value)}</span>
-            <span className={`inline-block ml-[0.25em] text-red-hot ${suffixClassName}`.trim()}>{suffix}</span>
+            <span className={`inline-block ml-[0.28em] scale-[1.22] origin-center text-red-hot ${suffixClassName}`.trim()}>{suffix}</span>
           </p>
           {showLabel ? <p className="eyebrow mt-2">{label}</p> : null}
         </div>
