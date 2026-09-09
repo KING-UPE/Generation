@@ -20,6 +20,7 @@ type Props = {
   iconSize?: string;
   /** Sits after the number in red. Every figure we publish is a floor, not a total. */
   suffix?: string;
+  suffixClassName?: string;
   label: string;
   /**
    * Font size of the number, as a CSS length.
@@ -62,6 +63,7 @@ export default function CountFigure({
   icon,
   iconSize = "clamp(3rem, 4.2vw, 3.5rem)",
   suffix = "+",
+  suffixClassName = "",
   label,
   size = "clamp(2.5rem, 3.6vw, 2.9rem)",
   layout = "row",
@@ -124,7 +126,7 @@ export default function CountFigure({
             style={{ fontSize: size }}
           >
             <span ref={numRef}>{FORMAT.format(value)}</span>
-            <span className="text-red-hot">{suffix}</span>
+            <span className={`inline-block ml-[0.25em] text-red-hot ${suffixClassName}`.trim()}>{suffix}</span>
           </p>
           {showLabel ? <p className="eyebrow mt-2">{label}</p> : null}
         </div>
