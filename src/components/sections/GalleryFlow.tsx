@@ -54,16 +54,39 @@ const SLOTS: GalleryShot[] = [
 
 /**
  * Gallery flow configuration:
- * Staggered depth spacing keeps visual density comfortable (~11 photos in view
- * at any moment on desktop, ~5-6 on mobile) instead of crowding all 37 simultaneously.
- * The extended runway gives each photo generous show time across the scroll.
+ * - Desktop: High density (~37 photos in the field simultaneously, like old).
+ * - Mobile: Relaxed density (~5-6 photos in view at any moment) to prevent phone clutter.
  */
 const COUNT = SLOTS.length;
-const INITIAL_IN_VIEW = 9;
-const SPACING = 0.09;
-const TOTAL_Z = Number(((COUNT - 1 - INITIAL_IN_VIEW) * SPACING + 1.05).toFixed(3));
-const FLOW_END = 0.76;
+
+// Desktop: full field density with recycling fly-through (like old)
+const CYCLES_DESKTOP = 1.15;
+const FLOW_END_DESKTOP = 0.70;
+
+// Mobile: staggered depth arrivals for relaxed ~5-6 visible photos (current density)
+const INITIAL_IN_VIEW_MOBILE = 9;
+const SPACING_MOBILE = 0.09;
+const TOTAL_Z_MOBILE = Number(((COUNT - 1 - INITIAL_IN_VIEW_MOBILE) * SPACING_MOBILE + 1.05).toFixed(3));
+
+// Shared drain & outro boundary
 const DRAIN_END = 0.85;
+
+const getZDesktop = (prog: number) => {
+  if (prog <= FLOW_END_DESKTOP) {
+    return (prog / FLOW_END_DESKTOP) * CYCLES_DESKTOP;
+  }
+  if (prog <= DRAIN_END) {
+    return CYCLES_DESKTOP + ((prog - FLOW_END_DESKTOP) / (DRAIN_END - FLOW_END_DESKTOP)) * 1.0;
+  }
+  return CYCLES_DESKTOP + 1.05;
+};
+
+const getZMobile = (prog: number) => {
+  if (prog <= DRAIN_END) {
+    return (prog / DRAIN_END) * TOTAL_Z_MOBILE;
+  }
+  return TOTAL_Z_MOBILE;
+};
 
 /**
  * Scale at the far end of the tunnel, and at the near end as it passes you.
@@ -114,8 +137,9 @@ const ITEMS = Array.from({ length: COUNT }, (_, i) => {
     ...SLOTS[i],
     bx: Math.cos(angle) * radius,
     by: Math.sin(angle) * radius,
-    w: 13 + ((i * 0.7548776662) % 1) * 8,  // vw at full size
-    arriveZ: (i - INITIAL_IN_VIEW) * SPACING,
+    w: 13 + ((i * 0.7548776662) % 1) * 8, // vw at full size
+    d: i / COUNT, // desktop: evenly spaced arrivals across full pass (like old)
+    arriveZ: (i - INITIAL_IN_VIEW_MOBILE) * SPACING_MOBILE, // mobile: staggered depth arrival
   };
 });
 
@@ -151,7 +175,6 @@ export default function GalleryFlow() {
 
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-      let targetZ = 0, z = 0;
       let targetP = 0, p = 0;
       const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
 
@@ -174,22 +197,36 @@ export default function GalleryFlow() {
         const sx = narrow ? SPREAD_X_NARROW : SPREAD_X;
         const sy = narrow ? SPREAD_Y_NARROW : SPREAD_Y;
         const far = narrow ? FAR_NARROW : FAR;
+        const currZ = narrow ? getZMobile(p) : getZDesktop(p);
 
         for (let i = 0; i < els.length; i++) {
           /* Compressing the depth range makes every print large, so a phone
-             would show all at once. Drop every other one — the survivors are
-             still evenly spaced in depth, so arrivals stay regular. */
+             would show all at once. Drop every other one on narrow screens to
+             keep mobile relaxed (~5-6 photos in view). */
           if (narrow && i % 2 === 1) {
             hide(i);
             continue;
           }
           const it = ITEMS[i];
 
-          /* Depth progress: 0 = far away at the centre, 1 = large and passing the viewer */
-          const t = z - it.arriveZ;
-          if (t < 0 || t > 1.0) {
-            hide(i);
-            continue;
+          let t = 0;
+          if (narrow) {
+            // Mobile: Staggered linear arrival for relaxed, uncrowded density (~5-6 photos in view)
+            t = currZ - it.arriveZ;
+            if (t < 0 || t > 1.0) {
+              hide(i);
+              continue;
+            }
+          } else {
+            // Desktop: Full field density (~37 photos in view simultaneously, like old)
+            const u = currZ + it.d;
+            const pass = Math.floor(u);
+            const retired = pass > Math.floor(CYCLES_DESKTOP + it.d);
+            if (retired) {
+              hide(i);
+              continue;
+            }
+            t = u - pass;
           }
 
           /* Exponential growth is what makes constant scrolling feel like
@@ -230,7 +267,7 @@ export default function GalleryFlow() {
 
         /* Prints fade themselves as they retire, so the field is never dimmed
            as a block — that is what cut them off mid-pass before. */
-        if (chrome) chrome.style.opacity = String(1 - clamp01((p - FLOW_END) / 0.14));
+        if (chrome) chrome.style.opacity = String(1 - clamp01((p - 0.72) / 0.14));
         black.style.opacity = String(dark);
 
 
@@ -260,14 +297,8 @@ export default function GalleryFlow() {
         end: "bottom bottom",
         onUpdate: (self) => {
           targetP = self.progress;
-          /* Uniform steady forward travel across the flow; holds when fully cleared. */
-          targetZ =
-            self.progress <= DRAIN_END
-              ? (self.progress / DRAIN_END) * TOTAL_Z
-              : TOTAL_Z;
           if (reduced) {
             p = targetP;
-            z = targetZ;
             render();
           }
         },
@@ -279,7 +310,6 @@ export default function GalleryFlow() {
       }
 
       const tick = () => {
-        z += (targetZ - z) * 0.07;
         p += (targetP - p) * 0.07;
         mouse.x += (mouse.tx - mouse.x) * 0.06;
         mouse.y += (mouse.ty - mouse.y) * 0.06;
