@@ -12,16 +12,25 @@ const VIDEO_SRC = "/Tower.seek.mp4";
 const ESTIMATED_SIZE = 13_096_081; // ~12.5 MB
 
 /**
- * How long to wait for the footage before letting the page through anyway.
+ * When to give up on the footage and let the page through without it.
  *
- * This was 7s, chosen when the file was 4MB. At 12.5MB a phone rarely finishes
- * in that, so the preloader handed over a video that had barely started
- * downloading — and the scrub then sat on frame 0, which reads as the footage
- * being missing rather than still arriving. Long enough now that a mid-range
- * mobile connection can realistically get there, and still bounded so nobody
- * is ever trapped behind it.
+ * This used to be a flat 25s from the start of the load, and that is what put
+ * the tower twenty seconds behind the loader. 18.9MB does not arrive in 25s on
+ * an ordinary connection, so on a cold visit the timer fired mid-download: it
+ * declared the tower ready when no frame existed, released the page, and threw
+ * away the bytes already in hand -- `resolveMedia({})` leaves the players with
+ * the plain path, so the video element then started the same 12.5MB download
+ * again from nothing. The loader was gone and the tower was still arriving,
+ * which is a page you can scroll with nothing in it.
+ *
+ * Slow is not the same as broken, so the wait is measured from the last byte
+ * received rather than from the beginning. A download that is still moving is
+ * never abandoned however long it takes; one that has genuinely stopped is
+ * released quickly. The hard cap is the backstop for a connection that trickles
+ * forever without ever finishing.
  */
-const LOAD_TIMEOUT_MS = 25000;
+const STALL_MS = 12000;
+const HARD_CAP_MS = 120000;
 
 /** Container type for the preloaded blobs — see the note where they are made. */
 const MIME = "video/mp4";
@@ -112,6 +121,9 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
 
     let isCancelled = false;
     let actualLoaded = 0;
+    /* The witness the release guard reads: set on every chunk, so a slow
+       download keeps renewing its own deadline. */
+    let lastByteAt = performance.now();
 
     // Check if DOM video element is ready
     if (typeof window !== "undefined" && (window as any).__TOWER_READY) {
@@ -139,6 +151,7 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
       const urls: Partial<Record<MediaKey, string>> = {};
 
       const progress = () => {
+        lastByteAt = performance.now();
         const total = sizes.reduce((a, b) => a + b, 0);
         const done = got.reduce((a, b) => a + b, 0);
         if (total > 0) actualLoaded = Math.min(100, (done / total) * 100);
@@ -153,6 +166,7 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
             if (!res.ok) throw new Error(`fetch ${path}`);
             const len = res.headers.get("content-length");
             sizes[i] = len ? parseInt(len, 10) : ESTIMATED_SIZE;
+            lastByteAt = performance.now();
             return res;
           }),
         );
@@ -188,6 +202,11 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
         );
 
         if (!isCancelled) resolveMedia(urls);
+        /* Nothing left to give up on. Without this the guard keeps ticking
+           against a `lastByteAt` that has stopped moving, and twelve seconds
+           later calls resolveMedia again -- harmless, since that is guarded,
+           but it should not be relying on that. */
+        clearInterval(releaseGuard);
       } catch {
         /* Blocked, offline, or out of memory — let the players fall back to
            the plain paths rather than leaving them without a source. */
@@ -198,14 +217,25 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
 
     downloadAll();
 
-    // 2. Fallback timer: ensure preloader never gets stuck regardless of network conditions
-    const fallbackTimer = setTimeout(() => {
-      /* Never trap anyone behind a bad connection: release the page and let
-         the players stream from the network as they used to. */
+    /* 2. The escape hatch, for a connection that has stopped rather than one
+     *    that is merely slow.
+     *
+     * Releasing here is a last resort and it shows: the players fall back to
+     * the plain paths and have to fetch the footage themselves, so the page
+     * arrives without a tower. That is the right trade against trapping
+     * someone forever, and the wrong one against making everybody else wait
+     * for it -- which is why it is now keyed to the download having actually
+     * stalled. */
+    const startedLoad = performance.now();
+    const releaseGuard = setInterval(() => {
+      if (isCancelled) return;
+      const now = performance.now();
+      if (now - lastByteAt < STALL_MS && now - startedLoad < HARD_CAP_MS) return;
+      clearInterval(releaseGuard);
       resolveMedia({});
       actualLoaded = 100;
       towerReadyRef.current = true;
-    }, LOAD_TIMEOUT_MS);
+    }, 1000);
 
     // 3. Smooth animation ticker for progress counter
     const startedAt = performance.now();
@@ -292,7 +322,7 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
       isCancelled = true;
       clearInterval(stallGuard);
       window.removeEventListener("tower:ready", onTowerReady);
-      clearTimeout(fallbackTimer);
+      clearInterval(releaseGuard);
       smoothScroll.held = false;
       /* Unmounting mid-load must not leave the page refusing to scroll. */
       openScroll();
