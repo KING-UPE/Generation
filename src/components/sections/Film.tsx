@@ -10,7 +10,6 @@ import { scrollState } from "@/lib/scroll-state";
 
 /* Paths live in MEDIA now — see src/lib/media-cache.ts. */
 
-/** Slow-motion feel while silent; real speed if the viewer turns sound on. */
 /**
  * Ceiling on scroll-driven playback speed.
  *
@@ -26,8 +25,14 @@ const MAX_RATE_MOBILE = 1.8;
  *  resyncs a second, which is itself enough to make playback judder on mobile. */
 const RATE_EPSILON = 0.08;
 
+/*
+ * Resting playback speed. Slow motion, which is what the section is built
+ * around -- scrolling drives it faster, up to the ceilings above.
+ *
+ * There is no second case any more. The video plays muted and has no control
+ * to unmute it, so nothing ever asks for real-time speed.
+ */
 const RATE_SILENT = 0.7;
-const RATE_SOUND = 1;
 
 /**
  * How far past the pin the viewer must scroll before the tablet opens itself.
@@ -120,7 +125,6 @@ export default function Film() {
   const endRef = useRef<HTMLDivElement>(null);
   const barRef = useRef<HTMLSpanElement>(null);
   const timeRef = useRef<HTMLSpanElement>(null);
-  const soundRef = useRef<HTMLButtonElement>(null);
   const skipRef = useRef<HTMLButtonElement>(null);
 
   useGSAP(
@@ -144,7 +148,6 @@ export default function Film() {
       let scrollBoost = 0;
       let lockSafetyTimer: ReturnType<typeof setTimeout> | undefined;
 
-      const baseRate = () => (video.muted ? RATE_SILENT : RATE_SOUND);
       let currentRate = RATE_SILENT;
       let appliedRate = RATE_SILENT;
       const maxRate = window.matchMedia("(max-width: 767px)").matches
@@ -287,18 +290,6 @@ export default function Film() {
       window.addEventListener("touchmove", onTouchMove, { passive: true });
       window.addEventListener("keydown", onKey);
 
-      const onSound = () => {
-        video.muted = !video.muted;
-        currentRate = baseRate();
-        appliedRate = currentRate;
-        video.playbackRate = currentRate;
-        if (soundRef.current) {
-          soundRef.current.textContent = video.muted ? "Sound off" : "Sound on";
-          soundRef.current.setAttribute("aria-pressed", String(!video.muted));
-        }
-      };
-      soundRef.current?.addEventListener("click", onSound);
-
       const onSkip = () => {
         if (Number.isFinite(video.duration) && video.duration > 0) {
           video.currentTime = video.duration;
@@ -326,7 +317,7 @@ export default function Film() {
 
           // Combine real scroll velocity with active wheel boost
           const vel = Math.abs(scrollState.velocity) + scrollBoost;
-          const targetSpeed = baseRate() + Math.min(3.0, vel * 1.5);
+          const targetSpeed = RATE_SILENT + Math.min(3.0, vel * 1.5);
 
           currentRate += (targetSpeed - currentRate) * 0.14;
           if (!video.paused && video.readyState >= 2) {
@@ -358,7 +349,6 @@ export default function Film() {
         video.removeEventListener("timeupdate", onTime);
         video.removeEventListener("loadedmetadata", onTime);
         video.removeEventListener("ended", onEnded);
-        soundRef.current?.removeEventListener("click", onSound);
         skipRef.current?.removeEventListener("click", onSkip);
       };
 
@@ -588,16 +578,6 @@ export default function Film() {
             className="cut-btn-outline cursor-pointer px-4 py-1.5 text-xs transition-all duration-300 hover:border-red-hot hover:text-white"
           >
             Skip
-          </button>
-
-          <button
-            ref={soundRef}
-            type="button"
-            data-cursor="link"
-            aria-pressed="false"
-            className="cut-btn-outline cursor-pointer px-4 py-1.5 text-xs transition-all duration-300 hover:border-red-hot hover:text-white"
-          >
-            Sound off
           </button>
         </div>
       </div>
