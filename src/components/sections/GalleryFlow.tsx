@@ -55,7 +55,7 @@ const SLOTS: GalleryShot[] = [
 /**
  * Gallery flow configuration:
  * - Desktop: High density (~37 photos in the field simultaneously, like old).
- * - Mobile: Relaxed density (~5-6 photos in view at any moment) to prevent phone clutter.
+ * - Mobile: ~8 photos in view at any moment, staggered so they arrive in turn.
  */
 const COUNT = SLOTS.length;
 
@@ -63,9 +63,24 @@ const COUNT = SLOTS.length;
 const CYCLES_DESKTOP = 1.15;
 const FLOW_END_DESKTOP = 0.70;
 
-// Mobile: staggered depth arrivals for relaxed ~5-6 visible photos (current density)
+/*
+ * Mobile: staggered depth arrivals, about eight prints in the frame at once.
+ *
+ * How many are on screen together is one division: a print is visible over one
+ * unit of depth, so it is that unit divided by the gap between arrivals. Only
+ * every other print is shown on a phone, so the gap is twice SPACING_MOBILE.
+ * 0.18 measured five prints across the flight; 0.12 measured eight, which
+ * overshot. 0.13 is the half-again this is meant to be -- measured at seven to
+ * eight, against five before.
+ *
+ * Note it is not the count of photographs that sets the density -- that is the
+ * spacing alone. Halving the gap puts more of the same nineteen on screen
+ * together rather than bringing the other eighteen back, which is deliberate:
+ * a phone decodes every distinct print it shows, and this section already had
+ * to be made lighter, not heavier.
+ */
 const INITIAL_IN_VIEW_MOBILE = 9;
-const SPACING_MOBILE = 0.09;
+const SPACING_MOBILE = 0.065;
 const TOTAL_Z_MOBILE = Number(((COUNT - 1 - INITIAL_IN_VIEW_MOBILE) * SPACING_MOBILE + 1.05).toFixed(3));
 
 // Shared drain & outro boundary
@@ -201,8 +216,10 @@ export default function GalleryFlow() {
 
         for (let i = 0; i < els.length; i++) {
           /* Compressing the depth range makes every print large, so a phone
-             would show all at once. Drop every other one on narrow screens to
-             keep mobile relaxed (~5-6 photos in view). */
+             would show all at once. Every other one is dropped on narrow
+             screens -- which halves how many distinct photographs a phone has
+             to decode. How many are in the frame together is set by the
+             arrival spacing, not by this. */
           if (narrow && i % 2 === 1) {
             hide(i);
             continue;
@@ -211,7 +228,7 @@ export default function GalleryFlow() {
 
           let t = 0;
           if (narrow) {
-            // Mobile: Staggered linear arrival for relaxed, uncrowded density (~5-6 photos in view)
+            // Mobile: staggered linear arrival -- see SPACING_MOBILE for the density
             t = currZ - it.arriveZ;
             if (t < 0 || t > 1.0) {
               hide(i);
