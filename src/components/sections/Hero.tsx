@@ -147,7 +147,7 @@ export default function Hero() {
                 delay={0.5}
                 start="top 100%"
                 y={104}
-                className={"font-display select-none text-white text-bone " + MARK_SIZE}
+                className={"font-display select-none text-white " + MARK_SIZE}
               >
                 {WORDMARK}
               </RevealText>

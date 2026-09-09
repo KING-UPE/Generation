@@ -1353,7 +1353,14 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
                           {e.upcoming ? "Expected Crowd" : "Recorded Crowd"}
                         </span>
                         <p className="font-display mt-1 text-2xl font-normal leading-none tracking-tight text-white sm:text-3xl">
-                          {e.crowd}
+                          {e.crowd.endsWith("+") ? (
+                            <>
+                              <span>{e.crowd.slice(0, -1)}</span>
+                              <span className="inline-block ml-[0.25em] text-red-hot">+</span>
+                            </>
+                          ) : (
+                            e.crowd
+                          )}
                         </p>
                       </div>
                     </div>

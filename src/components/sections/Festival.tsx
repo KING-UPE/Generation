@@ -128,7 +128,7 @@ const STALLS = [
   {
     index: "01",
     title: "Food Stalls",
-    line: "Artisan food kitchens and beverage stalls along the main walkway, serving 13,500+ attendees from doors open to encore.",
+    line: "Artisan food kitchens and beverage stalls along the main walkway, serving 13,500 + attendees from doors open to encore.",
     spec: "High-Traffic Footprint · Power Equipped",
     icon: <GlyphFood />,
     // Asymmetric scattered rotation and drop values
