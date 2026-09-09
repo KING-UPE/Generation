@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import LitTitle from "@/components/ui/LitTitle";
 import ScrollCopy from "@/components/ui/ScrollCopy";
 import CountFigure from "@/components/ui/CountFigure";
@@ -115,27 +115,27 @@ const PHONE_CARDS = [...CARDS.filter((c) => c !== WIDEST), WIDEST];
 
 const EASE = "all 0.45s cubic-bezier(0.16, 1, 0.3, 1)";
 
+/**
+ * The card itself: the paint, and the lift when it is the one being pointed at.
+ *
+ * It carries no hover handlers of its own. Which card is hovered is decided by
+ * the deck, from geometry -- see the notes there.
+ */
 function ScaleCard({
   card,
   lifted,
   dimmed,
-  onEnter,
-  onLeave,
   className = "",
   style,
 }: {
   card: Card;
   lifted?: boolean;
   dimmed?: boolean;
-  onEnter?: () => void;
-  onLeave?: () => void;
   className?: string;
   style?: React.CSSProperties;
 }) {
   return (
     <div
-      onMouseEnter={onEnter}
-      onMouseLeave={onLeave}
       className={
         "relative flex flex-col justify-between overflow-hidden rounded-[26px] p-5 sm:p-6 " +
         className
@@ -193,6 +193,98 @@ function ScaleCard({
 
 export default function Scale() {
   const [hovered, setHovered] = useState<number | null>(null);
+  const deckRef = useRef<HTMLDivElement>(null);
+
+  /*
+   * Which card is under the pointer, worked out from geometry rather than from
+   * what the browser reports is under it.
+   *
+   * Hover used to be mouseenter and mouseleave on the cards themselves, and in
+   * a fan that overlaps by sixty pixels those events describe a shape that
+   * hover is busy changing. The lifted card rises 26px, unwinds most of its
+   * rotation, scales to 1.05 and jumps to z-index 20 -- so the instant it
+   * lights up it owns area it did not own a frame earlier, and gives up area
+   * it did. Near an edge that oscillates; inside an overlap the two cards
+   * trade places for the pointer, which is the switching.
+   *
+   * The wrapper measured here sits at the resting pose and never moves, and
+   * the lift is applied to the card inside it. Testing the pointer against
+   * those boxes makes the answer a pure function of position, so there is no
+   * path from the visual state back into the hover state.
+   *
+   * Front-most first by resting order, deliberately not by z-index: z-index is
+   * one of the things hover changes.
+   */
+  const zones = useRef<{ index: number; r: DOMRect }[]>([]);
+  const deckAt = useRef({ x: 0, y: 0 });
+
+  const measure = () => {
+    const deck = deckRef.current;
+    if (!deck) return zones.current;
+    zones.current = Array.from(
+      deck.querySelectorAll<HTMLElement>("[data-card-index]"),
+    ).map((el) => ({ index: Number(el.dataset.cardIndex), r: el.getBoundingClientRect() }));
+    const dr = deck.getBoundingClientRect();
+    deckAt.current = { x: dr.left, y: dr.top };
+    return zones.current;
+  };
+
+  /* The boxes are viewport coordinates, so a scroll invalidates them while the
+     pointer sits still. The deck's own box is laid out rather than transformed,
+     which makes it a cheap witness: if it has moved, measure again. */
+  const refresh = () => {
+    const deck = deckRef.current;
+    if (!deck || !zones.current.length) return measure();
+    const dr = deck.getBoundingClientRect();
+    if (Math.abs(dr.left - deckAt.current.x) > 0.5 || Math.abs(dr.top - deckAt.current.y) > 0.5) {
+      return measure();
+    }
+    return zones.current;
+  };
+
+  const onDeckMove = (e: React.PointerEvent) => {
+    const list = refresh();
+    for (let i = list.length - 1; i >= 0; i--) {
+      const { r } = list[i];
+      if (
+        e.clientX >= r.left &&
+        e.clientX <= r.right &&
+        e.clientY >= r.top &&
+        e.clientY <= r.bottom
+      ) {
+        const index = list[i].index;
+        setHovered((prev) => (prev === index ? prev : index));
+        return;
+      }
+    }
+    /* A gap between two boxes belongs to neither. Keeping the last card lit
+       there stops a crossing from reading as a blink; leaving the fan still
+       clears it, below. */
+  };
+
+  /*
+   * Clearing is driven from the pointer's own position, not from a boundary
+   * event. The deck's box does not contain the fan -- the cards are translated
+   * down out of it -- so its leave fires while the pointer is still on a card,
+   * and it is the one event that must not be believed.
+   */
+  useEffect(() => {
+    if (hovered === null) return;
+    const onMove = (ev: PointerEvent) => {
+      const list = zones.current;
+      if (!list.length) return;
+      const pad = 32;
+      const left = Math.min(...list.map((z) => z.r.left)) - pad;
+      const right = Math.max(...list.map((z) => z.r.right)) + pad;
+      const top = Math.min(...list.map((z) => z.r.top)) - pad;
+      const bottom = Math.max(...list.map((z) => z.r.bottom)) + pad;
+      if (ev.clientX < left || ev.clientX > right || ev.clientY < top || ev.clientY > bottom) {
+        setHovered(null);
+      }
+    };
+    window.addEventListener("pointermove", onMove, { passive: true });
+    return () => window.removeEventListener("pointermove", onMove);
+  }, [hovered]);
 
   return (
     <section
@@ -215,31 +307,50 @@ export default function Scale() {
         </ScrollCopy>
 
         {/* ── The fan. Wide screens only: 1060px of deck needs the room. ── */}
-        <div className="mt-14 hidden justify-center md:mt-16 lg:flex">
+        <div
+          ref={deckRef}
+          onPointerEnter={measure}
+          onPointerMove={onDeckMove}
+          className="mt-14 hidden justify-center md:mt-16 lg:flex"
+        >
           {CARDS.map((card, i) => {
             const lifted = hovered === i;
             return (
-              <ScaleCard
+              /* The hit target. It sits at the resting pose and stays there;
+                 everything hover does happens to the card inside it. */
+              <div
                 key={card.label}
-                card={card}
-                lifted={lifted}
-                dimmed={hovered !== null && !lifted}
-                onEnter={() => setHovered(i)}
-                onLeave={() => setHovered(null)}
-                className="h-[250px] shrink-0 cursor-pointer"
+                data-card-index={i}
+                className="shrink-0 cursor-pointer"
                 style={{
                   width: CARD_W,
-                  /* The card is 260 wide but only STRIP of it is uncovered, and
-                     the padding eats into that. */
-                  ["--label-max" as string]: `${STRIP - 24}px`,
                   marginLeft: i === 0 ? 0 : STRIP - CARD_W,
                   zIndex: lifted ? 20 : i + 1,
                   transformOrigin: "bottom center",
-                  transform: lifted
-                    ? `translateY(${card.drop - 26}px) rotate(${card.rotate * 0.35}deg) scale(1.05)`
-                    : `translateY(${card.drop}px) rotate(${card.rotate}deg)`,
+                  transform: `translateY(${card.drop}px) rotate(${card.rotate}deg)`,
                 }}
-              />
+              >
+                <ScaleCard
+                  card={card}
+                  lifted={lifted}
+                  dimmed={hovered !== null && !lifted}
+                  className="h-[250px]"
+                  style={{
+                    /* The card is 260 wide but only STRIP of it is uncovered,
+                       and the padding eats into that. */
+                    ["--label-max" as string]: `${STRIP - 24}px`,
+                    transformOrigin: "bottom center",
+                    /* The lift, written as what it adds to the pose the wrapper
+                       already holds rather than as an absolute one. It composes
+                       inside the wrapper's rotation, so the 26px rise leans a
+                       few pixels with the card -- six at the ends of the fan,
+                       where the tilt is 14 degrees. */
+                    transform: lifted
+                      ? `translateY(-26px) rotate(${(card.rotate * 0.35 - card.rotate).toFixed(2)}deg) scale(1.05)`
+                      : "none",
+                  }}
+                />
+              </div>
             );
           })}
         </div>
