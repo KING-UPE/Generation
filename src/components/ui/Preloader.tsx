@@ -413,7 +413,7 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
           </div>
 
           <p className="font-mono-ui mt-2 text-[11px] font-bold tracking-[0.24em] text-bone-muted uppercase">
-            Talents by Echem · Colombo
+            Talents by <span className="brand-name">Echem</span> · Colombo
           </p>
         </div>
 

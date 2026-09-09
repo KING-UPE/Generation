@@ -286,7 +286,8 @@ export default function Footer() {
         <div className="flex flex-col sm:flex-row items-center justify-between text-xs font-mono text-dim uppercase tracking-wider mt-10 pt-6 border-t border-hairline/60 gap-4">
           <p className="text-center sm:text-left">
             © 2023 – 2026 Generation. All rights reserved.{" "}
-            <span className="mx-2 hidden sm:inline text-hairline">/</span> Produced by Echem
+            <span className="mx-2 hidden sm:inline text-hairline">/</span> Produced by{" "}
+            <span className="brand-name">Echem</span>
           </p>
 
           <p className="text-center sm:text-right">

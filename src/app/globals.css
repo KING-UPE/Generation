@@ -144,6 +144,17 @@ html.lenis, html.lenis body { height: auto; }
 }
 
 /*
+ * The company name is written Echem, never ECHEM.
+ *
+ * Several of the small mono styles set text-transform: uppercase -- the badge
+ * pill, the eyebrow, the buttons, the footer's bottom bar -- and the name has
+ * to keep its own case wherever it lands inside one of them.
+ */
+.brand-name {
+  text-transform: none;
+}
+
+/*
  * Labels sat at 10px on every screen: the vw term in the old clamp only reached
  * 10.4px at 1440 wide, so the 0.625rem floor was doing all the work. At that
  * size, with 0.28em tracking, "Venue" and "Crowd" were hard to read on a phone.
