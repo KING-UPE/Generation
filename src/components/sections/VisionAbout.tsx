@@ -11,12 +11,13 @@ import CutCard from "@/components/ui/CutCard";
    happens in it. */
 const VISION_CARDS = [
   { src: "/img/photos/IAP07571.webp", alt: "A performer facing a full open-air crowd at dusk" },
-  { src: "/img/photos/IAP08008.webp", alt: "The floor lit end to end by phone torches" },
+  { src: "/img/photos/MNP-1007.webp", alt: "A singer alone on the runway under the arena roof" },
 ];
 
+/* Index 1 is the card in front: it rests at full scale on top of the other. */
 const ABOUT_CARDS = [
   { src: "/img/photos/IAP08596.webp", alt: "A singer on stage behind a curtain of sparks" },
-  { src: "/img/photos/IAP09052.webp", alt: "A dance troupe in line across the stage" },
+  { src: "/img/photos/IAP09433.webp", alt: "A speaker at the microphone in front of the stage wall" },
 ];
 
 const TITLE_SIZE = "text-[clamp(2.6rem,7.5vw,8.5rem)] leading-[0.9] tracking-[-0.025em]";
@@ -139,7 +140,7 @@ export default function VisionAbout() {
 
   const onDeckEnter = (e: React.PointerEvent) => measureZones(e.currentTarget as HTMLElement);
 
-  const cardUnder = (e: React.PointerEvent) => {
+  const cardUnder = (e: React.MouseEvent) => {
     const deck = e.currentTarget as HTMLElement;
     const list = zones.current.get(deck) ?? measureZones(deck);
     /* Front-most first, by resting order. */
@@ -220,6 +221,37 @@ export default function VisionAbout() {
     setBackHovered(null);
   };
 
+
+  /*
+   * Tap selection, for pointers that cannot hover.
+   *
+   * Every path into the lift ran off pointermove, and a finger held still
+   * fires none: on a phone the card behind was unreachable -- tapping it did
+   * nothing at all. Click is the right event rather than pointerdown, because
+   * the browser withholds a click when the gesture turned out to be a scroll,
+   * and this section is scrolled through. Tapping the lit card again puts it
+   * back down, so both cards are reachable with no way out of the state.
+   *
+   * Re-measured on the spot instead of trusting the boxes cached on enter. The
+   * frozen boxes exist to stop the tilt from moving hover under a travelling
+   * pointer; a tap is one instant, with nothing to oscillate against, and the
+   * page may well have scrolled since the pointer arrived.
+   */
+  const onDeckTap = (
+    e: React.MouseEvent,
+    set: React.Dispatch<React.SetStateAction<number | null>>,
+  ) => {
+    /* A mouse already has hover, and toggling under it fights the pointermove
+       that is about to set the card straight back. */
+    if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+    measureZones(e.currentTarget as HTMLElement);
+    const index = cardUnder(e);
+    if (index === null) return;
+    set((prev) => (prev === index ? null : index));
+  };
+
+  const onFrontTap = (e: React.MouseEvent) => onDeckTap(e, setFrontHovered);
+  const onBackTap = (e: React.MouseEvent) => onDeckTap(e, setBackHovered);
 
   /* Front deck: watch the pointer while a card is lit. */
   useEffect(() => {
@@ -483,7 +515,7 @@ export default function VisionAbout() {
                   end={revealAboutCopyEnd}
                   className="text-[clamp(0.875rem,1.05vw,1.15rem)] font-medium leading-[1.65] text-bone lg:leading-[1.85]"
                 >
-                  Generation is produced by ECheM. Live performance, design and sound engineering held to a single production standard, for an audience that still turns up in person.
+                  Generation is produced by Echem. Live performance, design and sound engineering held to a single production standard, for an audience that still turns up in person.
                 </ScrollCopy>
               </div>
             </div>
@@ -507,6 +539,7 @@ export default function VisionAbout() {
                     onPointerMove={onFrontPointerMove}
                     onPointerEnter={onDeckEnter}
                     onPointerLeave={onFrontPointerLeave}
+                    onClick={onFrontTap}
                     className="absolute inset-0 [backface-visibility:hidden]"
                   >
                     {/*
@@ -605,6 +638,7 @@ export default function VisionAbout() {
                     onPointerMove={onBackPointerMove}
                     onPointerEnter={onDeckEnter}
                     onPointerLeave={onBackPointerLeave}
+                    onClick={onBackTap}
                     className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)]"
                     style={{ visibility: "hidden", pointerEvents: "none" }}
                   >

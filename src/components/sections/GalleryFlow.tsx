@@ -20,20 +20,21 @@ import Lightbox, { type Shot } from "@/components/ui/Lightbox";
 const SLOTS: Shot[] = [
   { src: "/img/photos/IAP07571.webp", alt: "A performer facing a full open-air crowd at dusk" },
   { src: "/img/photos/IAP07479.webp", alt: "A singer with one arm out against a lit backdrop" },
-  { src: "/img/photos/IAP08180.webp", alt: "The full stage under the LED wall" },
+  { src: "/img/photos/MNP-1133.webp", alt: "A guitarist singing through the haze" },
   { src: "/img/photos/IAP07837.webp", alt: "Two dancers in Kandyan costume mid-routine" },
-  { src: "/img/photos/IAP08008.webp", alt: "The floor lit end to end by phone torches" },
-  { src: "/img/photos/IAP07942.webp", alt: "Beams fanning down over the venue" },
+  { src: "/img/photos/MNP-1083.webp", alt: "Kandyan dancers in a line as the front row films" },
+  { src: "/img/photos/IAP06958.webp", alt: "A troupe in white spread across the stage" },
   { src: "/img/photos/IAP06765.webp", alt: "A singer mid-phrase at the microphone" },
-  { src: "/img/photos/IAP06905.webp", alt: "The crowd, shoulders up, one phone raised" },
+  { src: "/img/photos/IAP06665.webp", alt: "A singer against a green stage wash" },
   { src: "/img/photos/IAP07843.webp", alt: "A Kandyan dancer with an arm raised" },
   { src: "/img/photos/IAP08596.webp", alt: "Sparks falling behind a singer on stage" },
   { src: "/img/photos/IAP09052.webp", alt: "A dance troupe in line across the stage" },
-  { src: "/img/photos/IAP06665.webp", alt: "A singer against a green stage wash" },
-  { src: "/img/photos/IAP07600.webp", alt: "The stage and the crowd along its edge" },
-  { src: "/img/photos/IAP07586.webp", alt: "A performer in silhouette through the haze" },
-  { src: "/img/photos/IAP07942.webp", alt: "Beams fanning down over the venue" },
+  { src: "/img/photos/IAP09467.webp", alt: "A singer in a cap mid-verse at the microphone" },
+  { src: "/img/photos/IAP06937.webp", alt: "Two performers in a blue wash on the open stage" },
+  { src: "/img/photos/MNP-1121.webp", alt: "Two hosts on stage with the running order" },
+  { src: "/img/photos/MNP-1007.webp", alt: "A singer alone on the runway under the arena roof" },
 ];
+
 
 const RATIOS = ["4 / 3", "3 / 4", "1 / 1", "3 / 4", "4 / 3"];
 
@@ -211,10 +212,15 @@ export default function GalleryFlow() {
         black.style.opacity = String(dark);
 
         /* The card arrives in three beats — headline, rule, then the edition —
-           so the closing line lands after you have read the one above it. */
-        const reveal = clamp01((outro - 0.26) / 0.32);
-        const ruled = clamp01((outro - 0.44) / 0.20);
-        const branded = clamp01((outro - 0.54) / 0.32);
+           so the closing line lands after you have read the one above it.
+
+           All three finish by outro 0.52, and the rest of the section is a
+           hold. They used to run to 0.86, which is 98% of the way through: the
+           card assembled itself and the footer arrived on top of it, so there
+           was no moment where the finished thing simply stood there. */
+        const reveal = clamp01((outro - 0.12) / 0.22);
+        const ruled = clamp01((outro - 0.26) / 0.14);
+        const branded = clamp01((outro - 0.34) / 0.18);
 
         card.style.transform = `scale(${(0.95 + reveal * 0.05).toFixed(4)})`;
         soon.style.opacity = String(reveal);
@@ -289,7 +295,9 @@ export default function GalleryFlow() {
     <section
       id="flow"
       ref={sectionRef as React.RefObject<HTMLElement>}
-      className="relative h-[280vh]"
+      /* 300vh, up from 280. The extra 20 all lands in the hold at the end,
+         since the travel and the drain are fractions of the whole. */
+      className="relative h-[300vh]"
     >
       <div className="sticky top-0 h-[100svh] w-full overflow-hidden">
         {/* `--gs` scales every print together: at 13-21vw a print is barely
