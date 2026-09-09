@@ -24,7 +24,12 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
       duration: 1.15,
       easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
-      touchMultiplier: 0.8,
+      /* How far one swipe carries. Everything on this page is scrubbed by
+         scroll position, so this is really the speed of every animation on a
+         phone -- lower it and the tower, the fan and the fly-through all play
+         out further apart. 1.6 was the Lenis default and read as a flick
+         throwing you through a whole section. */
+      touchMultiplier: 0.5,
       wheelMultiplier: 1,
     });
 

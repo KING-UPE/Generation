@@ -32,6 +32,21 @@ const ESTIMATED_SIZE = 13_096_081; // ~12.5 MB
 const STALL_MS = 12000;
 const HARD_CAP_MS = 120000;
 
+/**
+ * How long the bar will hold at 95 waiting for the tower to report a frame.
+ *
+ * The gate below will not pass 95 until the tower says it has one, which is
+ * what makes the page arrive with the tower already on it. But the tower has
+ * to be able to say so, and the chain that reports it runs through media
+ * events and a presented frame -- any of which a browser may decline to
+ * deliver. With the download finished the stall guard has already been cleared
+ * too, so nothing else was left to rescue it: the loader simply sat at 95 for
+ * good.
+ *
+ * The wait is worth having and is kept. It is now merely bounded.
+ */
+const TOWER_WAIT_MS = 8000;
+
 /** Container type for the preloaded blobs — see the note where they are made. */
 const MIME = "video/mp4";
 
@@ -253,6 +268,9 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
     // 3. Smooth animation ticker for progress counter
     const startedAt = performance.now();
     let lastTickAt = startedAt;
+    /* When the footage finished arriving, so the wait for the tower's first
+       frame can be given a limit. Zero until it has. */
+    let downloadedAt = 0;
 
     const tick = () => {
       if (isCancelled) return;
@@ -276,8 +294,10 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
       let maxTarget = 0;
       if (actualLoaded < 100) {
         maxTarget = Math.min(90, Math.max(actualLoaded, warm));
+        downloadedAt = 0;
       } else if (!towerReadyRef.current) {
-        maxTarget = 95;
+        if (!downloadedAt) downloadedAt = lastTickAt;
+        maxTarget = lastTickAt - downloadedAt > TOWER_WAIT_MS ? 100 : 95;
       } else {
         maxTarget = 100;
       }

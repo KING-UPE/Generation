@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { useState } from "react";
 import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
 import Lightbox, { type Shot } from "@/components/ui/Lightbox";
@@ -156,64 +156,6 @@ export default function GalleryFlow() {
   const ruleRef = useRef<HTMLSpanElement>(null);
   const brandRef = useRef<HTMLSpanElement>(null);
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
-
-  /*
-   * Warm the photographs once the page is open, not while it is loading.
-   *
-   * The preloader waits for the two videos, and rightly: they are scrubbed, so
-   * a frame that has not arrived is a tower that does not move. The prints are
-   * not scrubbed and there are 5.1MB of them, which is a third again on top of
-   * the 19MB already being waited for -- putting them behind the loader would
-   * buy a smoother gallery with a longer wait for everyone, including the
-   * people who never scroll that far.
-   *
-   * So they are fetched afterwards instead, in the reader's own time. The
-   * gallery is eight sections down; on any connection that can reach it at
-   * all, the prints are in cache by the time it arrives, and the `loading`
-   * attribute on the elements themselves then resolves out of cache rather
-   * than off the network. Low priority so nothing here competes with whatever
-   * the page is doing in front of the reader, and in small batches so a slow
-   * line is not saturated for the whole visit.
-   */
-  useEffect(() => {
-    let cancelled = false;
-    let started = false;
-    const start = () => {
-      if (started || cancelled) return;
-      started = true;
-      let i = 0;
-      const nextBatch = () => {
-        if (cancelled || i >= SLOTS.length) return;
-        let pending = 0;
-        for (let n = 0; n < 6 && i < SLOTS.length; n++, i++) {
-          const img = new Image();
-          /* Not every browser has it; where it does not, the request is simply
-             a normal one, which is still off the critical path by now. */
-          (img as HTMLImageElement & { fetchPriority?: string }).fetchPriority = "low";
-          pending++;
-          const done = () => {
-            if (--pending === 0) nextBatch();
-          };
-          img.onload = done;
-          img.onerror = done;
-          img.src = SLOTS[i].src;
-        }
-      };
-      nextBatch();
-    };
-
-    /* This section is mounted behind the loader from the first render, so the
-       listener is always in place before the event. The timer is for the case
-       where no preloader runs at all -- otherwise the prints would never be
-       warmed; `start` only takes whichever arrives first. */
-    window.addEventListener("preloader:complete", start, { once: true });
-    const late = setTimeout(start, 12000);
-    return () => {
-      cancelled = true;
-      clearTimeout(late);
-      window.removeEventListener("preloader:complete", start);
-    };
-  }, []);
 
   useGSAP(
     () => {

@@ -18,7 +18,17 @@ import { scrollState } from "@/lib/scroll-state";
  * rather than speeding up. Desktops have the headroom, so they keep the range.
  */
 const MAX_RATE_DESKTOP = 4.0;
-const MAX_RATE_MOBILE = 1.8;
+/*
+ * 1.0 on a phone: never faster than the footage runs.
+ *
+ * 1.8 asked a mobile decoder for nearly twice real time on a page that is
+ * being scrolled, and every change of rate makes the media pipeline resync on
+ * top of that. On iOS the result is the picture juddering and then stopping
+ * outright while the layout carries on. Held to natural speed the decoder has
+ * nothing to catch up on. The scroll still drives the rate, between 0.6 and
+ * 1.0, so it still answers the reader -- it just cannot outrun the hardware.
+ */
+const MAX_RATE_MOBILE = 1.0;
 
 /** Smallest change worth writing to `playbackRate`. Every write makes the media
  *  pipeline resync, and this used to be set from a lerp on every frame — sixty

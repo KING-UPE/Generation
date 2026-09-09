@@ -1048,10 +1048,36 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         requestVideoFrameCallback?: (cb: () => void) => number;
       };
 
+      /*
+       * Readiness, with a way out.
+       *
+       * The chain below is loadeddata, then a seek, then `seeked`, then a
+       * frame actually presented through requestVideoFrameCallback. Each link
+       * is a better signal than the one before it -- a presented frame is the
+       * only proof there is something to look at -- and each link is also a
+       * thing that can fail to arrive. rVFC on a *paused* element is not
+       * guaranteed on Safari, a coalesced seek may never report `seeked`, and
+       * a backgrounded tab stops delivering frames at all.
+       *
+       * Nothing was bounding that wait, and the preloader will not pass 95
+       * until this fires: one missing event and the site never opens. Measured
+       * as exactly that -- a loader sitting at 95 with the footage downloaded
+       * and the tower decoded.
+       *
+       * So the presented frame stays the signal we want, and these are the
+       * ones we will settle for: the first frame's data existing, and failing
+       * even that, the clock. A tower that paints a moment late is a far
+       * smaller thing than a page that never arrives.
+       */
+      const firstFrameTimers: ReturnType<typeof setTimeout>[] = [];
+
       const setupFirstFrame = () => {
         if (isTowerReady) return;
 
         const onFrameRendered = () => {
+          if (isTowerReady) return;
+          firstFrameTimers.forEach(clearTimeout);
+          firstFrameTimers.length = 0;
           intro.v = 0;
           frame(0, offset(0));
           fit(0);
@@ -1094,6 +1120,17 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
         video.addEventListener("seeked", onSeeked, { once: true });
         video.addEventListener("loadeddata", onLoaded, { once: true });
         video.addEventListener("canplay", onLoaded, { once: true });
+
+        /* readyState 2 is HAVE_CURRENT_DATA: the first frame is decoded and
+           there to be drawn, whether or not anyone has presented it yet. */
+        firstFrameTimers.push(
+          setTimeout(() => {
+            if (video.readyState >= 2) onFrameRendered();
+          }, 2500),
+        );
+        /* And the backstop, for a decoder that never produced anything. The
+           page opens either way; the tower catches up when it can. */
+        firstFrameTimers.push(setTimeout(onFrameRendered, 8000));
 
         if (video.readyState >= 2) {
           onLoaded();
@@ -1166,6 +1203,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
       paint(0);
 
       return () => {
+        firstFrameTimers.forEach(clearTimeout);
         window.removeEventListener("preloader:opening", startIntro);
         window.removeEventListener("preloader:complete", startIntro);
         introCue.kill();

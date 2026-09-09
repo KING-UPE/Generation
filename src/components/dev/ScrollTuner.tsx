@@ -22,7 +22,7 @@ import { smoothScroll } from "@/lib/smooth-scroll";
 const STORAGE_KEY = "gen26_scroll_tuner";
 
 /** The values currently committed in SmoothScroll.tsx — the panel's baseline. */
-const SHIPPED = { wheel: 1, touch: 0.8, duration: 1.15 };
+const SHIPPED = { wheel: 1, touch: 0.5, duration: 1.15 };
 
 type Values = typeof SHIPPED;
 
