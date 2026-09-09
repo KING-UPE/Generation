@@ -6,59 +6,54 @@ import { useState } from "react";
 import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
 import Lightbox, { type Shot } from "@/components/ui/Lightbox";
 
+type GalleryShot = Shot & { ratio: string };
+
 /*
- * Ordered against RATIOS below, not by preference: the two cycle together, so
- * slot i always lands in the same frame shape. Thirty-three slots come out as
- * thirteen portrait frames, thirteen landscape and seven square — and the
- * library holds exactly thirteen portrait photographs and twenty landscape, so
- * every photograph sits in a frame of its own shape and nothing is cropped
- * across its subject.
- *
- * One photograph each, none repeated. The four the Vision and About decks
- * carry are the four that are not here.
+ * All 37 photographs from the library, with dedicated aspect ratios so portrait
+ * subjects sit in portrait frames and landscape in landscape/square frames.
  */
-const SLOTS: Shot[] = [
-  { src: "/img/photos/IAP09789.webp", alt: "A singer between the flame jets" },
-  { src: "/img/photos/IAP06765.webp", alt: "A singer mid-phrase at the microphone" },
-  { src: "/img/photos/MNP-1424.webp", alt: "The crowd from the back of the field" },
-  { src: "/img/photos/IAP07837.webp", alt: "Two dancers in Kandyan costume mid-routine" },
-  { src: "/img/photos/IAP06752.webp", alt: "A duet in front of a wall of falling petals" },
-  { src: "/img/photos/MNP-1065.webp", alt: "Dancers in a row before the rock fortress backdrop" },
-  { src: "/img/photos/IAP09542.webp", alt: "A performer in the crossfire of white beams" },
-  { src: "/img/photos/IAP06937.webp", alt: "Two performers in a blue wash on the open stage" },
-  { src: "/img/photos/IAP07843.webp", alt: "A Kandyan dancer with an arm raised" },
-  { src: "/img/photos/MNP-1186.webp", alt: "Beams over the stage and a standing crowd" },
-  { src: "/img/photos/IAP06884.webp", alt: "A singer in the warm wash with the band behind her" },
-  { src: "/img/photos/IAP06459.webp", alt: "A singer in a white gown against a starfield wall" },
-  { src: "/img/photos/IAP09052.webp", alt: "A dance troupe in line across the stage" },
-  { src: "/img/photos/MNP-1133.webp", alt: "A guitarist singing through the haze" },
-  { src: "/img/photos/MNP-1073.webp", alt: "The full troupe before the temple backdrop" },
-  { src: "/img/photos/IAP09629.webp", alt: "A pair dancing between the teal panels" },
-  { src: "/img/photos/IAP09467.webp", alt: "A singer in a cap mid-verse at the microphone" },
-  { src: "/img/photos/MNP-1583.webp", alt: "Faces at the barrier, lit from the stage" },
-  { src: "/img/photos/IAP07460.webp", alt: "A singer against a swirl of pink light" },
-  { src: "/img/photos/MNP-1129.webp", alt: "A singer against a wall of lights" },
-  { src: "/img/photos/IAP07140.webp", alt: "A drama piece playing out on the open stage" },
-  { src: "/img/photos/IAP09212.webp", alt: "Two singers sharing the microphone line" },
-  { src: "/img/photos/MNP-1194.webp", alt: "The stage in full, one performer at the centre" },
-  { src: "/img/photos/MNP-1121.webp", alt: "Two hosts on stage with the running order" },
-  { src: "/img/photos/IAP08170.webp", alt: "A singer on the chevron-lit stage" },
-  { src: "/img/photos/MNP-1200.webp", alt: "A singer alone in the green light" },
-  { src: "/img/photos/IAP09701.webp", alt: "A dancer arched back in the haze" },
-  { src: "/img/photos/IAP06958.webp", alt: "A troupe in white spread across the stage" },
-  { src: "/img/photos/MNP-1023.webp", alt: "A host on stage with the running order" },
-  { src: "/img/photos/MNP-1174.webp", alt: "The room seated, one singer on the stage" },
-  { src: "/img/photos/MNP-1239.webp", alt: "A troupe in white across the stage" },
-  { src: "/img/photos/MNP-1151.webp", alt: "Two voices in the green wash" },
-  { src: "/img/photos/IAP06665.webp", alt: "A singer against a green stage wash" },
+const SLOTS: GalleryShot[] = [
+  { src: "/img/photos/IAP09789.webp", alt: "A singer between the flame jets", ratio: "4 / 3" },
+  { src: "/img/photos/IAP06765.webp", alt: "A singer mid-phrase at the microphone", ratio: "3 / 4" },
+  { src: "/img/photos/MNP-1424.webp", alt: "The crowd from the back of the field", ratio: "1 / 1" },
+  { src: "/img/photos/IAP07837.webp", alt: "Two dancers in Kandyan costume mid-routine", ratio: "3 / 4" },
+  { src: "/img/photos/IAP06752.webp", alt: "A duet in front of a wall of falling petals", ratio: "4 / 3" },
+  { src: "/img/photos/MNP-1065.webp", alt: "Dancers in a row before the rock fortress backdrop", ratio: "4 / 3" },
+  { src: "/img/photos/IAP09542.webp", alt: "A performer in the crossfire of white beams", ratio: "3 / 4" },
+  { src: "/img/photos/IAP06937.webp", alt: "Two performers in a blue wash on the open stage", ratio: "1 / 1" },
+  { src: "/img/photos/IAP07843.webp", alt: "A Kandyan dancer with an arm raised", ratio: "3 / 4" },
+  { src: "/img/photos/MNP-1186.webp", alt: "Beams over the stage and a standing crowd", ratio: "4 / 3" },
+  { src: "/img/photos/IAP06884.webp", alt: "A singer in the warm wash with the band behind her", ratio: "4 / 3" },
+  { src: "/img/photos/IAP06459.webp", alt: "A singer in a white gown against a starfield wall", ratio: "3 / 4" },
+  { src: "/img/photos/IAP09052.webp", alt: "A dance troupe in line across the stage", ratio: "1 / 1" },
+  { src: "/img/photos/MNP-1133.webp", alt: "A guitarist singing through the haze", ratio: "3 / 4" },
+  { src: "/img/photos/MNP-1073.webp", alt: "The full troupe before the temple backdrop", ratio: "4 / 3" },
+  { src: "/img/photos/IAP09629.webp", alt: "A pair dancing between the teal panels", ratio: "4 / 3" },
+  { src: "/img/photos/IAP09467.webp", alt: "A singer in a cap mid-verse at the microphone", ratio: "3 / 4" },
+  { src: "/img/photos/MNP-1583.webp", alt: "Faces at the barrier, lit from the stage", ratio: "1 / 1" },
+  { src: "/img/photos/IAP07460.webp", alt: "A singer against a swirl of pink light", ratio: "3 / 4" },
+  { src: "/img/photos/MNP-1129.webp", alt: "A singer against a wall of lights", ratio: "4 / 3" },
+  { src: "/img/photos/IAP07140.webp", alt: "A drama piece playing out on the open stage", ratio: "4 / 3" },
+  { src: "/img/photos/IAP09212.webp", alt: "Two singers sharing the microphone line", ratio: "3 / 4" },
+  { src: "/img/photos/MNP-1194.webp", alt: "The stage in full, one performer at the centre", ratio: "1 / 1" },
+  { src: "/img/photos/MNP-1121.webp", alt: "Two hosts on stage with the running order", ratio: "3 / 4" },
+  { src: "/img/photos/IAP08170.webp", alt: "A singer on the chevron-lit stage", ratio: "4 / 3" },
+  { src: "/img/photos/MNP-1200.webp", alt: "A singer alone in the green light", ratio: "4 / 3" },
+  { src: "/img/photos/IAP09701.webp", alt: "A dancer arched back in the haze", ratio: "3 / 4" },
+  { src: "/img/photos/IAP06958.webp", alt: "A troupe in white spread across the stage", ratio: "1 / 1" },
+  { src: "/img/photos/MNP-1023.webp", alt: "A host on stage with the running order", ratio: "3 / 4" },
+  { src: "/img/photos/MNP-1174.webp", alt: "The room seated, one singer on the stage", ratio: "4 / 3" },
+  { src: "/img/photos/MNP-1239.webp", alt: "A troupe in white across the stage", ratio: "4 / 3" },
+  { src: "/img/photos/MNP-1151.webp", alt: "Two voices in the green wash", ratio: "3 / 4" },
+  { src: "/img/photos/IAP06665.webp", alt: "A singer against a green stage wash", ratio: "1 / 1" },
+  { src: "/img/photos/IAP07571.webp", alt: "A performer facing a full open-air crowd at dusk", ratio: "4 / 3" },
+  { src: "/img/photos/MNP-1007.webp", alt: "A singer alone on the runway under the arena roof", ratio: "4 / 3" },
+  { src: "/img/photos/IAP08596.webp", alt: "A singer on stage behind a curtain of sparks", ratio: "1 / 1" },
+  { src: "/img/photos/IAP09433.webp", alt: "A speaker at the microphone in front of the stage wall", ratio: "4 / 3" },
 ];
 
-
-
-const RATIOS = ["4 / 3", "3 / 4", "1 / 1", "3 / 4", "4 / 3"];
-
-/** How many full passes of the field the fly-through covers. */
-const CYCLES = 1.05;
+/** How many full passes of the field the fly-through covers (enables continuous looping). */
+const CYCLES = 2.6;
 /*
  * The section is 280vh, down from 400. One pass of the field was being spread
  * across four screens of scrolling — the single largest block on a page that
@@ -84,27 +79,16 @@ const FAR = 0.05;
 const FAR_NARROW = 0.22;
 const NEAR = 1;
 /**
- * How far off centre a print drifts as it comes forward. Narrow screens get a
- * wider spread: prints are scaled up a lot there (see `--gs`), so without this
- * they would arrive on top of one another in the middle of the frame.
+ * How far off centre a print drifts as it comes forward.
+ * SPREAD_Y is tuned to allow prints to travel all the way to the top and bottom edges.
  */
-const SPREAD_X = 0.62;
-const SPREAD_Y = 0.62;
-const SPREAD_X_NARROW = 0.86;
-/* Flatter than the horizontal, because a phone opens the field sideways --
-   see `nx`/`ny` where the directions are laid out. */
-const SPREAD_Y_NARROW = 0.52;
+const SPREAD_X = 0.72;
+const SPREAD_Y = 0.95;
+const SPREAD_X_NARROW = 0.78;
+const SPREAD_Y_NARROW = 0.95;
 const NARROW = 768;
 
-/**
- * Roughly how many prints a phone carries at once.
- *
- * The narrow depth range makes every print large, so the whole set on screen
- * together is a wall rather than a field. Prints are dropped to a stride to get
- * back to about this many, and the stride is derived from COUNT so adding
- * photographs never quietly crowds a small screen.
- */
-const NARROW_ON_SCREEN = 8;
+
 
 /**
  * The section runs in three phases.
@@ -114,8 +98,8 @@ const NARROW_ON_SCREEN = 8;
  * mid-way through and then does not respawn. Only once the field is genuinely
  * empty does the close begin.
  */
-const FLOW_END = 0.65;
-const DRAIN_END = 0.85;
+const FLOW_END = 0.75;
+const DRAIN_END = 0.88;
 
 /**
  * The field is laid out by construction rather than randomly.
@@ -130,60 +114,18 @@ const DRAIN_END = 0.85;
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
 const PHI = 0.6180339887;
 
-/**
- * One print per photograph: the field is however large the library is.
- *
- * It was fifteen, tuned by measuring nearest-neighbour gaps across the whole
- * scroll — a ~44px median gap with 17% of prints touching on a 1280px frame.
- * Every print is somewhere in the tunnel at any moment, evenly spread in depth,
- * so the whole library on screen is a denser field than that was: showing all
- * of the photographs and keeping that gap are not both available without
- * staggering arrivals across more than one pass. The spacing is still even —
- * the golden angle keeps prints that arrive together on opposite sides — there
- * is simply more of it. The radius floor stays: near 0.58 it flung them to the
- * edges, near 0.32 it put 71% of them on top of each other.
- */
+const SQRT2_FRAC = Math.SQRT2 - 1;
 const COUNT = SLOTS.length;
-const NARROW_STRIDE = Math.max(1, Math.round(COUNT / NARROW_ON_SCREEN));
+const NARROW_STRIDE = 4;
 const ITEMS = Array.from({ length: COUNT }, (_, i) => {
   const angle = i * GOLDEN_ANGLE;
-  /* A floor on the radius keeps a print clear of the middle once it is big. */
-  const radius = 0.44 + ((i * PHI) % 1) * 0.42;
+  /* Decoupled from GOLDEN_ANGLE via an independent low-discrepancy multiplier
+     so prints spread symmetrically towards the top and bottom of the frame. */
+  const radius = 0.50 + ((i * SQRT2_FRAC) % 1) * 0.40;
   return {
-    ...SLOTS[i % SLOTS.length],
-    ratio: RATIOS[i % RATIOS.length],
+    ...SLOTS[i],
     bx: Math.cos(angle) * radius,
     by: Math.sin(angle) * radius,
-
-    /* Where a print goes on a phone, which is not where it goes on a desktop.
-     *
-     * The golden angle sends prints out in every direction, and that reads as
-     * a field on a wide screen. On a tall narrow one it mostly sends them off
-     * the top and the bottom -- and the ones pointing straight up or down have
-     * almost no sideways travel at all, so they sit in the middle and grow.
-     *
-     * A phone gets a left-right fan instead: every print leaves the centre
-     * towards one edge or the other, alternating, with the vertical only
-     * scattering them off each other's path rather than deciding where they
-     * go. Same emergence from the middle, opening out across the screen.
-     *
-     * The sideways push runs down to almost nothing on purpose. A floor of 0.5
-     * gave two columns of prints with a hole down the middle of the screen
-     * between them -- every print was being pushed off centre, so none was ever
-     * on it. The desktop layout has a floor for the opposite reason, to keep a
-     * large print clear of the middle, but there the direction is radial and
-     * the ones aimed up and down cross the centre anyway. Here nothing else
-     * would.
-     */
-    /* Which side, taken from the golden-angle direction rather than from the
-       parity of i. Parity looked equivalent and was not: a phone keeps one
-       print in every NARROW_STRIDE, the stride is even, and every index it
-       kept was therefore even too -- so the whole field flew off to the left.
-       The golden angle is irrational in turns, so its sign lines up with no
-       stride at all, and it keeps each print on the side the wide layout
-       already sends it. */
-    nx: (Math.cos(angle) >= 0 ? 1 : -1) * (0.06 + ((i * PHI) % 1) * 0.88),
-    ny: (((i * 0.5698402909) % 1) - 0.5) * 0.85,
     w: 13 + ((i * 0.7548776662) % 1) * 8,  // vw at full size
     d: i / COUNT,                           // evenly spaced arrivals
   };
@@ -214,6 +156,9 @@ export default function GalleryFlow() {
       const rule = ruleRef.current;
       const brand = brandRef.current;
       const els = itemRefs.current.filter(Boolean) as HTMLDivElement[];
+      /* The button inside each print, which is the thing that can be clicked.
+         Reaching for it every frame would be a query per print per frame. */
+      const btns = els.map((el) => el.firstElementChild as HTMLElement | null);
       if (!section || !field || !black || !card || !soon || !rule || !brand || !els.length) return;
 
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -223,9 +168,10 @@ export default function GalleryFlow() {
       const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
 
       /* Out of sight and out of reach. See the note where alpha is set. */
-      const hide = (el: HTMLElement) => {
-        el.style.opacity = "0";
-        el.style.pointerEvents = "none";
+      const hide = (i: number) => {
+        els[i].style.opacity = "0";
+        const b = btns[i];
+        if (b) b.style.pointerEvents = "none";
       };
 
       const render = () => {
@@ -247,7 +193,7 @@ export default function GalleryFlow() {
              — the survivors are still evenly spaced in depth, so arrivals stay
              regular. */
           if (narrow && i % NARROW_STRIDE !== 0) {
-            hide(els[i]);
+            hide(i);
             continue;
           }
           const it = ITEMS[i];
@@ -258,7 +204,7 @@ export default function GalleryFlow() {
           const pass = Math.floor(u);
           const retired = pass > Math.floor(CYCLES + it.d);
           if (retired) {
-            hide(els[i]);
+            hide(i);
             continue;
           }
 
@@ -269,8 +215,8 @@ export default function GalleryFlow() {
              constant forward speed — linear scaling reads as slowing down. */
           const scale = far * Math.pow(NEAR / far, t);
 
-          const x = (narrow ? it.nx : it.bx) * scale * w * sx + mouse.x * (10 + t * 26);
-          const y = (narrow ? it.ny : it.by) * scale * h * sy + mouse.y * (10 + t * 26);
+          const x = it.bx * scale * w * sx + mouse.x * (10 + t * 26);
+          const y = it.by * scale * h * sy + mouse.y * (10 + t * 26);
 
           const fadeIn = Math.min(1, t / 0.10);
           const fadeOut = t > 0.92 ? Math.max(0, (1 - t) / 0.08) : 1;
@@ -287,10 +233,15 @@ export default function GalleryFlow() {
 
              The blackout counts as not being seen. A print retires a pass
              after its own arrival offset, so the last few are still at full
-             opacity when the black goes up over them -- and this cannot be
-             answered on the field instead, because pointer-events:none on an
-             ancestor still lets a descendant set to auto take the event. */
-          el.style.pointerEvents = alpha > 0.02 && dark < 0.02 ? "auto" : "none";
+             opacity when the black goes up over them.
+
+             Set on the button rather than on this wrapper, and that is the
+             whole of it: pointer-events:none on an ancestor does not stop a
+             descendant taking the event, because auto is the initial value and
+             the button has it. Turning the wrapper off -- or the field above it
+             -- looked like it worked and changed nothing at all. */
+          const b = btns[i];
+          if (b) b.style.pointerEvents = alpha > 0.02 && dark < 0.02 ? "auto" : "none";
           el.style.zIndex = String(Math.round(t * 100));
         }
 
@@ -386,18 +337,11 @@ export default function GalleryFlow() {
     <section
       id="flow"
       ref={sectionRef as React.RefObject<HTMLElement>}
-      /* 300vh, up from 280. The extra 20 all lands in the hold at the end,
-         since the travel and the drain are fractions of the whole. */
-      className="relative h-[300vh]"
+      /* 550vh gives a comfortable, continuous runway for the looping fly-through */
+      className="relative h-[550vh]"
     >
-      {/* Where the closing card starts to assemble, for the scroll rail.
-          76% of the box rather than the 0.868 of progress the beats begin at:
-          the stage is pinned, so progress runs over the box less one screen,
-          and the rail compares a document position against a line 55% down
-          the viewport. Those two together turn 0.868 into 0.762 -- and since
-          the height is stated in vh, a screen is always a third of the box and
-          the fraction holds at any viewport. */}
-      <div id="soon" aria-hidden className="absolute h-1 w-full" style={{ top: "76%" }} />
+      {/* Where the closing card starts to assemble, for the scroll rail */}
+      <div id="soon" aria-hidden className="absolute h-1 w-full" style={{ top: "82%" }} />
 
       <div className="sticky top-0 h-[100svh] w-full overflow-hidden">
         {/* `--gs` scales every print together: at 13-21vw a print is barely
