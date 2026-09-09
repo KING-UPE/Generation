@@ -52,8 +52,10 @@ const RAMP: { label: string; dh: number; ds: number; l: number }[] = [
 
 export default function ThemeTuner() {
   const [values, setValues] = useState<Values>(SHIPPED);
-  /* Collapsed is the safe first render: it matches what the server sends, and
-     on a phone the open panel is half the screen. Desktop opens it below. */
+  /* Collapsed everywhere until it is asked for. It is a control panel sitting
+     over the page, not part of it, so it stays a header on arrival whatever
+     the screen -- which is also the safe first render, matching what the
+     server sends. */
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const loaded = useRef(false);
@@ -73,9 +75,6 @@ export default function ThemeTuner() {
       /* private mode, cleared storage — the defaults are fine */
     }
 
-    /* Open where there is room for it. Anywhere the panel would cover the page
-       it stays a header until it is asked for. */
-    if (window.matchMedia("(min-width: 768px)").matches) setOpen(true);
     loaded.current = true;
   }, []);
 
