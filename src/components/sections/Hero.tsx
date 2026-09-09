@@ -13,7 +13,7 @@ import EditionMark from "@/components/ui/EditionMark";
 const WORDMARK = "GENERATION";
 const EDITION = "26";
 const PREV_EDITION = "25";
-const TAGLINE = "Talents by ECheM";
+const TAGLINE = "Talents by Echem";
 
 const MARK_SIZE =
   "text-[clamp(2.75rem,13.2vw,13rem)] leading-[0.85] tracking-[-0.01em]";

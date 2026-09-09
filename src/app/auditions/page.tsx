@@ -8,7 +8,7 @@ import Footer from "@/components/sections/Footer";
 
 const DESCRIPTION =
   "Auditions for Generation 26 — singing, dancing, drama, announcing, instruments, " +
-  "script writing, art and photography. Talents by ECheM, Lotus Tower Open Arena, " +
+  "script writing, art and photography. Talents by Echem, Lotus Tower Open Arena, " +
   "Colombo, 12 December 2026.";
 
 export const metadata: Metadata = {
@@ -62,7 +62,7 @@ const CHANNELS = [
   },
 ];
 
-const TAGS = ["#8th_Batch", "#Generation26", "#Talents_By_ECHEM"];
+const TAGS = ["#8th_Batch", "#Generation26", "#Talents_By_Echem"];
 
 type Form = { index: string; title: string; href: string };
 

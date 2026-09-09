@@ -191,7 +191,7 @@ export default function Footer() {
                 </span>
               </Link>
               <p className="mt-3 text-xs font-mono text-dim leading-relaxed max-w-xs">
-                Live Stage & Arena Experience at Lotus Tower, Colombo. Produced by ECheM.
+                Live Stage & Arena Experience at Lotus Tower, Colombo. Produced by Echem.
               </p>
             </div>
 
@@ -277,7 +277,7 @@ export default function Footer() {
               <li>Lotus Tower Open Arena</li>
               <li>Colombo, Sri Lanka</li>
               <li className="text-red-hot font-medium pt-1">Saturday, Dec 12, 2026</li>
-              <li>Produced by ECheM</li>
+              <li>Produced by Echem</li>
             </ul>
           </div>
         </div>
@@ -286,7 +286,7 @@ export default function Footer() {
         <div className="flex flex-col sm:flex-row items-center justify-between text-xs font-mono text-dim uppercase tracking-wider mt-10 pt-6 border-t border-hairline/60 gap-4">
           <p className="text-center sm:text-left">
             © 2023 – 2026 Generation. All rights reserved.{" "}
-            <span className="mx-2 hidden sm:inline text-hairline">/</span> Produced by ECheM
+            <span className="mx-2 hidden sm:inline text-hairline">/</span> Produced by Echem
           </p>
 
           <p className="text-center sm:text-right">

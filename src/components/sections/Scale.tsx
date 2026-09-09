@@ -27,7 +27,7 @@ type Card = {
 };
 
 /**
- * ECheM's standing audience, before a single ticket moves.
+ * Echem's standing audience, before a single ticket moves.
  *
  * The gradients run bright to deep left to right, so the fan reads as one
  * graded sweep rather than five cards that happen to be red. Each is still
@@ -209,7 +209,7 @@ export default function Scale() {
         </div>
 
         <ScrollCopy className="mt-5 max-w-[42ch] text-[clamp(0.875rem,1.05vw,1.15rem)] font-medium leading-[1.65] text-bone">
-          ECheM&apos;s strength goes beyond classroom attendance. Our physical and
+          Echem&apos;s strength goes beyond classroom attendance. Our physical and
           digital platforms create continuous connections with students throughout
           their A/L journey.
         </ScrollCopy>

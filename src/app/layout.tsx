@@ -67,10 +67,10 @@ const notoSinhala = Noto_Sans_Sinhala({
  */
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://generation26.lk";
 
-const TITLE = "Generation 26 — Talents by ECheM";
+const TITLE = "Generation 26 — Talents by Echem";
 const DESCRIPTION =
   "Generation 26 lands at the Lotus Tower Open Arena, Colombo on Saturday 12 December 2026. " +
-  "Ten thousand people, one stage, produced by ECheM — the fourth event of Sri Lanka's " +
+  "Ten thousand people, one stage, produced by Echem — the fourth event of Sri Lanka's " +
   "Generation live music series.";
 
 export const metadata: Metadata = {
@@ -84,7 +84,7 @@ export const metadata: Metadata = {
   applicationName: "Generation 26",
   keywords: [
     "Generation 26",
-    "ECheM",
+    "Echem",
     "Colombo concert",
     "Lotus Tower Open Arena",
     "Sri Lanka live music",
@@ -92,9 +92,9 @@ export const metadata: Metadata = {
     "Colombo events 2026",
     "live music Colombo",
   ],
-  authors: [{ name: "ECheM" }],
-  creator: "ECheM",
-  publisher: "ECheM",
+  authors: [{ name: "Echem" }],
+  creator: "Echem",
+  publisher: "Echem",
   category: "music",
   alternates: { canonical: "/" },
   openGraph: {
@@ -157,7 +157,7 @@ const EVENT_JSONLD = {
       addressCountry: "LK",
     },
   },
-  organizer: { "@type": "Organization", name: "ECheM", url: SITE_URL },
+  organizer: { "@type": "Organization", name: "Echem", url: SITE_URL },
 };
 
 export const viewport: Viewport = {
