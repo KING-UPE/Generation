@@ -299,6 +299,15 @@ export default function GalleryFlow() {
          since the travel and the drain are fractions of the whole. */
       className="relative h-[300vh]"
     >
+      {/* Where the closing card starts to assemble, for the scroll rail.
+          76% of the box rather than the 0.868 of progress the beats begin at:
+          the stage is pinned, so progress runs over the box less one screen,
+          and the rail compares a document position against a line 55% down
+          the viewport. Those two together turn 0.868 into 0.762 -- and since
+          the height is stated in vh, a screen is always a third of the box and
+          the fraction holds at any viewport. */}
+      <div id="soon" aria-hidden className="absolute h-1 w-full" style={{ top: "76%" }} />
+
       <div className="sticky top-0 h-[100svh] w-full overflow-hidden">
         {/* `--gs` scales every print together: at 13-21vw a print is barely
             50px on a phone, so narrow screens need a large multiple. */}

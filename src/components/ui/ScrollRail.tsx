@@ -49,17 +49,29 @@ export default function ScrollRail({ markers }: { markers: Marker[] }) {
       let bounds: number[] = [];
 
       const measure = () => {
-        /* A marker cannot take over while the section before it is still on
-           the fold line. The hero is a full screen tall and the timeline's own
-           top sits 40vh inside it, so by its own top alone the timeline took
-           over at once and "03 Hero" was never once displayed. */
+        let prevEl: HTMLElement | null = null;
         let prevBottom = -Infinity;
         bounds = markers.map((m, i) => {
           const el = document.getElementById(m.id);
           if (!el) return Infinity; // nothing to point at: never selected
           const r = el.getBoundingClientRect();
           const top = r.top + window.scrollY;
-          const start = i === 0 ? -Infinity : Math.max(top, prevBottom);
+
+          /* A marker cannot take over while the section before it is still on
+             the fold line. The hero is a full screen tall and the timeline's
+             own top sits 40vh inside it, so by its own top alone the timeline
+             took over at once and the hero was never once displayed.
+
+             Unless it sits inside that section, which is how the closing card
+             is marked: an anchor within the gallery, at the point the card
+             begins to assemble. The gallery's extent says nothing about where
+             its own parts begin, and reaching past it would put the card's
+             label somewhere in the footer. */
+          const outer = prevEl;
+          const nested = !!outer && outer.contains(el);
+          const start = i === 0 ? -Infinity : nested ? top : Math.max(top, prevBottom);
+
+          prevEl = el;
           prevBottom = r.bottom + window.scrollY;
           return start;
         });
