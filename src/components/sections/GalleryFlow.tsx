@@ -8,32 +8,51 @@ import Lightbox, { type Shot } from "@/components/ui/Lightbox";
 
 /*
  * Ordered against RATIOS below, not by preference: the two cycle together, so
- * slot i always lands in the same frame shape. The four portrait frames get the
- * four portrait photographs; where there are more portrait frames than portrait
- * photographs, the landscape ones chosen for them have a centred subject, which
- * is all that survives an object-cover crop to 3/4.
+ * slot i always lands in the same frame shape. Thirty-three slots come out as
+ * thirteen portrait frames, thirteen landscape and seven square — and the
+ * library holds exactly thirteen portrait photographs and twenty landscape, so
+ * every photograph sits in a frame of its own shape and nothing is cropped
+ * across its subject.
  *
- * Fifteen frames against fourteen photographs, so one repeats. It is a wide
- * venue shot placed nine slots from its twin, which is most of a pass of the
- * tunnel — far enough apart not to read as the same picture twice.
+ * One photograph each, none repeated. The four the Vision and About decks
+ * carry are the four that are not here.
  */
 const SLOTS: Shot[] = [
-  { src: "/img/photos/IAP07571.webp", alt: "A performer facing a full open-air crowd at dusk" },
-  { src: "/img/photos/IAP07479.webp", alt: "A singer with one arm out against a lit backdrop" },
-  { src: "/img/photos/MNP-1133.webp", alt: "A guitarist singing through the haze" },
-  { src: "/img/photos/IAP07837.webp", alt: "Two dancers in Kandyan costume mid-routine" },
-  { src: "/img/photos/MNP-1083.webp", alt: "Kandyan dancers in a line as the front row films" },
-  { src: "/img/photos/IAP06958.webp", alt: "A troupe in white spread across the stage" },
+  { src: "/img/photos/IAP09789.webp", alt: "A singer between the flame jets" },
   { src: "/img/photos/IAP06765.webp", alt: "A singer mid-phrase at the microphone" },
-  { src: "/img/photos/IAP06665.webp", alt: "A singer against a green stage wash" },
-  { src: "/img/photos/IAP07843.webp", alt: "A Kandyan dancer with an arm raised" },
-  { src: "/img/photos/IAP08596.webp", alt: "Sparks falling behind a singer on stage" },
-  { src: "/img/photos/IAP09052.webp", alt: "A dance troupe in line across the stage" },
-  { src: "/img/photos/IAP09467.webp", alt: "A singer in a cap mid-verse at the microphone" },
+  { src: "/img/photos/MNP-1424.webp", alt: "The crowd from the back of the field" },
+  { src: "/img/photos/IAP07837.webp", alt: "Two dancers in Kandyan costume mid-routine" },
+  { src: "/img/photos/IAP06752.webp", alt: "A duet in front of a wall of falling petals" },
+  { src: "/img/photos/MNP-1065.webp", alt: "Dancers in a row before the rock fortress backdrop" },
+  { src: "/img/photos/IAP09542.webp", alt: "A performer in the crossfire of white beams" },
   { src: "/img/photos/IAP06937.webp", alt: "Two performers in a blue wash on the open stage" },
+  { src: "/img/photos/IAP07843.webp", alt: "A Kandyan dancer with an arm raised" },
+  { src: "/img/photos/MNP-1186.webp", alt: "Beams over the stage and a standing crowd" },
+  { src: "/img/photos/IAP06884.webp", alt: "A singer in the warm wash with the band behind her" },
+  { src: "/img/photos/IAP06459.webp", alt: "A singer in a white gown against a starfield wall" },
+  { src: "/img/photos/IAP09052.webp", alt: "A dance troupe in line across the stage" },
+  { src: "/img/photos/MNP-1133.webp", alt: "A guitarist singing through the haze" },
+  { src: "/img/photos/MNP-1073.webp", alt: "The full troupe before the temple backdrop" },
+  { src: "/img/photos/IAP09629.webp", alt: "A pair dancing between the teal panels" },
+  { src: "/img/photos/IAP09467.webp", alt: "A singer in a cap mid-verse at the microphone" },
+  { src: "/img/photos/MNP-1583.webp", alt: "Faces at the barrier, lit from the stage" },
+  { src: "/img/photos/IAP07460.webp", alt: "A singer against a swirl of pink light" },
+  { src: "/img/photos/MNP-1129.webp", alt: "A singer against a wall of lights" },
+  { src: "/img/photos/IAP07140.webp", alt: "A drama piece playing out on the open stage" },
+  { src: "/img/photos/IAP09212.webp", alt: "Two singers sharing the microphone line" },
+  { src: "/img/photos/MNP-1194.webp", alt: "The stage in full, one performer at the centre" },
   { src: "/img/photos/MNP-1121.webp", alt: "Two hosts on stage with the running order" },
-  { src: "/img/photos/MNP-1007.webp", alt: "A singer alone on the runway under the arena roof" },
+  { src: "/img/photos/IAP08170.webp", alt: "A singer on the chevron-lit stage" },
+  { src: "/img/photos/MNP-1200.webp", alt: "A singer alone in the green light" },
+  { src: "/img/photos/IAP09701.webp", alt: "A dancer arched back in the haze" },
+  { src: "/img/photos/IAP06958.webp", alt: "A troupe in white spread across the stage" },
+  { src: "/img/photos/MNP-1023.webp", alt: "A host on stage with the running order" },
+  { src: "/img/photos/MNP-1174.webp", alt: "The room seated, one singer on the stage" },
+  { src: "/img/photos/MNP-1239.webp", alt: "A troupe in white across the stage" },
+  { src: "/img/photos/MNP-1151.webp", alt: "Two voices in the green wash" },
+  { src: "/img/photos/IAP06665.webp", alt: "A singer against a green stage wash" },
 ];
+
 
 
 const RATIOS = ["4 / 3", "3 / 4", "1 / 1", "3 / 4", "4 / 3"];
@@ -71,9 +90,21 @@ const NEAR = 1;
  */
 const SPREAD_X = 0.62;
 const SPREAD_Y = 0.62;
-const SPREAD_X_NARROW = 0.82;
-const SPREAD_Y_NARROW = 0.74;
+const SPREAD_X_NARROW = 0.86;
+/* Flatter than the horizontal, because a phone opens the field sideways --
+   see `nx`/`ny` where the directions are laid out. */
+const SPREAD_Y_NARROW = 0.52;
 const NARROW = 768;
+
+/**
+ * Roughly how many prints a phone carries at once.
+ *
+ * The narrow depth range makes every print large, so the whole set on screen
+ * together is a wall rather than a field. Prints are dropped to a stride to get
+ * back to about this many, and the stride is derived from COUNT so adding
+ * photographs never quietly crowds a small screen.
+ */
+const NARROW_ON_SCREEN = 8;
 
 /**
  * The section runs in three phases.
@@ -100,13 +131,20 @@ const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
 const PHI = 0.6180339887;
 
 /**
- * Tuned by measuring nearest-neighbour gaps across the whole scroll: this lands
- * at a ~44px median gap with 17% of prints touching on a 1280px frame — close
- * enough to read as a field, open enough that nothing is buried. A radius floor
- * near 0.58 flung them to the edges; near 0.32 put 71% of them on top of
- * each other.
+ * One print per photograph: the field is however large the library is.
+ *
+ * It was fifteen, tuned by measuring nearest-neighbour gaps across the whole
+ * scroll — a ~44px median gap with 17% of prints touching on a 1280px frame.
+ * Every print is somewhere in the tunnel at any moment, evenly spread in depth,
+ * so the whole library on screen is a denser field than that was: showing all
+ * of the photographs and keeping that gap are not both available without
+ * staggering arrivals across more than one pass. The spacing is still even —
+ * the golden angle keeps prints that arrive together on opposite sides — there
+ * is simply more of it. The radius floor stays: near 0.58 it flung them to the
+ * edges, near 0.32 it put 71% of them on top of each other.
  */
-const COUNT = 15;
+const COUNT = SLOTS.length;
+const NARROW_STRIDE = Math.max(1, Math.round(COUNT / NARROW_ON_SCREEN));
 const ITEMS = Array.from({ length: COUNT }, (_, i) => {
   const angle = i * GOLDEN_ANGLE;
   /* A floor on the radius keeps a print clear of the middle once it is big. */
@@ -116,6 +154,36 @@ const ITEMS = Array.from({ length: COUNT }, (_, i) => {
     ratio: RATIOS[i % RATIOS.length],
     bx: Math.cos(angle) * radius,
     by: Math.sin(angle) * radius,
+
+    /* Where a print goes on a phone, which is not where it goes on a desktop.
+     *
+     * The golden angle sends prints out in every direction, and that reads as
+     * a field on a wide screen. On a tall narrow one it mostly sends them off
+     * the top and the bottom -- and the ones pointing straight up or down have
+     * almost no sideways travel at all, so they sit in the middle and grow.
+     *
+     * A phone gets a left-right fan instead: every print leaves the centre
+     * towards one edge or the other, alternating, with the vertical only
+     * scattering them off each other's path rather than deciding where they
+     * go. Same emergence from the middle, opening out across the screen.
+     *
+     * The sideways push runs down to almost nothing on purpose. A floor of 0.5
+     * gave two columns of prints with a hole down the middle of the screen
+     * between them -- every print was being pushed off centre, so none was ever
+     * on it. The desktop layout has a floor for the opposite reason, to keep a
+     * large print clear of the middle, but there the direction is radial and
+     * the ones aimed up and down cross the centre anyway. Here nothing else
+     * would.
+     */
+    /* Which side, taken from the golden-angle direction rather than from the
+       parity of i. Parity looked equivalent and was not: a phone keeps one
+       print in every NARROW_STRIDE, the stride is even, and every index it
+       kept was therefore even too -- so the whole field flew off to the left.
+       The golden angle is irrational in turns, so its sign lines up with no
+       stride at all, and it keeps each print on the side the wide layout
+       already sends it. */
+    nx: (Math.cos(angle) >= 0 ? 1 : -1) * (0.06 + ((i * PHI) % 1) * 0.88),
+    ny: (((i * 0.5698402909) % 1) - 0.5) * 0.85,
     w: 13 + ((i * 0.7548776662) % 1) * 8,  // vw at full size
     d: i / COUNT,                           // evenly spaced arrivals
   };
@@ -154,20 +222,32 @@ export default function GalleryFlow() {
       let targetP = 0, p = 0;
       const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
 
+      /* Out of sight and out of reach. See the note where alpha is set. */
+      const hide = (el: HTMLElement) => {
+        el.style.opacity = "0";
+        el.style.pointerEvents = "none";
+      };
+
       const render = () => {
         const w = field.clientWidth || window.innerWidth;
         const h = field.clientHeight || window.innerHeight;
         const narrow = w < NARROW;
+
+        /* Worked out before the prints rather than after them, because whether
+           a print can be clicked depends on it. */
+        const outro = clamp01((p - DRAIN_END) / (1 - DRAIN_END));
+        const dark = clamp01(outro / 0.30);
         const sx = narrow ? SPREAD_X_NARROW : SPREAD_X;
         const sy = narrow ? SPREAD_Y_NARROW : SPREAD_Y;
         const far = narrow ? FAR_NARROW : FAR;
 
         for (let i = 0; i < els.length; i++) {
           /* Compressing the depth range makes every print large, so a phone
-             would show all 15 at once. Drop every other one — the survivors are
-             still evenly spaced in depth, so arrivals stay regular. */
-          if (narrow && i % 2 === 1) {
-            els[i].style.opacity = "0";
+             would show the whole set at once. Keep one in every NARROW_STRIDE
+             — the survivors are still evenly spaced in depth, so arrivals stay
+             regular. */
+          if (narrow && i % NARROW_STRIDE !== 0) {
+            hide(els[i]);
             continue;
           }
           const it = ITEMS[i];
@@ -178,7 +258,7 @@ export default function GalleryFlow() {
           const pass = Math.floor(u);
           const retired = pass > Math.floor(CYCLES + it.d);
           if (retired) {
-            els[i].style.opacity = "0";
+            hide(els[i]);
             continue;
           }
 
@@ -189,27 +269,38 @@ export default function GalleryFlow() {
              constant forward speed — linear scaling reads as slowing down. */
           const scale = far * Math.pow(NEAR / far, t);
 
-          const x = it.bx * scale * w * sx + mouse.x * (10 + t * 26);
-          const y = it.by * scale * h * sy + mouse.y * (10 + t * 26);
+          const x = (narrow ? it.nx : it.bx) * scale * w * sx + mouse.x * (10 + t * 26);
+          const y = (narrow ? it.ny : it.by) * scale * h * sy + mouse.y * (10 + t * 26);
 
           const fadeIn = Math.min(1, t / 0.10);
           const fadeOut = t > 0.92 ? Math.max(0, (1 - t) / 0.08) : 1;
 
           const el = els[i];
+          const alpha = fadeIn * fadeOut;
           el.style.transform =
             `translate(-50%,-50%) translate(${x.toFixed(1)}px,${y.toFixed(1)}px) scale(${scale.toFixed(4)})`;
-          el.style.opacity = String(fadeIn * fadeOut);
+          el.style.opacity = String(alpha);
+          /* A print that cannot be seen cannot be clicked either. Every one
+             of these is a button, and opacity leaves them exactly where they
+             are: they were lying over the closing card, invisible, and a tap
+             near the middle of it opened a photograph.
+
+             The blackout counts as not being seen. A print retires a pass
+             after its own arrival offset, so the last few are still at full
+             opacity when the black goes up over them -- and this cannot be
+             answered on the field instead, because pointer-events:none on an
+             ancestor still lets a descendant set to auto take the event. */
+          el.style.pointerEvents = alpha > 0.02 && dark < 0.02 ? "auto" : "none";
           el.style.zIndex = String(Math.round(t * 100));
         }
 
         /* --- the close: only after the field has drained --- */
-        const outro = clamp01((p - DRAIN_END) / (1 - DRAIN_END));
-        const dark = clamp01(outro / 0.30);
 
         /* Prints fade themselves as they retire, so the field is never dimmed
            as a block — that is what cut them off mid-pass before. */
         if (chrome) chrome.style.opacity = String(1 - clamp01((p - FLOW_END) / 0.14));
         black.style.opacity = String(dark);
+
 
         /* The card arrives in three beats — headline, rule, then the edition —
            so the closing line lands after you have read the one above it.
