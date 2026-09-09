@@ -426,7 +426,10 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
               <span className="text-bone-muted truncate max-w-[240px] sm:max-w-none">{statusText}</span>
             </span>
             <span ref={percentRef} className="font-bold text-red-hot tabular-nums">
-              [{String(progress).padStart(3, "0")}%]
+              {/* Two digits for the whole climb -- 00 through 99 -- and three
+                  only at 100, which needs them. Padding to three all the way
+                  put a leading zero on every reading but the last. */}
+              [{String(progress).padStart(2, "0")}%]
             </span>
           </div>
 
