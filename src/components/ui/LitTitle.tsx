@@ -46,7 +46,29 @@ export default function LitTitle({
 
       if (hasPlayedRef.current) return;
 
+      const isMobile = window.matchMedia("(max-width: 767px)").matches;
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      if (isMobile) {
+        hasPlayedRef.current = true;
+        if (reduced) {
+          gsap.set(wrap, { opacity: 1, y: 0 });
+          return;
+        }
+        gsap.fromTo(
+          wrap,
+          { opacity: 0, y: 44 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 1.15,
+            ease: "gen",
+            scrollTrigger: { trigger: trigger?.current ?? wrap, start, once: true },
+          },
+        );
+        return;
+      }
+
       const w = glow.offsetWidth || 600;
       const h = glow.offsetHeight || 120;
 
@@ -93,11 +115,11 @@ export default function LitTitle({
         children
       )}
 
-      {/* the lit copy, revealed through a radial mask */}
+      {/* the lit copy, revealed through a radial mask (desktop only) */}
       <span
         ref={glowRef}
         aria-hidden
-        className={"font-display lit-glow pointer-events-none absolute inset-0 select-none " + className}
+        className={"font-display lit-glow pointer-events-none absolute inset-0 select-none hidden md:block " + className}
         style={{ ["--lit-w" as string]: weight + "px", ["--lit-r" as string]: radius + "px" }}
       >
         {children}

@@ -147,7 +147,7 @@ export default function AuditionsPage() {
               type="chars"
               stagger={0.038}
               y={104}
-              className="font-display select-none text-[clamp(2.75rem,10vw,8.5rem)] leading-[0.85] tracking-[-0.015em] text-bone"
+              className="font-display select-none text-[clamp(2.75rem,10vw,8.5rem)] leading-[0.85] tracking-[-0.015em] text-white md:text-bone"
             >
               Auditions
             </RevealText>

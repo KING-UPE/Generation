@@ -186,7 +186,7 @@ export default function Footer() {
           <div className="col-span-2 flex flex-col justify-between lg:col-span-1">
             <div>
               <Link href="/" className="inline-block group">
-                <span className="font-display text-2xl font-bold tracking-tight text-bone group-hover:text-red-hot transition-colors duration-200">
+                <span className="font-display text-2xl font-bold tracking-tight text-white md:text-bone group-hover:text-red-hot transition-colors duration-200">
                   GENERATION <span className="text-red-hot">26</span>
                 </span>
               </Link>

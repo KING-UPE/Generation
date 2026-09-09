@@ -57,7 +57,7 @@ export default function Projection() {
             <div ref={headRef}>
               <span className="badge-pill">Generation 26</span>
 
-              <h2 className={"font-display mt-6 select-none text-bone " + TITLE_SIZE}>
+              <h2 className={"font-display mt-6 select-none text-white md:text-bone " + TITLE_SIZE}>
                 Projections
               </h2>
 

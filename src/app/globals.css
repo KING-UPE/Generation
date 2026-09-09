@@ -526,34 +526,47 @@ html.lenis, html.lenis body { height: auto; }
    Typography (family, leading, tracking) stays on the utility classes
    so Tailwind keeps control of it.
 ------------------------------------------------------------------ */
-.lit-base,
-.lit-glow {
-  color: transparent;
-  -webkit-text-fill-color: transparent;
+@media (max-width: 767px) {
+  .lit-base {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    -webkit-text-stroke: 0 !important;
+  }
+  .lit-glow {
+    display: none !important;
+  }
 }
 
-.lit-base {
-  -webkit-text-stroke: var(--lit-w, 1.4px) var(--lit-c, rgba(237, 237, 240, 0.34));
-}
+@media (min-width: 768px) {
+  .lit-base,
+  .lit-glow {
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
 
-.lit-glow {
-  -webkit-text-stroke: var(--lit-w, 1.6px) var(--red-hot);
-  -webkit-mask-image: radial-gradient(
-    circle var(--lit-r, 260px) at var(--mx, 50%) var(--my, 50%),
-    #000 0%, #000 30%, transparent 74%
-  );
-  mask-image: radial-gradient(
-    circle var(--lit-r, 260px) at var(--mx, 50%) var(--my, 50%),
-    #000 0%, #000 30%, transparent 74%
-  );
-  filter: drop-shadow(0 0 14px hsl(var(--red-hot-c) / 0.55))
-          drop-shadow(0 0 44px hsl(var(--red-c) / 0.30));
-}
+  .lit-base {
+    -webkit-text-stroke: var(--lit-w, 1.4px) var(--lit-c, rgba(237, 237, 240, 0.34));
+  }
 
-/* Firefox has no -webkit-text-stroke: fall back to a hairline-dim fill. */
-@supports not (-webkit-text-stroke: 1px red) {
-  .lit-base { -webkit-text-fill-color: currentColor; color: var(--lit-c, rgba(237, 237, 240, 0.30)); }
-  .lit-glow { -webkit-text-fill-color: currentColor; color: var(--red-hot); }
+  .lit-glow {
+    -webkit-text-stroke: var(--lit-w, 1.6px) var(--red-hot);
+    -webkit-mask-image: radial-gradient(
+      circle var(--lit-r, 260px) at var(--mx, 50%) var(--my, 50%),
+      #000 0%, #000 30%, transparent 74%
+    );
+    mask-image: radial-gradient(
+      circle var(--lit-r, 260px) at var(--mx, 50%) var(--my, 50%),
+      #000 0%, #000 30%, transparent 74%
+    );
+    filter: drop-shadow(0 0 14px hsl(var(--red-hot-c) / 0.55))
+            drop-shadow(0 0 44px hsl(var(--red-c) / 0.30));
+  }
+
+  /* Firefox has no -webkit-text-stroke: fall back to a hairline-dim fill. */
+  @supports not (-webkit-text-stroke: 1px red) {
+    .lit-base { -webkit-text-fill-color: currentColor; color: var(--lit-c, rgba(237, 237, 240, 0.30)); }
+    .lit-glow { -webkit-text-fill-color: currentColor; color: var(--red-hot); }
+  }
 }
 
 /* ------------------------------------------------------------------
