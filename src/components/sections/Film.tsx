@@ -45,6 +45,24 @@ const RATE_EPSILON = 0.08;
 const RATE_SILENT = 0.7;
 
 /**
+ * Where the video is held on its first frame, and where it is allowed to run.
+ *
+ * These were 0.05 and 0.08, a gap of three hundredths, and the pause branch
+ * also rewound to zero every time it ran. On a phone that is a video that
+ * stops and starts under your thumb: a touch never leaves the page perfectly
+ * still, the scrub carries on easing for most of a second after it, and
+ * progress crosses a boundary that narrow again and again -- pausing,
+ * rewinding, playing, pausing. The frame ticker made it worse by playing
+ * anything paused above 0.05, so the two were fighting inside the gap itself.
+ *
+ * Far apart now, and the same two numbers answer both, so nothing can want the
+ * video playing and paused at once. Wide enough that no amount of settling
+ * after a touch can span it.
+ */
+const HOLD_BELOW = 0.02;
+const PLAY_ABOVE = 0.12;
+
+/**
  * How far past the pin the viewer must scroll before the tablet opens itself.
  * Small enough to feel like a nudge, large enough not to fire on arrival.
  */
@@ -249,11 +267,25 @@ export default function Film() {
       video.addEventListener("loadedmetadata", onTime);
       video.addEventListener("ended", onEnded);
 
-      // Touch / pointer interaction unlock for mobile browsers
+      /*
+       * A gesture to fall back on where a browser refuses to autoplay.
+       *
+       * It exists for the case where the element is muted and playsinline and
+       * the browser still will not start it on its own. What it must not do is
+       * start the film at a moment the page is deliberately holding it still:
+       * it asked only whether the section was on screen, so a tap while the
+       * tablet was still closed played the video, and the scrub paused it again
+       * on the next update. Touch, play, pause, touch, play, pause -- which
+       * from the outside is a video that stops and starts when you touch it.
+       *
+       * It now answers to the same threshold as everything else, so a tap can
+       * only ever start a film that was already supposed to be running.
+       */
       const tryUserPlay = () => {
         const rect = section.getBoundingClientRect();
         const inSection = rect.bottom > 0 && rect.top < window.innerHeight;
-        if (inSection && !finished && video.paused) {
+        const running = (tl.scrollTrigger?.progress ?? 0) > PLAY_ABOVE;
+        if (inSection && running && !finished && video.paused) {
           video.play().catch(() => {});
         }
       };
@@ -318,7 +350,7 @@ export default function Film() {
         const inView = rect.bottom > -100 && rect.top < window.innerHeight + 100;
 
         if (inView && !finished) {
-          if (video.paused && tl.scrollTrigger && tl.scrollTrigger.progress > 0.05) {
+          if (video.paused && tl.scrollTrigger && tl.scrollTrigger.progress > PLAY_ABOVE) {
             void video.play().catch(() => {});
           }
 
@@ -422,14 +454,17 @@ export default function Film() {
             unlock();
           },
           onUpdate: (self) => {
-            if (self.progress <= 0.05) {
-              // In small tablet preview: pause and stay on first frame
-              video.pause();
-              video.currentTime = 0;
+            if (self.progress <= HOLD_BELOW) {
+              /* Held on the first frame inside the closed tablet. Both of
+                 these are guarded: pausing an already paused element is
+                 harmless, but rewinding one that is already at the start is
+                 what made a touch look like it restarted the film. */
+              if (!video.paused) video.pause();
+              if (video.currentTime > 0.05) video.currentTime = 0;
               finished = false;
               showEndCard(false);
               unlock();
-            } else if (self.progress > 0.08 && !finished && video.paused) {
+            } else if (self.progress > PLAY_ABOVE && !finished && video.paused) {
               void video.play().catch(() => {});
             }
 
