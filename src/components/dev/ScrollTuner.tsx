@@ -22,7 +22,7 @@ import { smoothScroll } from "@/lib/smooth-scroll";
 const STORAGE_KEY = "gen26_scroll_tuner";
 
 /** The values currently committed in SmoothScroll.tsx — the panel's baseline. */
-const SHIPPED = { wheel: 1, touch: 1.6, duration: 1.15 };
+const SHIPPED = { wheel: 1, touch: 0.8, duration: 1.15 };
 
 type Values = typeof SHIPPED;
 
@@ -70,7 +70,11 @@ export default function ScrollTuner() {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setValues({ ...SHIPPED, ...JSON.parse(raw) });
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed.touch === 1.6) parsed.touch = SHIPPED.touch;
+        setValues({ ...SHIPPED, ...parsed });
+      }
     } catch {
       /* private mode, cleared storage — the defaults are fine */
     }
