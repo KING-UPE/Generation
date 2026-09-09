@@ -142,20 +142,14 @@ export default function Lightbox({ shots, index, onClose, onIndex }: Props) {
       <figure
         ref={figureRef}
         onClick={(e) => e.stopPropagation()}
-        className="flex max-h-full flex-col items-center gap-4"
+        className="flex max-h-full items-center justify-center"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={shot.src}
           alt={shot.alt}
-          className="cut-shape max-h-[76svh] w-auto max-w-full object-contain"
+          className="cut-shape max-h-[82svh] w-auto max-w-full object-contain"
         />
-        <figcaption className="flex items-center gap-3 font-mono-ui text-[11px] tracking-[0.2em] text-dim">
-          <span className="text-red-hot">
-            {String(index + 1).padStart(2, "0")}
-          </span>
-          <span className="max-w-[60ch] normal-case tracking-[0.08em]">{shot.alt}</span>
-        </figcaption>
       </figure>
     </div>,
     document.body,
