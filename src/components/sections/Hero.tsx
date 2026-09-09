@@ -39,7 +39,7 @@ export default function Hero() {
         "(prefers-reduced-motion: reduce)",
       ).matches;
 
-      if (torch) {
+      if (torch && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
         gsap.set(torch, { "--mx": "50%", "--my": "50%" });
         gsap.to(torch, {
           opacity: 1,
@@ -147,17 +147,17 @@ export default function Hero() {
                 delay={0.5}
                 start="top 100%"
                 y={104}
-                className={"font-display select-none text-bone " + MARK_SIZE}
+                className={"font-display select-none text-white text-bone " + MARK_SIZE}
               >
                 {WORDMARK}
               </RevealText>
 
-              {/* pointer-lit duplicate sitting exactly on top */}
+              {/* pointer-lit duplicate sitting exactly on top, active only on desktop hover devices */}
               <span
                 ref={torchRef}
                 aria-hidden
                 className={
-                  "font-display pointer-events-none absolute inset-0 select-none opacity-0 " +
+                  "font-display pointer-events-none absolute inset-0 select-none opacity-0 hidden md:block " +
                   MARK_SIZE
                 }
                 style={{
