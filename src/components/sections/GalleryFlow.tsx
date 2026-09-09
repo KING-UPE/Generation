@@ -52,15 +52,19 @@ const SLOTS: GalleryShot[] = [
   { src: "/img/photos/IAP09433.webp", alt: "A speaker at the microphone in front of the stage wall", ratio: "4 / 3" },
 ];
 
-/** How many full passes of the field the fly-through covers. */
-const CYCLES = 1.05;
-/*
- * The section is 280vh, down from 400. One pass of the field was being spread
- * across four screens of scrolling — the single largest block on a page that
- * already runs to fifteen, and unlike the tower there is no frame rate riding
- * on it: these are CSS transforms, so a shorter runway makes the prints travel
- * faster and costs nothing else.
+/**
+ * Gallery flow configuration:
+ * Staggered depth spacing keeps visual density comfortable (~11 photos in view
+ * at any moment on desktop, ~5-6 on mobile) instead of crowding all 37 simultaneously.
+ * The extended runway gives each photo generous show time across the scroll.
  */
+const COUNT = SLOTS.length;
+const INITIAL_IN_VIEW = 9;
+const SPACING = 0.09;
+const TOTAL_Z = Number(((COUNT - 1 - INITIAL_IN_VIEW) * SPACING + 1.05).toFixed(3));
+const FLOW_END = 0.76;
+const DRAIN_END = 0.85;
+
 /**
  * Scale at the far end of the tunnel, and at the near end as it passes you.
  *
@@ -90,17 +94,6 @@ const SPREAD_Y_NARROW = 0.74;
 const NARROW = 768;
 
 /**
- * The section runs in three phases.
- *
- * `FLOW_END` ends the travel. Between there and `DRAIN_END` the field drains:
- * z keeps advancing by one more turn so every print finishes the pass it is
- * mid-way through and then does not respawn. Only once the field is genuinely
- * empty does the close begin.
- */
-const FLOW_END = 0.65;
-const DRAIN_END = 0.85;
-
-/**
  * The field is laid out by construction rather than randomly.
  *
  * Random angles clump: several prints land close together, arrive at the same
@@ -113,10 +106,6 @@ const DRAIN_END = 0.85;
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
 const PHI = 0.6180339887;
 
-/**
- * All 37 photographs from the library configured in the field.
- */
-const COUNT = SLOTS.length;
 const ITEMS = Array.from({ length: COUNT }, (_, i) => {
   const angle = i * GOLDEN_ANGLE;
   /* A floor on the radius keeps a print clear of the middle once it is big. */
@@ -126,7 +115,7 @@ const ITEMS = Array.from({ length: COUNT }, (_, i) => {
     bx: Math.cos(angle) * radius,
     by: Math.sin(angle) * radius,
     w: 13 + ((i * 0.7548776662) % 1) * 8,  // vw at full size
-    d: i / COUNT,                           // evenly spaced arrivals
+    arriveZ: (i - INITIAL_IN_VIEW) * SPACING,
   };
 });
 
@@ -196,18 +185,12 @@ export default function GalleryFlow() {
           }
           const it = ITEMS[i];
 
-          /* `u` is unwrapped travel. Once a print has begun a pass beyond its
-             last allowed one it has retired, and stays gone. */
-          const u = z + it.d;
-          const pass = Math.floor(u);
-          const retired = pass > Math.floor(CYCLES + it.d);
-          if (retired) {
+          /* Depth progress: 0 = far away at the centre, 1 = large and passing the viewer */
+          const t = z - it.arriveZ;
+          if (t < 0 || t > 1.0) {
             hide(i);
             continue;
           }
-
-          /* 0 = far away at the centre, 1 = large and passing the viewer */
-          const t = u - pass;
 
           /* Exponential growth is what makes constant scrolling feel like
              constant forward speed — linear scaling reads as slowing down. */
@@ -216,8 +199,8 @@ export default function GalleryFlow() {
           const x = it.bx * scale * w * sx + mouse.x * (10 + t * 26);
           const y = it.by * scale * h * sy + mouse.y * (10 + t * 26);
 
-          const fadeIn = Math.min(1, t / 0.10);
-          const fadeOut = t > 0.92 ? Math.max(0, (1 - t) / 0.08) : 1;
+          const fadeIn = Math.min(1, t / 0.12);
+          const fadeOut = t > 0.88 ? Math.max(0, (1 - t) / 0.12) : 1;
 
           const el = els[i];
           const alpha = fadeIn * fadeOut;
@@ -277,13 +260,11 @@ export default function GalleryFlow() {
         end: "bottom bottom",
         onUpdate: (self) => {
           targetP = self.progress;
-          /* The travel finishes at FLOW_END and holds, leaving the rest of the
-             section for the close. */
+          /* Uniform steady forward travel across the flow; holds when fully cleared. */
           targetZ =
-            self.progress <= FLOW_END
-              ? (self.progress / FLOW_END) * CYCLES
-              : CYCLES +
-                clamp01((self.progress - FLOW_END) / (DRAIN_END - FLOW_END));
+            self.progress <= DRAIN_END
+              ? (self.progress / DRAIN_END) * TOTAL_Z
+              : TOTAL_Z;
           if (reduced) {
             p = targetP;
             z = targetZ;
@@ -335,18 +316,11 @@ export default function GalleryFlow() {
     <section
       id="flow"
       ref={sectionRef as React.RefObject<HTMLElement>}
-      /* 300vh, up from 280. The extra 20 all lands in the hold at the end,
-         since the travel and the drain are fractions of the whole. */
-      className="relative h-[300vh]"
+      /* Extended runway (480vh) so each photo has generous show time across the scroll. */
+      className="relative h-[480vh]"
     >
-      {/* Where the closing card starts to assemble, for the scroll rail.
-          76% of the box rather than the 0.868 of progress the beats begin at:
-          the stage is pinned, so progress runs over the box less one screen,
-          and the rail compares a document position against a line 55% down
-          the viewport. Those two together turn 0.868 into 0.762 -- and since
-          the height is stated in vh, a screen is always a third of the box and
-          the fraction holds at any viewport. */}
-      <div id="soon" aria-hidden className="absolute h-1 w-full" style={{ top: "76%" }} />
+      {/* Where the closing card starts to assemble, aligned for the scroll rail. */}
+      <div id="soon" aria-hidden className="absolute h-1 w-full" style={{ top: "79%" }} />
 
       <div className="sticky top-0 h-[100svh] w-full overflow-hidden">
         {/* `--gs` scales every print together: at 13-21vw a print is barely
