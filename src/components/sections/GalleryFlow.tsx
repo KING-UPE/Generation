@@ -52,8 +52,8 @@ const SLOTS: GalleryShot[] = [
   { src: "/img/photos/IAP09433.webp", alt: "A speaker at the microphone in front of the stage wall", ratio: "4 / 3" },
 ];
 
-/** How many full passes of the field the fly-through covers (enables continuous looping). */
-const CYCLES = 2.6;
+/** How many full passes of the field the fly-through covers. */
+const CYCLES = 1.05;
 /*
  * The section is 280vh, down from 400. One pass of the field was being spread
  * across four screens of scrolling — the single largest block on a page that
@@ -79,16 +79,15 @@ const FAR = 0.05;
 const FAR_NARROW = 0.22;
 const NEAR = 1;
 /**
- * How far off centre a print drifts as it comes forward.
- * SPREAD_Y is tuned to allow prints to travel all the way to the top and bottom edges.
+ * How far off centre a print drifts as it comes forward. Narrow screens get a
+ * wider spread: prints are scaled up a lot there (see `--gs`), so without this
+ * they would arrive on top of one another in the middle of the frame.
  */
-const SPREAD_X = 0.72;
-const SPREAD_Y = 0.95;
-const SPREAD_X_NARROW = 0.78;
-const SPREAD_Y_NARROW = 0.95;
+const SPREAD_X = 0.62;
+const SPREAD_Y = 0.62;
+const SPREAD_X_NARROW = 0.82;
+const SPREAD_Y_NARROW = 0.74;
 const NARROW = 768;
-
-
 
 /**
  * The section runs in three phases.
@@ -98,8 +97,8 @@ const NARROW = 768;
  * mid-way through and then does not respawn. Only once the field is genuinely
  * empty does the close begin.
  */
-const FLOW_END = 0.75;
-const DRAIN_END = 0.88;
+const FLOW_END = 0.65;
+const DRAIN_END = 0.85;
 
 /**
  * The field is laid out by construction rather than randomly.
@@ -114,14 +113,14 @@ const DRAIN_END = 0.88;
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
 const PHI = 0.6180339887;
 
-const SQRT2_FRAC = Math.SQRT2 - 1;
+/**
+ * All 37 photographs from the library configured in the field.
+ */
 const COUNT = SLOTS.length;
-const NARROW_STRIDE = 4;
 const ITEMS = Array.from({ length: COUNT }, (_, i) => {
   const angle = i * GOLDEN_ANGLE;
-  /* Decoupled from GOLDEN_ANGLE via an independent low-discrepancy multiplier
-     so prints spread symmetrically towards the top and bottom of the frame. */
-  const radius = 0.50 + ((i * SQRT2_FRAC) % 1) * 0.40;
+  /* A floor on the radius keeps a print clear of the middle once it is big. */
+  const radius = 0.44 + ((i * PHI) % 1) * 0.42;
   return {
     ...SLOTS[i],
     bx: Math.cos(angle) * radius,
@@ -189,10 +188,9 @@ export default function GalleryFlow() {
 
         for (let i = 0; i < els.length; i++) {
           /* Compressing the depth range makes every print large, so a phone
-             would show the whole set at once. Keep one in every NARROW_STRIDE
-             — the survivors are still evenly spaced in depth, so arrivals stay
-             regular. */
-          if (narrow && i % NARROW_STRIDE !== 0) {
+             would show all at once. Drop every other one — the survivors are
+             still evenly spaced in depth, so arrivals stay regular. */
+          if (narrow && i % 2 === 1) {
             hide(i);
             continue;
           }
@@ -337,11 +335,18 @@ export default function GalleryFlow() {
     <section
       id="flow"
       ref={sectionRef as React.RefObject<HTMLElement>}
-      /* 550vh gives a comfortable, continuous runway for the looping fly-through */
-      className="relative h-[550vh]"
+      /* 300vh, up from 280. The extra 20 all lands in the hold at the end,
+         since the travel and the drain are fractions of the whole. */
+      className="relative h-[300vh]"
     >
-      {/* Where the closing card starts to assemble, for the scroll rail */}
-      <div id="soon" aria-hidden className="absolute h-1 w-full" style={{ top: "82%" }} />
+      {/* Where the closing card starts to assemble, for the scroll rail.
+          76% of the box rather than the 0.868 of progress the beats begin at:
+          the stage is pinned, so progress runs over the box less one screen,
+          and the rail compares a document position against a line 55% down
+          the viewport. Those two together turn 0.868 into 0.762 -- and since
+          the height is stated in vh, a screen is always a third of the box and
+          the fraction holds at any viewport. */}
+      <div id="soon" aria-hidden className="absolute h-1 w-full" style={{ top: "76%" }} />
 
       <div className="sticky top-0 h-[100svh] w-full overflow-hidden">
         {/* `--gs` scales every print together: at 13-21vw a print is barely
