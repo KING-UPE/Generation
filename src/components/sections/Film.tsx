@@ -11,40 +11,41 @@ import { scrollState } from "@/lib/scroll-state";
 /* Paths live in MEDIA now — see src/lib/media-cache.ts. */
 
 /**
- * Ceiling on scroll-driven playback speed.
+ * Two speeds, and how much scrolling it takes to change gear.
  *
- * Measured on a production build: the decoder holds every rate up to 4x at
- * 97-99% of what is asked, with no dropped frames, so the ceiling was never
- * the thing that stalled. It is 2.5 because 4x does not read as a film running
- * on with you, it reads as a fast-forward -- and because the headroom that
- * leaves is what absorbs a slower machine than the one this was measured on.
- */
-const MAX_RATE_DESKTOP = 2.5;
-/*
- * The mobile ceiling, kept only for a touch device wide enough to be driving
- * the rate at all -- see `rateFollowsScroll`, which switches the whole
- * mechanism off wherever the pointer is coarse.
+ * This was a continuous ramp: velocity fed a target, a lerp chased it, and any
+ * change past a threshold was written to the element. Measured on a production
+ * build, a sustained scroll came out at six writes -- and the halts in playback
+ * tracked the number of writes, not the speed. Every write makes the media
+ * pipeline resync, and that resync is the stutter. The decoder itself is
+ * blameless: it holds 4x at 97-99% of what is asked, with `waiting` never
+ * firing at any rate, and frame times stay under 26ms at the 99th percentile
+ * through the whole thing.
  *
- * It was 1.8, which asked a phone decoder for nearly twice real time on a page
- * being scrolled. Lowering it to natural speed helped and did not fix
- * anything: the cost is in the changing, not in the speed.
+ * So the rate stops being a curve and becomes a switch. Cruising, or pushed,
+ * and nothing in between -- which is two writes across a scroll instead of
+ * six. The two thresholds are apart on purpose: one scroll that hovers around
+ * a single threshold would change gear repeatedly, which is the fault this is
+ * meant to remove.
+ *
+ * PUSHED is 1.4 rather than the 4.0 it once was. That was fast-forward, not a
+ * film running on with you.
  */
-const MAX_RATE_MOBILE = 1.0;
+const RATE_PUSHED = 1.4;
+const PUSH_ON = 0.55;
+const PUSH_OFF = 0.25;
 
 /**
- * Smallest change worth writing to `playbackRate`.
+ * How hard the scroll is allowed to push, and how fast it may build.
  *
- * Every write makes the media pipeline resync. This was 0.08, and a fast flick
- * through the section measured 31 writes inside about a second -- thirty-one
- * resyncs, which is the same mechanism that had the film stopping outright on
- * iOS, just with more hardware underneath it.
- *
- * 0.3 across a 0.7-to-2.5 range is at most six distinct speeds, so the rate
- * still answers the scroll and does so in steps the pipeline can take. The
- * lerp underneath is unchanged; this only decides when the result is worth
- * telling the element about.
+ * Scrolling gently never reaches the top; scrolling continuously -- one push
+ * after another without a pause -- pins it there, because the boost each wheel
+ * event adds arrives faster than the decay takes it away. Smaller per event
+ * and a lower bank, so it takes a sustained scroll to change gear at all.
  */
-const RATE_EPSILON = 0.3;
+const BOOST_CEILING = 1.6;
+const BOOST_PER_WHEEL = 0.005;
+const BOOST_PER_TOUCH = 0.012;
 
 /*
  * Resting playback speed. Slow motion, which is what the section is built
@@ -195,12 +196,8 @@ export default function Film() {
       let scrollBoost = 0;
       let lockSafetyTimer: ReturnType<typeof setTimeout> | undefined;
 
-      let currentRate = RATE_SILENT;
-      let appliedRate = RATE_SILENT;
-      const maxRate = window.matchMedia("(max-width: 767px)").matches
-        ? MAX_RATE_MOBILE
-        : MAX_RATE_DESKTOP;
-
+      /* Which gear the film is in. See RATE_PUSHED. */
+      let pushed = false;
       /*
        * Whether scrolling is allowed to drive the playback rate at all.
        *
@@ -337,7 +334,7 @@ export default function Film() {
       const onWheel = (e: WheelEvent) => {
         if (locked) {
           if (e.deltaY > 0) {
-            scrollBoost = Math.min(3.5, scrollBoost + Math.abs(e.deltaY) * 0.008);
+            scrollBoost = Math.min(BOOST_CEILING, scrollBoost + Math.abs(e.deltaY) * BOOST_PER_WHEEL);
           } else if (e.deltaY < -20) {
             unlock();
           }
@@ -353,7 +350,7 @@ export default function Film() {
         if (locked) {
           const dy = touchY - (e.touches[0]?.clientY ?? 0);
           if (dy > 0) {
-            scrollBoost = Math.min(3.5, scrollBoost + dy * 0.02);
+            scrollBoost = Math.min(BOOST_CEILING, scrollBoost + dy * BOOST_PER_TOUCH);
           } else if (dy < -20) {
             unlock();
           }
@@ -398,15 +395,11 @@ export default function Film() {
 
             // Combine real scroll velocity with active wheel boost
             const vel = Math.abs(scrollState.velocity) + scrollBoost;
-            const targetSpeed = RATE_SILENT + Math.min(3.0, vel * 1.5);
-
-            currentRate += (targetSpeed - currentRate) * 0.14;
-            if (!video.paused && video.readyState >= 2) {
-              const next = Math.max(0.6, Math.min(maxRate, currentRate));
-              if (Math.abs(next - appliedRate) > RATE_EPSILON) {
-                appliedRate = next;
-                video.playbackRate = next;
-              }
+            /* Hysteresis: it takes more to start pushing than to keep it. */
+            const wants = pushed ? vel > PUSH_OFF : vel > PUSH_ON;
+            if (wants !== pushed && !video.paused && video.readyState >= 2) {
+              pushed = wants;
+              video.playbackRate = pushed ? RATE_PUSHED : RATE_SILENT;
             }
           }
         } else if (!inView) {
