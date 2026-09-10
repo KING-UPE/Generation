@@ -13,11 +13,13 @@ import { scrollState } from "@/lib/scroll-state";
 /**
  * Ceiling on scroll-driven playback speed.
  *
- * A phone decodes this in hardware at its native 30fps comfortably; asking for
- * 4x means 120fps of decode, which no mobile decoder sustains, and it stalls
- * rather than speeding up. Desktops have the headroom, so they keep the range.
+ * Measured on a production build: the decoder holds every rate up to 4x at
+ * 97-99% of what is asked, with no dropped frames, so the ceiling was never
+ * the thing that stalled. It is 2.5 because 4x does not read as a film running
+ * on with you, it reads as a fast-forward -- and because the headroom that
+ * leaves is what absorbs a slower machine than the one this was measured on.
  */
-const MAX_RATE_DESKTOP = 4.0;
+const MAX_RATE_DESKTOP = 2.5;
 /*
  * The mobile ceiling, kept only for a touch device wide enough to be driving
  * the rate at all -- see `rateFollowsScroll`, which switches the whole
@@ -29,10 +31,20 @@ const MAX_RATE_DESKTOP = 4.0;
  */
 const MAX_RATE_MOBILE = 1.0;
 
-/** Smallest change worth writing to `playbackRate`. Every write makes the media
- *  pipeline resync, and this used to be set from a lerp on every frame — sixty
- *  resyncs a second, which is itself enough to make playback judder on mobile. */
-const RATE_EPSILON = 0.08;
+/**
+ * Smallest change worth writing to `playbackRate`.
+ *
+ * Every write makes the media pipeline resync. This was 0.08, and a fast flick
+ * through the section measured 31 writes inside about a second -- thirty-one
+ * resyncs, which is the same mechanism that had the film stopping outright on
+ * iOS, just with more hardware underneath it.
+ *
+ * 0.3 across a 0.7-to-2.5 range is at most six distinct speeds, so the rate
+ * still answers the scroll and does so in steps the pipeline can take. The
+ * lerp underneath is unchanged; this only decides when the result is worth
+ * telling the element about.
+ */
+const RATE_EPSILON = 0.3;
 
 /*
  * Resting playback speed. Slow motion, which is what the section is built
