@@ -2,11 +2,11 @@
   "name": "Generation 26 — Talents by Echem",
   "short_name": "Generation 26",
   "description": "Live Stage & Arena Experience at Lotus Tower Open Arena, Colombo. Saturday, 12 December 2026.",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#0c1e21",
-  "theme_color": "#0c1e21",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
   "icons": [
     {
       "src": "assets/images/favicon/android-chrome-192x192.png",
