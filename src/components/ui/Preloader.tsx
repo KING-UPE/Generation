@@ -5,11 +5,10 @@ import { gsap } from "@/lib/gsap";
 import { smoothScroll } from "@/lib/smooth-scroll";
 import { MEDIA, mediaPath, resolveMedia, type MediaKey } from "@/lib/media-cache";
 
-const VIDEO_SRC = "/Tower.seek.mp4";
 /* Only used if the server withholds content-length; the real size is read from
    the response. Kept roughly honest so the bar is not wildly wrong when it is
    needed. */
-const ESTIMATED_SIZE = 13_096_081; // ~12.5 MB
+const ESTIMATED_SIZE = 8_624_921; // the aftermovie, ~8.2 MB
 
 /**
  * When to give up on the footage and let the page through without it.
@@ -319,9 +318,9 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
       if (p < 25) {
         setStatusText("INITIALIZING SYSTEM CORE");
       } else if (p < 60) {
-        setStatusText("BUFFERING LOTUS TOWER FOOTAGE");
+        setStatusText("BUFFERING AFTERMOVIE FOOTAGE");
       } else if (p < 85) {
-        setStatusText("DECODING 1200 INTRA-FRAME KEYFRAMES");
+        setStatusText("BUILDING LOTUS TOWER GEOMETRY");
       } else if (p < 99) {
         setStatusText(
           !towerReadyRef.current
@@ -519,7 +518,7 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
 
       {/* Bottom Telemetry Footer */}
       <footer className="relative z-10 flex w-full max-w-(--maxw) mx-auto items-center justify-between text-muted font-mono-ui text-[10px]">
-        <span>ALL-INTRA GOP=1 // 30 FPS</span>
+        <span>REAL-TIME 3D // WEBGL</span>
         <span className="text-bone-muted">PRELOADING HIGH-DEFINITION ASSETS</span>
       </footer>
     </div>

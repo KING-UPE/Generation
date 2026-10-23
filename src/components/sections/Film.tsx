@@ -579,7 +579,7 @@ export default function Film() {
             playsInline
             /* No `src` and no preloading here: the preloader fetches this
                file up front and hands over the bytes, so anything set in the
-               markup would only start a second download of the same 10MB. */
+               markup would only start a second download of the same file. */
             preload="none"
           />
           <div className="pointer-events-none absolute inset-0 bg-black/25" />

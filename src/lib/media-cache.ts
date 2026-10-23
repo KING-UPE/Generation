@@ -2,11 +2,12 @@
 
 /**
  * The footage the preloader fetches in full before the page is shown, and the
- * handoff that lets the players use those exact bytes.
+ * handoff that lets the player use those exact bytes.
  *
- * Both videos are scrubbed or rate-controlled rather than simply played, so
- * either one reaching for the network mid-page shows up as a freeze you cannot
- * scroll past. Downloading them up front only helps if the players then reuse
+ * Only the aftermovie is footage now — the tower is drawn in code (see
+ * src/lib/lotus-tower). It is rate-controlled rather than simply played, so
+ * reaching for the network mid-page shows up as a freeze you cannot scroll
+ * past. Downloading them up front only helps if the players then reuse
  * the download: the files are served `Cache-Control: public, max-age=0` with an
  * ETag, so a second request revalidates rather than being served outright, and
  * a range request against that is not guaranteed to reuse anything. The
@@ -21,19 +22,17 @@
 const NARROW = 768;
 
 /**
- * Each player has a wide and a narrow cut of the same footage — identical
- * duration and frame rate, so every cue time and the cross-fade's frame maths
- * hold for either. Only one is ever fetched.
+ * A wide and a narrow cut of the same footage — identical duration and frame
+ * rate, so every cue time holds for either. Only one is ever fetched.
  *
- * The narrow cuts are not a compromise on what you see. `object-cover` crops
- * the tower to roughly a quarter of the frame's width on a phone, so 960px
- * across is still more detail than the screen can show; the saving is in
- * pixels that were being downloaded and then thrown away. Together they take
- * the blocking download from 22.8MB to 8.8MB.
+ * The aftermovie uses one file for both. On a phone the film fills the full
+ * screen height and is cropped at the sides, so a phone needs every one of
+ * the 720 lines — a narrower cut would be upscaled further and look softer.
+ * The file is a visually lossless re-encode of the delivered edit, video only:
+ * it always plays muted, so it carries no audio track.
  */
 export const MEDIA = {
-  tower: { wide: "/Tower.seek.mp4", narrow: "/Tower.seek.mobile.mp4" },
-  film: { wide: "/Video.desktop.mp4", narrow: "/Video.mobile.mp4" },
+  film: { wide: "/Aftermovie.mp4", narrow: "/Aftermovie.mp4" },
 } as const;
 
 export type MediaKey = keyof typeof MEDIA;
