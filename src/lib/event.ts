@@ -14,8 +14,7 @@ export const EVENT = {
   year: "2026",
   venue: "Lotus Tower Open Arena",
   city: "Colombo, Sri Lanka",
-  /* Doors and set times are not announced yet. Say so rather than guess. */
-  time: "To be announced",
+  time: "6:00 PM",
   crowd: "10,000+",
 };
 

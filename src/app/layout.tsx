@@ -127,11 +127,9 @@ const EVENT_JSONLD = {
   "@type": "MusicEvent",
   name: "Generation 26",
   description: DESCRIPTION,
-  /* Date only, deliberately. Doors and set times are not known here, and a
-     guessed clock time in structured data is a wrong fact served to Google.
-     Add the time — and a `performer` block once the line-up exists — when
-     they are real. The offer appears on its own once TICKET_URL is set. */
-  startDate: "2026-12-12",
+  /* Starts 6 PM Colombo time. Add a `performer` block once the line-up
+     exists. The offer appears on its own once TICKET_URL is set. */
+  startDate: "2026-12-12T18:00:00+05:30",
   ...(TICKET_URL
     ? {
         offers: {

@@ -68,7 +68,7 @@ export default function EventDetails() {
               <span className={LABEL + " text-red-hot"}>Date</span>
               <p className="font-display text-[clamp(2.75rem,6.2vw,6rem)] leading-[0.9] tracking-[-0.02em] text-white">
                 {EVENT.dayMonth}
-                <span className="block text-red-hot">{EVENT.year}</span>
+                <span className="mt-[0.14em] block text-red-hot">{EVENT.year}</span>
               </p>
               <p className="text-base font-bold text-bone sm:text-lg">{EVENT.day}</p>
             </div>
