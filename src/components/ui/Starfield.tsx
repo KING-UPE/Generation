@@ -45,6 +45,8 @@ export default function Starfield() {
     if (!ctx) return;
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    /* Stars are specks: a phone's third device pixel buys nothing but fill. */
+    const coarse = window.matchMedia("(pointer: coarse)").matches;
 
     let w = 0;
     let h = 0;
@@ -64,7 +66,7 @@ export default function Starfield() {
     window.addEventListener("brand:change", rereadBrand);
 
     const build = () => {
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      dpr = Math.min(window.devicePixelRatio || 1, coarse ? 1.5 : 2);
       /* Measure the container: it can mount at zero size (background tab,
          a pane that gets sized later) and only the observer will tell us. */
       w = wrap.clientWidth || window.innerWidth;
@@ -137,6 +139,26 @@ export default function Starfield() {
       ctx.globalAlpha = 1;
     };
 
+    /*
+     * Every frame only while something moves the stars. The canvas covers the
+     * whole screen and sits over everything else that animates, the tower
+     * included; the twinkle is a slow sine and reads the same at twenty
+     * frames a second, while scrolling and the pointer lean still get every
+     * frame, since the stars travel with them.
+     */
+    let lastAt = 0;
+    let lastScroll = -1;
+    const tick = () => {
+      const now = performance.now();
+      const scroll = window.scrollY || 0;
+      const leaning =
+        Math.abs(mouse.tx - mouse.x) > 0.002 || Math.abs(mouse.ty - mouse.y) > 0.002;
+      if (scroll === lastScroll && !leaning && now - lastAt < 50) return;
+      lastAt = now;
+      lastScroll = scroll;
+      draw();
+    };
+
     const rebuild = () => {
       if (build()) draw();
     };
@@ -148,14 +170,14 @@ export default function Starfield() {
 
     if (!reduced) {
       window.addEventListener("pointermove", onMove, { passive: true });
-      gsap.ticker.add(draw);
+      gsap.ticker.add(tick);
     }
 
     return () => {
       ro.disconnect();
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("brand:change", rereadBrand);
-      gsap.ticker.remove(draw);
+      gsap.ticker.remove(tick);
     };
   }, []);
 

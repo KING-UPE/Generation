@@ -3,61 +3,18 @@
 
 import { useRef } from "react";
 import { useState } from "react";
+import Link from "next/link";
 import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
-import Lightbox, { type Shot } from "@/components/ui/Lightbox";
-
-type GalleryShot = Shot & { ratio: string };
-
-/*
- * All 37 photographs from the library, with dedicated aspect ratios so portrait
- * subjects sit in portrait frames and landscape in landscape/square frames.
- */
-const SLOTS: GalleryShot[] = [
-  { src: "/img/photos/IAP09789.webp", alt: "A singer between the flame jets", ratio: "4 / 3" },
-  { src: "/img/photos/IAP06765.webp", alt: "A singer mid-phrase at the microphone", ratio: "3 / 4" },
-  { src: "/img/photos/MNP-1424.webp", alt: "The crowd from the back of the field", ratio: "1 / 1" },
-  { src: "/img/photos/IAP07837.webp", alt: "Two dancers in Kandyan costume mid-routine", ratio: "3 / 4" },
-  { src: "/img/photos/IAP06752.webp", alt: "A duet in front of a wall of falling petals", ratio: "4 / 3" },
-  { src: "/img/photos/MNP-1065.webp", alt: "Dancers in a row before the rock fortress backdrop", ratio: "4 / 3" },
-  { src: "/img/photos/IAP09542.webp", alt: "A performer in the crossfire of white beams", ratio: "3 / 4" },
-  { src: "/img/photos/IAP06937.webp", alt: "Two performers in a blue wash on the open stage", ratio: "1 / 1" },
-  { src: "/img/photos/IAP07843.webp", alt: "A Kandyan dancer with an arm raised", ratio: "3 / 4" },
-  { src: "/img/photos/MNP-1186.webp", alt: "Beams over the stage and a standing crowd", ratio: "4 / 3" },
-  { src: "/img/photos/IAP06884.webp", alt: "A singer in the warm wash with the band behind her", ratio: "4 / 3" },
-  { src: "/img/photos/IAP06459.webp", alt: "A singer in a white gown against a starfield wall", ratio: "3 / 4" },
-  { src: "/img/photos/IAP09052.webp", alt: "A dance troupe in line across the stage", ratio: "1 / 1" },
-  { src: "/img/photos/MNP-1133.webp", alt: "A guitarist singing through the haze", ratio: "3 / 4" },
-  { src: "/img/photos/MNP-1073.webp", alt: "The full troupe before the temple backdrop", ratio: "4 / 3" },
-  { src: "/img/photos/IAP09629.webp", alt: "A pair dancing between the teal panels", ratio: "4 / 3" },
-  { src: "/img/photos/IAP09467.webp", alt: "A singer in a cap mid-verse at the microphone", ratio: "3 / 4" },
-  { src: "/img/photos/MNP-1583.webp", alt: "Faces at the barrier, lit from the stage", ratio: "1 / 1" },
-  { src: "/img/photos/IAP07460.webp", alt: "A singer against a swirl of pink light", ratio: "3 / 4" },
-  { src: "/img/photos/MNP-1129.webp", alt: "A singer against a wall of lights", ratio: "4 / 3" },
-  { src: "/img/photos/IAP07140.webp", alt: "A drama piece playing out on the open stage", ratio: "4 / 3" },
-  { src: "/img/photos/IAP09212.webp", alt: "Two singers sharing the microphone line", ratio: "3 / 4" },
-  { src: "/img/photos/MNP-1194.webp", alt: "The stage in full, one performer at the centre", ratio: "1 / 1" },
-  { src: "/img/photos/MNP-1121.webp", alt: "Two hosts on stage with the running order", ratio: "3 / 4" },
-  { src: "/img/photos/IAP08170.webp", alt: "A singer on the chevron-lit stage", ratio: "4 / 3" },
-  { src: "/img/photos/MNP-1200.webp", alt: "A singer alone in the green light", ratio: "4 / 3" },
-  { src: "/img/photos/IAP09701.webp", alt: "A dancer arched back in the haze", ratio: "3 / 4" },
-  { src: "/img/photos/IAP06958.webp", alt: "A troupe in white spread across the stage", ratio: "1 / 1" },
-  { src: "/img/photos/MNP-1023.webp", alt: "A host on stage with the running order", ratio: "3 / 4" },
-  { src: "/img/photos/MNP-1174.webp", alt: "The room seated, one singer on the stage", ratio: "4 / 3" },
-  { src: "/img/photos/MNP-1239.webp", alt: "A troupe in white across the stage", ratio: "4 / 3" },
-  { src: "/img/photos/MNP-1151.webp", alt: "Two voices in the green wash", ratio: "3 / 4" },
-  { src: "/img/photos/IAP06665.webp", alt: "A singer against a green stage wash", ratio: "1 / 1" },
-  { src: "/img/photos/IAP07571.webp", alt: "A performer facing a full open-air crowd at dusk", ratio: "4 / 3" },
-  { src: "/img/photos/MNP-1007.webp", alt: "A singer alone on the runway under the arena roof", ratio: "4 / 3" },
-  { src: "/img/photos/IAP08596.webp", alt: "A singer on stage behind a curtain of sparks", ratio: "1 / 1" },
-  { src: "/img/photos/IAP09433.webp", alt: "A speaker at the microphone in front of the stage wall", ratio: "4 / 3" },
-];
+import Lightbox from "@/components/ui/Lightbox";
+import { PHOTOS, photoSrcSet } from "@/lib/photos";
+import { EVENT } from "@/lib/event";
 
 /**
  * Gallery flow configuration:
  * - Desktop: High density (~37 photos in the field simultaneously, like old).
  * - Mobile: ~8 photos in view at any moment, staggered so they arrive in turn.
  */
-const COUNT = SLOTS.length;
+const COUNT = PHOTOS.length;
 
 // Desktop: full field density with recycling fly-through (like old)
 const CYCLES_DESKTOP = 1.15;
@@ -149,7 +106,7 @@ const ITEMS = Array.from({ length: COUNT }, (_, i) => {
   /* A floor on the radius keeps a print clear of the middle once it is big. */
   const radius = 0.44 + ((i * PHI) % 1) * 0.42;
   return {
-    ...SLOTS[i],
+    ...PHOTOS[i],
     bx: Math.cos(angle) * radius,
     by: Math.sin(angle) * radius,
     w: 13 + ((i * 0.7548776662) % 1) * 8, // vw at full size
@@ -284,7 +241,13 @@ export default function GalleryFlow() {
 
         /* Prints fade themselves as they retire, so the field is never dimmed
            as a block — that is what cut them off mid-pass before. */
-        if (chrome) chrome.style.opacity = String(1 - clamp01((p - 0.72) / 0.14));
+        if (chrome) {
+          const shown = 1 - clamp01((p - 0.72) / 0.14);
+          chrome.style.opacity = String(shown);
+          /* Hidden outright once faded, so its link cannot be pressed
+             unseen over the closing card. */
+          chrome.style.visibility = shown < 0.02 ? "hidden" : "visible";
+        }
         black.style.opacity = String(dark);
 
 
@@ -397,7 +360,15 @@ export default function GalleryFlow() {
                   boxShadow: "0 20px 60px rgba(0,0,0,0.8), 0 0 20px hsl(var(--red-hot-c) / 0.15)",
                 }}
               >
-                <img src={it.src} alt="" loading="lazy" className="h-full w-full object-cover" />
+                <img
+                  src={it.src}
+                  srcSet={photoSrcSet(it.src)}
+                  sizes="(max-width: 768px) 50vw, 22vw"
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  className="h-full w-full object-cover"
+                />
                 <div className="pointer-events-none absolute inset-0 border border-hairline/60" />
               </button>
             </div>
@@ -415,8 +386,15 @@ export default function GalleryFlow() {
           ref={chromeRef}
           className="pointer-events-none absolute inset-x-0 top-0 z-[200] mx-auto flex w-full max-w-(--maxw) items-center justify-between px-(--gutter) pt-8 md:pt-10"
         >
-          <span className="badge-pill whitespace-nowrap">Archive · Gallery</span>
-          <span className="badge-pill whitespace-nowrap">Past Events</span>
+          <span className="badge-pill whitespace-nowrap">Generation 25</span>
+          <Link
+            href="/gallery"
+            scroll={false}
+            data-cursor="link"
+            className="badge-pill tap-target pointer-events-auto whitespace-nowrap"
+          >
+            View gallery <span aria-hidden>→</span>
+          </Link>
         </header>
 
         {/* the field hands over to black */}
@@ -434,7 +412,7 @@ export default function GalleryFlow() {
             ref={soonRef}
             className="font-display select-none text-center text-[clamp(2.75rem,12vw,11rem)] leading-[0.9] tracking-[-0.02em] text-white opacity-0"
           >
-            Coming soon
+            See you there
           </span>
 
           <span
@@ -448,7 +426,7 @@ export default function GalleryFlow() {
             ref={brandRef}
             className="font-display select-none text-center text-[clamp(1.1rem,4vw,3.25rem)] leading-none tracking-[-0.01em] text-white opacity-0"
           >
-            Generation <span className="text-red-hot">26</span>
+            Generation <span className="text-red-hot">26</span>, {EVENT.dayMonth}
           </span>
         </div>
       </div>

@@ -22,8 +22,8 @@ const KNOTS: ReadonlyArray<readonly [number, number, number, number, number, num
   /* Down from the bud to the lettering — scrolled, and shaped as one ease:
      it leaves the bud from rest, is quickest through the balcony, and slows
      onto the lettering instead of arriving on it. */
-  [0.0,   221,    241,    262,  -26,   24],
-  [0.6,   219,    238,    261,  -25.5, 24],
+  [0.0,   224,    244,    268,  -26,   24],
+  [0.6,   222,    241,    266,  -25.5, 24],
   [1.6,   205,    220,    258,  -21,   24],
   [2.8,   170,    178,    253,  -15,   24],
   [3.8,   146,    148,    250,  -11,   24],

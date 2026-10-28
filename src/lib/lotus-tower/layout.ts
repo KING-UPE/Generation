@@ -97,24 +97,26 @@ export const STAGE = {
 /**
  * The bud's outline: radius against height, in the head's frame.
  *
- * Taken from the tower itself rather than the footage — narrow where it leaves
- * the neck, swelling fast to its widest a little above the middle, and drawing
- * in only slightly toward a broad, flat crown. Every petal is laid on this surface,
- * each tier a little inside the one below it, so the bud reads as one closed
- * form with its petals pressed to it instead of a cup of loose leaves.
+ * A tulip, not a ball: narrow where it rises out of its cup, widening steadily
+ * to its widest about two thirds of the way up, then turning in only a little
+ * toward a broad crown — the real tower's shape, which carries its width high.
+ * Every petal is laid on this surface, each tier a little inside the one
+ * below it, so the bud reads as one closed form with its petals pressed to
+ * it, while the narrower top tier leaves gaps between its tips, as the real
+ * crown does.
  */
 const BUD: ReadonlyArray<readonly [number, number]> = [
-  [363.5, 9.8],
-  [367, 15.2],
-  [371, 19.2],
-  [376, 22.3],
-  [382, 24.0],
-  [388, 24.6],
-  [394, 24.4],
-  [399, 23.6],
-  [404, 22.4],
-  [408, 21.2],
-  [411, 20.4],
+  [363.5, 9.0],
+  [366, 12.0],
+  [370, 15.0],
+  [375, 17.6],
+  [381, 20.4],
+  [388, 21.8],
+  [395, 22.6],
+  [401, 22.4],
+  [406, 21.2],
+  [410, 19.4],
+  [413.5, 17.4],
 ];
 
 export function budRadius(y: number) {

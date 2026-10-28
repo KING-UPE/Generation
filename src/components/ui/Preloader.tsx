@@ -3,12 +3,13 @@
 import { useEffect, useState, useRef } from "react";
 import { gsap } from "@/lib/gsap";
 import { smoothScroll } from "@/lib/smooth-scroll";
-import { MEDIA, mediaPath, resolveMedia, type MediaKey } from "@/lib/media-cache";
-
-/* Only used if the server withholds content-length; the real size is read from
-   the response. Kept roughly honest so the bar is not wildly wrong when it is
-   needed. */
-const ESTIMATED_SIZE = 8_624_921; // the aftermovie, ~8.2 MB
+import {
+  MEDIA,
+  mediaPath,
+  registerPreloadCancel,
+  resolveMedia,
+  type MediaKey,
+} from "@/lib/media-cache";
 
 /**
  * When to give up on the footage and let the page through without it.
@@ -32,17 +33,13 @@ const STALL_MS = 12000;
 const HARD_CAP_MS = 120000;
 
 /**
- * How long the bar will hold at 95 waiting for the tower to report a frame.
+ * How long the loader will wait for the tower to report a frame.
  *
- * The gate below will not pass 95 until the tower says it has one, which is
- * what makes the page arrive with the tower already on it. But the tower has
- * to be able to say so, and the chain that reports it runs through media
- * events and a presented frame -- any of which a browser may decline to
- * deliver. With the download finished the stall guard has already been cleared
- * too, so nothing else was left to rescue it: the loader simply sat at 95 for
- * good.
- *
- * The wait is worth having and is kept. It is now merely bounded.
+ * The tower is the only thing the page waits for now. The gate below will not
+ * reach 100 until the tower says it has drawn, which is what makes the page
+ * arrive with the tower already on it. But the tower has to be able to say
+ * so -- no WebGL, a lost context -- so the wait is bounded, measured from the
+ * start of the load.
  */
 const TOWER_WAIT_MS = 8000;
 
@@ -50,12 +47,13 @@ const TOWER_WAIT_MS = 8000;
 const MIME = "video/mp4";
 
 /**
- * How far the bar may run on elapsed time before any bytes are counted, and
- * over how long. Small on purpose: it exists to cover connection setup, not to
- * flatter the download.
+ * How the bar runs while the tower is being built: on time, easing toward 90
+ * and holding there until the tower reports its first frame. There are no
+ * bytes to count any more -- the film is not waited for -- and building the
+ * scene is one job with no progress of its own to read.
  */
-const WARMUP_CEILING = 18;
-const WARMUP_MS = 1800;
+const WARMUP_CEILING = 90;
+const WARMUP_MS = 1400;
 
 export default function Preloader({ onComplete }: { onComplete?: () => void }) {
   const [progress, setProgress] = useState(0);
@@ -134,7 +132,6 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
     openScrollRef.current = openScroll;
 
     let isCancelled = false;
-    let actualLoaded = 0;
     /* The witness the release guard reads: set on every chunk, so a slow
        download keeps renewing its own deadline. */
     let lastByteAt = performance.now();
@@ -144,12 +141,27 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
       towerReadyRef.current = true;
     }
 
+    /* The film waits for the tower: on a slow connection it would otherwise
+       compete with the scene for the same bandwidth and hold up the only
+       thing the page opens on. */
+    let started = false;
+    let startedLoad = 0;
+    const startDownload = () => {
+      if (started || isCancelled) return;
+      started = true;
+      startedLoad = performance.now();
+      lastByteAt = startedLoad;
+      downloadAll();
+    };
+
     const onTowerReady = () => {
       towerReadyRef.current = true;
+      startDownload();
     };
     window.addEventListener("tower:ready", onTowerReady, { once: true });
 
-    /* 1. Fetch every piece of footage in full, tracking real bytes.
+    /* 1. Fetch every piece of footage in full, behind the page, tracking real
+     *    bytes.
      *
      * Both files are kept as blobs and handed to the players as object URLs.
      * Counting bytes and throwing them away would leave the players to fetch
@@ -158,28 +170,27 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
      * guarantees nothing touches the network once the page is running, which
      * is the whole point of waiting here. */
     const downloadAll = async () => {
+      /* The player cancels this if it is reached before the bytes are all
+         in, and streams instead -- see `needMedia`. */
+      const controller = new AbortController();
+      registerPreloadCancel(() => controller.abort());
       const keys = Object.keys(MEDIA) as MediaKey[];
       const paths = keys.map(mediaPath);
-      const sizes = new Array(keys.length).fill(0);
-      const got = new Array(keys.length).fill(0);
       const urls: Partial<Record<MediaKey, string>> = {};
 
       const progress = () => {
         lastByteAt = performance.now();
-        const total = sizes.reduce((a, b) => a + b, 0);
-        const done = got.reduce((a, b) => a + b, 0);
-        if (total > 0) actualLoaded = Math.min(100, (done / total) * 100);
       };
 
       try {
-        /* Sized first so the bar reflects the whole job from the start rather
-           than jumping when the second file appears. */
         const responses = await Promise.all(
-          paths.map(async (path, i) => {
-            const res = await fetch(path);
+          paths.map(async (path) => {
+            /* Low priority: it should never hold up anything on screen. */
+            const res = await fetch(path, {
+              signal: controller.signal,
+              priority: "low",
+            } as RequestInit);
             if (!res.ok) throw new Error(`fetch ${path}`);
-            const len = res.headers.get("content-length");
-            sizes[i] = len ? parseInt(len, 10) : ESTIMATED_SIZE;
             lastByteAt = performance.now();
             return res;
           }),
@@ -190,7 +201,6 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
             const reader = res.body?.getReader();
             if (!reader) {
               const blob = await res.blob();
-              got[i] = sizes[i];
               urls[keys[i]] = URL.createObjectURL(
                 blob.type ? blob : new Blob([blob], { type: MIME }),
               );
@@ -202,7 +212,6 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
               const { done, value } = await reader.read();
               if (done || isCancelled) break;
               chunks.push(value);
-              got[i] += value.length;
               progress();
             }
             /* The type is not optional. A blob URL with an empty type gives
@@ -215,17 +224,6 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
           }),
         );
 
-        /* Every byte is in hand, whatever the headers claimed.
-         *
-         * The bar is driven by bytes read over bytes promised, and the promise
-         * is `content-length` -- or ESTIMATED_SIZE for both files when the
-         * server withholds it, which a proxy sending chunked responses does.
-         * Get that wrong and the ratio never reaches 100: the gate below holds
-         * at 90 waiting for a number that cannot arrive, the stall guard has
-         * already been cleared because the download did finish, and the loader
-         * sits there for good. Finishing is the authoritative signal, so it is
-         * the one that sets this. */
-        actualLoaded = 100;
         if (!isCancelled) resolveMedia(urls);
         /* Nothing left to give up on. Without this the guard keeps ticking
            against a `lastByteAt` that has stopped moving, and twelve seconds
@@ -236,70 +234,40 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
         /* Blocked, offline, or out of memory — let the players fall back to
            the plain paths rather than leaving them without a source. */
         resolveMedia({});
-        actualLoaded = 100;
       }
     };
 
-    downloadAll();
+    if (towerReadyRef.current) startDownload();
 
     /* 2. The escape hatch, for a connection that has stopped rather than one
      *    that is merely slow.
      *
-     * Releasing here is a last resort and it shows: the players fall back to
-     * the plain paths and have to fetch the footage themselves, so the page
-     * arrives without a tower. That is the right trade against trapping
-     * someone forever, and the wrong one against making everybody else wait
-     * for it -- which is why it is now keyed to the download having actually
-     * stalled. */
-    const startedLoad = performance.now();
+     * Releasing here is a last resort: the player falls back to the plain
+     * path and streams the footage itself. It is keyed to the download having
+     * actually stalled, never to it merely being slow. */
     const releaseGuard = setInterval(() => {
-      if (isCancelled) return;
+      if (isCancelled || !started) return;
       const now = performance.now();
       if (now - lastByteAt < STALL_MS && now - startedLoad < HARD_CAP_MS) return;
       clearInterval(releaseGuard);
       resolveMedia({});
-      actualLoaded = 100;
-      setTimeout(() => {
-        towerReadyRef.current = true;
-      }, 4000);
     }, 1000);
 
     // 3. Smooth animation ticker for progress counter
     const startedAt = performance.now();
     let lastTickAt = startedAt;
-    /* When the footage finished arriving, so the wait for the tower's first
-       frame can be given a limit. Zero until it has. */
-    let downloadedAt = 0;
 
     const tick = () => {
       if (isCancelled) return;
       lastTickAt = performance.now();
 
-      /* Connection setup and the response headers both land before a single
-         byte is counted, and a bar sitting at 0 through that reads as broken.
-         This lets it creep on time alone for a moment, bounded hard, so it can
-         never be more than a fifth ahead of work actually done. */
-      const warm = Math.min(1, (lastTickAt - startedAt) / WARMUP_MS) * WARMUP_CEILING;
+      const elapsed = lastTickAt - startedAt;
+      const warm = WARMUP_CEILING * (1 - Math.exp(-elapsed / WARMUP_MS));
 
-      // STRICT GATE:
-      // Preloader MUST NOT complete until Lotus Tower footage is fully loaded, decoded, and rendered!
-      // 1. While downloading media files (actualLoaded < 100):
-      //    maxTarget is strictly capped at 90% (tied to actual downloaded bytes).
-      // 2. Once all media is downloaded (actualLoaded >= 100):
-      //    If the Tower has not painted its initial frame yet,
-      //    maxTarget is capped at 95% and waits.
-      // 3. ONLY when actualLoaded >= 100 AND towerReadyRef.current is true:
-      //    maxTarget unlocks to 100%!
-      let maxTarget = 0;
-      if (actualLoaded < 100) {
-        maxTarget = Math.min(90, Math.max(actualLoaded, warm));
-        downloadedAt = 0;
-      } else if (!towerReadyRef.current) {
-        if (!downloadedAt) downloadedAt = lastTickAt;
-        maxTarget = lastTickAt - downloadedAt > TOWER_WAIT_MS ? 100 : 95;
-      } else {
-        maxTarget = 100;
-      }
+      /* The gate: 100 only once the tower has drawn its first frame, or
+         once it has had TOWER_WAIT_MS to try. The film is not part of it. */
+      const maxTarget =
+        towerReadyRef.current || elapsed > TOWER_WAIT_MS ? 100 : Math.min(90, warm);
 
       const remaining = maxTarget - progressVal.current;
       const step = remaining > 0 ? Math.max(0.25, remaining * 0.12) : 0;
@@ -315,10 +283,8 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
       const p = Math.floor(progressVal.current);
       setProgress(p);
 
-      if (p < 25) {
+      if (p < 40) {
         setStatusText("INITIALIZING SYSTEM CORE");
-      } else if (p < 60) {
-        setStatusText("BUFFERING AFTERMOVIE FOOTAGE");
       } else if (p < 85) {
         setStatusText("BUILDING LOTUS TOWER GEOMETRY");
       } else if (p < 99) {
@@ -345,8 +311,7 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
       if (
         !isCancelled &&
         performance.now() - lastTickAt > 1200 &&
-        towerReadyRef.current &&
-        actualLoaded >= 99
+        towerReadyRef.current
       ) {
         progressVal.current = 100;
         setProgress(100);

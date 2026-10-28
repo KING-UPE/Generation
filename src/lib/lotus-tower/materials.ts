@@ -20,45 +20,43 @@ const HASH = /* glsl */ `
 /* ------------------------------------------------------------------------ */
 
 /**
- * The petals: tinted glass in a painted steel frame, as built.
+ * The petals at night: dark glass lit from inside, in a dark steel frame,
+ * the way the tower glows after dark.
  *
- * A standard PBR material rather than a hand-made shader, so the glass takes
- * the scene's real light — the floodlights' highlights, the night sky and the
- * city glow in its reflection, Fresnel brightening it as it turns away — and
- * reads as a material, not a colour. The petal is patterned on top of that:
+ * Each petal is glazed in flat panes, and every pane is one of three
+ * strengths of light (dim, mid, bright), so the bud reads as a mosaic of lit
+ * boxes rather than one even sheet. The light gathers toward each petal's
+ * edges and root, where the fittings are; that is the glow. The petal has no
+ * outline of any kind: a lit line round it was taken out, and the dark frame
+ * left behind read as a black outline, so the glass now runs to the edge.
+ * The floodlights barely
+ * touch the glass and its reflections are kept low, so nothing reads as
+ * daylit; the panes still sit at their own slight angles, so a little night
+ * sky slides across them as the camera moves.
  *
- *  - the frame: ribs that run up the petal and meet at its point, crossed by
- *    rows of transoms, in red-painted steel — rougher, faintly metallic;
- *  - the glass between them: deep ruby and glossy — not a perfect mirror,
- *    which would throw highlights hotter than the frame can hold — every pane
- *    a shade and a gloss of its own, the way real glazing never quite matches;
- *  - the light inside: a deep magenta glow through the tint, a little
- *    stronger low down where the lamps are, with the floors behind it just
- *    showing as faint warm lines;
- *  - a thin lit line along the outer frame, the LED strip — kept a line.
- *
- * The glass reflects its surroundings but not the floodlights directly: their
- * highlights on a surface this smooth were hard white points that bloomed
- * into blobs and jumped as the camera moved.
+ *  - the frame: ribs and transoms in dark steel, so the boxes stay
+ *    separate; nothing round the edge;
+ *  - the glass: deep magenta, three shades, each pane glowing at its own
+ *    strength.
  */
 export function petalMaterial() {
   const mat = new THREE.MeshStandardMaterial({
     color: 0xffffff,
-    roughness: 0.1,
-    metalness: 0,
+    roughness: 0.08,
+    metalness: 0.15,
     emissive: 0xffffff,
-    envMapIntensity: 2.2,
+    envMapIntensity: 1.2,
     side: THREE.DoubleSide,
   });
   mat.onBeforeCompile = (shader) => {
     shader.vertexShader = shader.vertexShader
       .replace(
         "#include <common>",
-        "#include <common>\nattribute float aSeed;\nvarying vec2 vPUv;\nvarying float vPSeed;\nvarying float vPY;",
+        "#include <common>\nattribute float aSeed;\nvarying vec2 vPUv;\nvarying float vPSeed;",
       )
       .replace(
         "#include <begin_vertex>",
-        "#include <begin_vertex>\nvPUv = uv;\nvPSeed = aSeed;\nvPY = position.y;",
+        "#include <begin_vertex>\nvPUv = uv;\nvPSeed = aSeed;",
       );
     shader.fragmentShader = shader.fragmentShader
       .replace(
@@ -66,7 +64,6 @@ export function petalMaterial() {
         `#include <common>
         varying vec2 vPUv;
         varying float vPSeed;
-        varying float vPY;
         ${HASH}
         float pGrid(float x, float w) {
           float f = fract(x);
@@ -74,7 +71,7 @@ export function petalMaterial() {
         }
         float pFrame;
         float pPane;
-        float pRim;`,
+        vec2 pTilt;`,
       )
       .replace(
         "#include <map_fragment>",
@@ -87,57 +84,63 @@ export function petalMaterial() {
           float cu = au * 3.0;
           float transom = pGrid(pv, 0.05 + fwidth(pv)) * step(0.04, v);
           float mullion = pGrid(cu, 0.05 + fwidth(cu)) * step(au, 0.97);
-          float aw = fwidth(u);
-          pRim = smoothstep(1.0 - (0.035 + 2.0 * aw), 1.0 - aw * 0.5, au);
-          pFrame = max(max(transom, mullion), pRim);
-          pPane = hash12(vec2(floor(cu) + step(0.0, u) * 5.0 + vPSeed * 17.0, floor(pv)));
-          vec3 glass = vec3(0.11, 0.006, 0.03) * (0.75 + 0.5 * pPane);
-          vec3 steel = vec3(0.3, 0.018, 0.05);
+          pFrame = max(transom, mullion);
+          vec2 cell = vec2(floor(cu) + step(0.0, u) * 5.0 + vPSeed * 17.0, floor(pv));
+          /* Three shades, one per pane: 0, 0.5 or 1. */
+          pPane = floor(hash12(cell) * 3.0) / 2.0;
+          pTilt = vec2(hash12(cell + 7.3), hash12(cell + 19.1)) - 0.5;
+          vec3 glass = mix(vec3(0.06, 0.004, 0.03), vec3(0.12, 0.009, 0.055), pPane);
+          vec3 steel = vec3(0.14, 0.018, 0.04);
           diffuseColor.rgb = mix(glass, steel, pFrame);
         }`,
       )
       .replace(
         "#include <roughnessmap_fragment>",
         `#include <roughnessmap_fragment>
-        roughnessFactor = mix(0.16 + 0.1 * pPane, 0.45, pFrame);`,
+        roughnessFactor = mix(0.07 + 0.08 * pPane, 0.38, pFrame);`,
       )
       .replace(
         "#include <metalnessmap_fragment>",
         `#include <metalnessmap_fragment>
-        metalnessFactor = mix(0.0, 0.35, pFrame);`,
+        metalnessFactor = mix(0.15, 0.55, pFrame);`,
+      )
+      /* Each pane a flat facet at its own slight angle. */
+      .replace(
+        "#include <normal_fragment_maps>",
+        `#include <normal_fragment_maps>
+        normal = normalize(normal + vec3(pTilt * 0.22, 0.0) * (1.0 - pFrame));`,
       )
       .replace(
         "#include <emissivemap_fragment>",
         `#include <emissivemap_fragment>
         {
           float v = vPUv.y;
-          float inner = (0.45 + 0.7 * pPane) * mix(1.0, 0.6, v);
-          float fy = fract((vPY - 366.0) / 5.6);
-          float floors = smoothstep(0.8, 0.92, fy) * (1.0 - smoothstep(0.92, 1.0, fy));
-          vec3 glow = vec3(0.13, 0.005, 0.05) * inner + vec3(0.45, 0.16, 0.05) * floors * 0.05;
-          totalEmissiveRadiance = glow * (1.0 - pFrame) + vec3(0.6, 0.035, 0.2) * pRim * 0.5;
+          float au = abs(vPUv.x * 2.0 - 1.0);
+          vec3 pink = vec3(0.9, 0.05, 0.36);
+          /* Each pane lit at one of three strengths, gathering toward the
+             petal's edges and root. */
+          float edgeward = smoothstep(0.3, 1.0, au);
+          float rootward = 1.0 - smoothstep(0.05, 0.95, v);
+          vec3 glow = pink * mix(0.06, 0.28, pPane) * (0.45 + 1.0 * edgeward + 0.25 * rootward);
+          /* Ribs and transoms dark between the panes. */
+          totalEmissiveRadiance = glow * (1.0 - pFrame) + pink * 0.05 * pFrame;
         }`,
       )
-      /* No highlights from the floodlights themselves: on glass this smooth
-         they are hard white points that bloom into blobs, and they jump as
-         the camera moves. The night sky still reflects, softly. */
       .replace(
         "#include <aomap_fragment>",
         `reflectedLight.directSpecular = vec3(0.0);
+        reflectedLight.directDiffuse *= 0.3;
         #include <aomap_fragment>`,
       )
-      /* A guard on the way out. A near-mirror surface lit at a glancing angle
-         can produce a highlight beyond what a half-float target holds; that
-         Inf turns to NaN in the bloom blur and the whole frame drops out for
-         a moment. The roughness floor above keeps highlights in range, and
-         this makes sure of it. */
+      /* A guard on the way out: a stray Inf or NaN, spread by the bloom
+         blur, would take the whole frame with it. */
       .replace(
         "#include <opaque_fragment>",
         `#include <opaque_fragment>
         gl_FragColor.rgb = any(isnan(gl_FragColor.rgb)) ? vec3(0.0) : min(gl_FragColor.rgb, vec3(24.0));`,
       );
   };
-  mat.customProgramCacheKey = () => "petal-glass-4";
+  mat.customProgramCacheKey = () => "petal-glass-16";
   return mat;
 }
 

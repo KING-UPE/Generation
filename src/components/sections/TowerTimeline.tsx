@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
 import { END_T } from "@/lib/lotus-tower/path";
 import type { LotusTower } from "@/lib/lotus-tower";
+import { TICKET_URL, bookHref } from "@/lib/event";
 
 /**
  * The tower is a scene now, not footage.
@@ -165,7 +166,7 @@ const EDITIONS = [
         alt: "SLIC General - Sri Lanka Insurance",
       },
       {
-        src: "/img/sponsors/yfm.png",
+        src: "/img/sponsors/yfm.webp",
         name: "Y FM 92.7",
         title: "Official Media",
         alt: "Y FM - The Original Youth Channel",
@@ -409,6 +410,12 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
       /* Only draw while the section is on screen. Below it the stage has
          faded out and scrolled away, and the GPU has better things to do. */
       let onScreen = true;
+      /* Released by the entrance (startIntro) when the loader reaches 100, or
+         by the backstop if no loader ever reports. */
+      let heldBehindLoader = true;
+      const loaderBackstop = setTimeout(() => {
+        heldBehindLoader = false;
+      }, 20000);
       const io = new IntersectionObserver(([entry]) => {
         onScreen = entry.isIntersecting;
       });
@@ -433,6 +440,10 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
       let lastDrawnAt = 0;
       const draw = (now: number, force = false) => {
         if (!scene || !onScreen) return;
+        /* Behind the loader the first frame is all that is needed (it is what
+           reports ready). Drawing on underneath only took frames from the
+           loader's own bar, which on a phone held it up for seconds. */
+        if (heldBehindLoader && !force) return;
         if (stageRef.current?.style.opacity === "0") return;
         /* Except at the concert: sweeping beams at twenty frames a second
            read as stepping. */
@@ -546,6 +557,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
        */
       let introStarted = false;
       const startIntro = () => {
+        heldBehindLoader = false;
         if (introStarted) return;
         introStarted = true;
         if (intro.v <= 0.01) {
@@ -571,6 +583,7 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
       return () => {
         disposed = true;
         clearTimeout(readyBackstop);
+        clearTimeout(loaderBackstop);
         io.disconnect();
         ro.disconnect();
         window.removeEventListener("preloader:ready", startIntro);
@@ -754,9 +767,24 @@ export default function TowerTimeline({ children }: { children: React.ReactNode 
                       target="_blank"
                       rel="noreferrer noopener"
                       data-cursor="link"
-                      className="cut-btn-outline pointer-events-auto mt-6 w-fit text-xs hover:shadow-[0_4px_16px_hsl(var(--red-hot-c)/0.3)]"
+                      /* No pointer-events class of its own: the card turns
+                         pointer events on only while it is showing, and an
+                         explicit `auto` here left this link live, invisible,
+                         over the 2026 card. */
+                      className="cut-btn-outline mt-6 w-fit text-xs hover:shadow-[0_4px_16px_hsl(var(--red-hot-c)/0.3)]"
                     >
                       <span>VIEW EVENT ARCHIVE</span> <span aria-hidden>↗</span>
+                    </a>
+                  ) : null}
+
+                  {e.upcoming ? (
+                    <a
+                      href={bookHref()}
+                      {...(TICKET_URL ? { target: "_blank", rel: "noreferrer" } : {})}
+                      data-cursor="link"
+                      className="cut-btn mt-6 w-fit text-xs"
+                    >
+                      <span>Book Now</span> <span aria-hidden>→</span>
                     </a>
                   ) : null}
                 </article>

@@ -170,3 +170,33 @@ export function IconCheck(p: Props) {
     </Line>
   );
 }
+
+/* ── Mission ───────────────────────────────────────────────────────── */
+
+export function IconMic(p: Props) {
+  return (
+    <Line {...p}>
+      <rect x="9" y="3" width="6" height="11" rx="3" />
+      <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7" />
+    </Line>
+  );
+}
+
+export function IconPalette(p: Props) {
+  return (
+    <Line {...p}>
+      <path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.9-.8 1.9-1.8 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-1 .8-1.8 1.8-1.8H17a4 4 0 0 0 4-4c0-4.4-4-8-9-8Z" />
+      <circle cx="7.5" cy="11.5" r="1" />
+      <circle cx="10" cy="7.5" r="1" />
+      <circle cx="14.5" cy="7.5" r="1" />
+    </Line>
+  );
+}
+
+export function IconStar(p: Props) {
+  return (
+    <Line {...p}>
+      <polygon points="12 3 14.8 8.7 21 9.6 16.5 14 17.6 20.2 12 17.3 6.4 20.2 7.5 14 3 9.6 9.2 8.7" />
+    </Line>
+  );
+}

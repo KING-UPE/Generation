@@ -1,8 +1,8 @@
 "use client";
 
 /**
- * The footage the preloader fetches in full before the page is shown, and the
- * handoff that lets the player use those exact bytes.
+ * The footage the preloader fetches in full behind the page once the tower is
+ * up, and the handoff that lets the player use those exact bytes.
  *
  * Only the aftermovie is footage now — the tower is drawn in code (see
  * src/lib/lotus-tower). It is rate-controlled rather than simply played, so
@@ -66,6 +66,27 @@ export function resolveMedia(entries: Partial<Record<MediaKey, string>>) {
   settled = true;
   waiting.forEach((fn) => fn());
   waiting.clear();
+}
+
+/**
+ * The footage is no longer waited for. The page opens once the tower is
+ * drawn and the film downloads behind it, which on a phone is the difference
+ * between a page in a second or two and one behind eight megabytes. The film
+ * is six sections down, so the download nearly always finishes first; when
+ * it has not, the player asks for it here and gets the plain path to stream,
+ * and the background download is cancelled rather than left competing.
+ */
+let cancelPreload: (() => void) | null = null;
+
+export function registerPreloadCancel(fn: () => void) {
+  cancelPreload = fn;
+}
+
+/** Called by a player about to be seen: settle now, streaming if need be. */
+export function needMedia() {
+  if (settled) return;
+  cancelPreload?.();
+  resolveMedia({});
 }
 
 /** Runs `fn` once the preloader has settled, immediately if it already has. */

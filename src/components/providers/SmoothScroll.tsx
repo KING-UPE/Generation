@@ -31,6 +31,11 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
          throwing you through a whole section. */
       touchMultiplier: 0.5,
       wheelMultiplier: 1,
+      /* In-page links (Book Now, while it still points at the tickets
+         section) travel through Lenis rather than jumping. A native jump moves the
+         document under Lenis without telling it, and the next wheel tick
+         would throw the page back to where Lenis last thought it was. */
+      anchors: true,
     });
 
     lenis.scrollTo(0, { immediate: true });
@@ -96,7 +101,20 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
    * keeps those bounds, which is how it ends up unable to reach the bottom.
    */
   useEffect(() => {
-    const refresh = () => ScrollTrigger.refresh();
+    const refresh = () => {
+      ScrollTrigger.refresh();
+      /* Arrived from another page on a section link (the gallery's Book Now
+         goes to /#tickets): the preloader has just put the page back at the
+         top, so go on to the section now that it is measured. */
+      const id = window.location.hash.slice(1);
+      const el = id ? document.getElementById(id) : null;
+      if (!el) return;
+      requestAnimationFrame(() => {
+        const lenis = smoothScroll.current;
+        if (lenis) lenis.scrollTo(el, { immediate: true, force: true });
+        else el.scrollIntoView();
+      });
+    };
     window.addEventListener("preloader:complete", refresh, { once: true });
     return () => window.removeEventListener("preloader:complete", refresh);
   }, []);

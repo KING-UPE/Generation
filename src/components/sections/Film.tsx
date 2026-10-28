@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
-import { mediaPath, mediaSrc, onMediaResolved } from "@/lib/media-cache";
+import { mediaPath, mediaSrc, needMedia, onMediaResolved } from "@/lib/media-cache";
 import LitTitle from "@/components/ui/LitTitle";
 import RevealText from "@/components/ui/RevealText";
 import { smoothScroll } from "@/lib/smooth-scroll";
@@ -453,16 +453,30 @@ export default function Film() {
       };
       video.addEventListener("error", onSrcError);
 
-      /* Take the preloaded bytes as soon as they exist. No scroll-triggered
-         warming any more: the file is already downloaded by the time the page
-         is shown, so there is nothing left to fetch on approach. */
+      /* Take the preloaded bytes as soon as they exist: the preloader fetches
+         them behind the page once the tower is up. */
       const stopWaiting = onMediaResolved(() => {
         const src = mediaSrc("film");
         if (video.getAttribute("src") !== src) {
+          /* Streaming rather than playing preloaded bytes: buffer ahead. */
+          if (!src.startsWith("blob:")) video.preload = "auto";
           video.src = src;
           video.load();
         }
       });
+
+      /* The film downloads behind the page and is not waited for. Coming
+         within a screen and a half of it with the download still running,
+         take the plain path and stream, so it is never reached empty. */
+      const approach = new IntersectionObserver(
+        ([entry]) => {
+          if (!entry?.isIntersecting) return;
+          approach.disconnect();
+          needMedia();
+        },
+        { rootMargin: "150% 0px 150% 0px" },
+      );
+      approach.observe(section);
 
       // Bidirectional Scrubbed Timeline:
       // In small tablet screen (progress <= 0.05): stays on first frame (currentTime 0)
@@ -518,6 +532,7 @@ export default function Film() {
 
       return () => {
         stopWaiting();
+        approach.disconnect();
         video.removeEventListener("error", onSrcError);
         tl.kill();
         teardown();
@@ -598,7 +613,7 @@ export default function Film() {
           style={{ paddingRight: "calc(var(--gutter) + var(--text-reserve))" }}
         >
           <div className="badge-pill border-red-hot/40 bg-red-black/50 text-red-hot mb-4 w-fit">
-            ✦ OFFICIAL TRAILER // REEL
+            Generation 25
           </div>
 
           <LitTitle
@@ -617,7 +632,7 @@ export default function Film() {
             className="mt-6 max-w-[36ch] text-balance text-lead text-bone"
             start="top 92%"
           >
-            One stage. Pure frequency. Relive the night a generation showed up loud.
+            Relive last year&apos;s night at the Lotus Tower Open Arena.
           </RevealText>
         </div>
 

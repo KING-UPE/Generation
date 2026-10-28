@@ -4,6 +4,7 @@
 import { useRef, useState, useEffect, useId } from "react";
 import { gsap, useGSAP, DrawSVGPlugin } from "@/lib/gsap";
 import { clamp } from "@/lib/scroll-state";
+import { photoSrcSet } from "@/lib/photos";
 
 void DrawSVGPlugin;
 
@@ -103,13 +104,17 @@ export default function CutCard({ src, alt, delay = 0, className = "" }: Props) 
       className={"cut-shape relative h-full w-full overflow-hidden bg-ink-2 " + className}
     >
       <div ref={imgWrapRef} className="absolute inset-0 will-change-transform">
-        {/* Placeholder art — swap `src` for a real photo, layout is unchanged. */}
+        {/* The deck is at most 460px wide, so the library's photographs come
+            in at that size rather than at their full 1920. */}
         <img
           data-zoom
           src={src}
+          srcSet={src.startsWith("/img/photos/") ? photoSrcSet(src) : undefined}
+          sizes="(max-width: 1024px) 320px, 460px"
           alt={alt}
           className="h-full w-full object-cover will-change-transform"
           loading="lazy"
+          decoding="async"
         />
       </div>
 

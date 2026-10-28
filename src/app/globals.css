@@ -134,16 +134,6 @@ html.lenis, html.lenis body { height: auto; }
 .font-mono-ui { font-family: var(--font-jetbrains), ui-monospace, monospace; }
 
 /*
- * Sinhala first, Inter Tight behind it. The two scripts sit side by side in the
- * auditions copy — "Batch එක", "Student ID එක" — and only the sinhala subset of
- * Noto is loaded, so its @font-face covers no Latin codepoints and those words
- * fall through to the body face instead of switching colour mid-sentence.
- */
-.font-sinhala {
-  font-family: var(--font-sinhala), var(--font-inter-tight), system-ui, sans-serif;
-}
-
-/*
  * The company name is written Echem, never ECHEM.
  *
  * Several of the small mono styles set text-transform: uppercase -- the badge
@@ -447,16 +437,56 @@ html.lenis, html.lenis body { height: auto; }
 }
 
 /*
- * The festival deck scrolls sideways on a phone, and the bar under it reads as
- * a stray line across the section. The cards are their own affordance — they
- * run off the edge of the screen, which is what says "keep going".
+ * The ticket: a stub and a body with a perforation between them, and a bite
+ * out of each edge where the tear runs. The bites are a mask, two half-boxes
+ * each holding one hole, so the edge is really open and the stars show
+ * through it. Below lg the stub sits on top and the tear runs across, at the
+ * stub's height (h-56, h-64, h-72); from lg up they sit side by side and the
+ * tear runs down at the column split, 1.15 / 2.15 of the width.
  */
-.no-scrollbar {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+.ticket {
+  --notch: 14px;
+  --tear-y: 14rem;
+  -webkit-mask:
+    radial-gradient(circle var(--notch) at 0 var(--tear-y), #0000 98%, #000) left / 51% 100% no-repeat,
+    radial-gradient(circle var(--notch) at 100% var(--tear-y), #0000 98%, #000) right / 51% 100% no-repeat;
+  mask:
+    radial-gradient(circle var(--notch) at 0 var(--tear-y), #0000 98%, #000) left / 51% 100% no-repeat,
+    radial-gradient(circle var(--notch) at 100% var(--tear-y), #0000 98%, #000) right / 51% 100% no-repeat;
 }
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
+@media (min-width: 40rem) {
+  .ticket { --tear-y: 16rem; }
+}
+@media (min-width: 48rem) {
+  .ticket { --tear-y: 18rem; }
+}
+@media (min-width: 64rem) {
+  .ticket {
+    --notch: 18px;
+    --tear-x: 53.49%;
+    -webkit-mask:
+      radial-gradient(circle var(--notch) at var(--tear-x) 0, #0000 98%, #000) top / 100% 51% no-repeat,
+      radial-gradient(circle var(--notch) at var(--tear-x) 100%, #0000 98%, #000) bottom / 100% 51% no-repeat;
+    mask:
+      radial-gradient(circle var(--notch) at var(--tear-x) 0, #0000 98%, #000) top / 100% 51% no-repeat,
+      radial-gradient(circle var(--notch) at var(--tear-x) 100%, #0000 98%, #000) bottom / 100% 51% no-repeat;
+  }
+}
+
+/* The ticket's outline, on a wrapper so it traces the cut and the bites. */
+.ticket-edge {
+  filter: drop-shadow(1px 0 0 rgba(237, 237, 240, 0.28))
+          drop-shadow(-1px 0 0 rgba(237, 237, 240, 0.28))
+          drop-shadow(0 1px 0 rgba(237, 237, 240, 0.28))
+          drop-shadow(0 -1px 0 rgba(237, 237, 240, 0.28));
+  transition: filter 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.ticket-edge:hover {
+  filter: drop-shadow(1px 0 0 hsl(var(--red-hot-c) / 0.7))
+          drop-shadow(-1px 0 0 hsl(var(--red-hot-c) / 0.7))
+          drop-shadow(0 1px 0 hsl(var(--red-hot-c) / 0.7))
+          drop-shadow(0 -1px 0 hsl(var(--red-hot-c) / 0.7))
+          drop-shadow(0 12px 40px hsl(var(--red-hot-c) / 0.22));
 }
 
 /* Gallery Field responsive scaling variable */

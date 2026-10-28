@@ -1,31 +1,29 @@
 import Hero from "@/components/sections/Hero";
 import TowerTimeline from "@/components/sections/TowerTimeline";
+import EventDetails from "@/components/sections/EventDetails";
 import VisionAbout from "@/components/sections/VisionAbout";
+import Tickets from "@/components/sections/Tickets";
 import Film from "@/components/sections/Film";
-import Scale from "@/components/sections/Scale";
-import Projection from "@/components/sections/Projection";
-import Festival from "@/components/sections/Festival";
 import GalleryFlow from "@/components/sections/GalleryFlow";
+import Partners from "@/components/sections/Partners";
 import Footer from "@/components/sections/Footer";
 import ScrollRail from "@/components/ui/ScrollRail";
 import Preloader from "@/components/ui/Preloader";
 
 /**
- * The rail, in the order the page is read. Numbered from the top of this page
- * rather than from somewhere upstream of it, and ending on the closing card --
- * which is an anchor inside the gallery rather than a section of its own.
+ * The rail, in the order the page is read: the event and how to get in first,
+ * then last year's night as the reason to come.
  */
 const MARKERS = [
   { id: "hero", index: "01", label: "Hero" },
   { id: "timeline", index: "02", label: "Events" },
-  { id: "vision", index: "03", label: "Vision" },
+  { id: "details", index: "03", label: "Details" },
   { id: "about", index: "04", label: "About" },
-  { id: "film", index: "05", label: "After Movie" },
-  { id: "scale", index: "06", label: "Built at Scale" },
-  { id: "projection", index: "07", label: "Projections" },
-  { id: "festival", index: "08", label: "Festival" },
-  { id: "flow", index: "09", label: "Gallery" },
-  { id: "soon", index: "10", label: "Coming soon" },
+  { id: "mission", index: "05", label: "Mission" },
+  { id: "tickets", index: "06", label: "Tickets" },
+  { id: "film", index: "07", label: "After Movie" },
+  { id: "flow", index: "08", label: "Gallery" },
+  { id: "partners", index: "09", label: "Partners" },
 ];
 
 export default function Home() {
@@ -36,15 +34,13 @@ export default function Home() {
       <TowerTimeline>
         <Hero />
       </TowerTimeline>
+      <EventDetails />
       <VisionAbout />
+      <Tickets />
       <Film />
-      <Scale />
-      <Projection />
-      <Festival />
       <GalleryFlow />
+      <Partners />
       <Footer />
     </>
   );
 }
-
-

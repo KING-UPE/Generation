@@ -16,11 +16,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1,
     },
     {
-      url: `${SITE_URL}/auditions`,
+      url: `${SITE_URL}/gallery`,
       lastModified: new Date(),
-      /* The form list changes while calls are open, then stops. */
-      changeFrequency: "weekly",
-      priority: 0.8,
+      /* Last year's photographs: they only change when a new set is added. */
+      changeFrequency: "yearly",
+      priority: 0.7,
     },
   ];
 }

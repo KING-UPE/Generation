@@ -5,19 +5,39 @@ import { gsap, useGSAP } from "@/lib/gsap";
 import LitTitle from "@/components/ui/LitTitle";
 import ScrollCopy from "@/components/ui/ScrollCopy";
 import CutCard from "@/components/ui/CutCard";
+import { IconMic, IconPalette, IconStar } from "@/components/ui/icons";
 
-/* The deck is aspect-[4/3], so these are the landscape frames. Vision carries
-   the two that show the size of the room; About carries the two that show what
-   happens in it. */
-const VISION_CARDS = [
+/* The deck is aspect-[4/3], so these are the landscape frames. About carries
+   the two that show the size of the room; Mission carries the two that show
+   what happens in it. */
+const ABOUT_CARDS = [
   { src: "/img/photos/IAP07571.webp", alt: "A performer facing a full open-air crowd at dusk" },
   { src: "/img/photos/MNP-1007.webp", alt: "A singer alone on the runway under the arena roof" },
 ];
 
 /* Index 1 is the card in front: it rests at full scale on top of the other. */
-const ABOUT_CARDS = [
+const MISSION_CARDS = [
   { src: "/img/photos/IAP08596.webp", alt: "A singer on stage behind a curtain of sparks" },
   { src: "/img/photos/IAP09433.webp", alt: "A speaker at the microphone in front of the stage wall" },
+];
+
+/* The three parts of the night, as the Generation 25 site set them out. */
+const MISSION = [
+  {
+    title: "Open Mic Session",
+    text: "Unleash your voice in our open mic session, where every word echoes the spirit of our vibrant community.",
+    icon: <IconMic className="h-5 w-5 sm:h-6 sm:w-6" />,
+  },
+  {
+    title: "Art Gallery",
+    text: "Immerse yourself in the art gallery, a visual feast showcasing the vivid imagination of our talented artists.",
+    icon: <IconPalette className="h-5 w-5 sm:h-6 sm:w-6" />,
+  },
+  {
+    title: "Main Event",
+    text: "Experience the pinnacle of creativity at our main event, a grand celebration of Echem Edu's finest talents.",
+    icon: <IconStar className="h-5 w-5 sm:h-6 sm:w-6" />,
+  },
 ];
 
 const TITLE_SIZE = "text-[clamp(2.6rem,7.5vw,8.5rem)] leading-[0.9] tracking-[-0.025em]";
@@ -31,8 +51,8 @@ export default function VisionAbout() {
   const flipDeckRef = useRef<HTMLDivElement>(null);
   const frontDeckRef = useRef<HTMLDivElement>(null);
   const backDeckRef = useRef<HTMLDivElement>(null);
-  const visionTextRef = useRef<HTMLDivElement>(null);
   const aboutTextRef = useRef<HTMLDivElement>(null);
+  const missionTextRef = useRef<HTMLDivElement>(null);
 
   const [frontHovered, setFrontHovered] = useState<number | null>(null);
   const [backHovered, setBackHovered] = useState<number | null>(null);
@@ -54,27 +74,15 @@ export default function VisionAbout() {
   const [isDesktop, setIsDesktop] = useState<boolean | null>(null);
 
   /**
-   * Scroll positions where the About block is actually on screen.
-   * Memoized with useCallback so their function references remain completely
-   * stable across card hover re-renders, preventing LitTitle and ScrollCopy
-   * from unmounting or restarting their entrance animations.
+   * Scroll position where the Mission block is actually on screen.
+   * Memoized with useCallback so its function reference remains completely
+   * stable across card hover re-renders, preventing LitTitle from
+   * unmounting or restarting its entrance animation.
    */
-  const revealAboutStart = useCallback(() => {
+  const revealMissionStart = useCallback(() => {
     const el = containerRef.current;
     if (!el) return 0;
     return el.offsetTop + (el.offsetHeight - window.innerHeight) * (0.5 / 0.95);
-  }, []);
-
-  const revealAboutCopyStart = useCallback(() => {
-    const el = containerRef.current;
-    if (!el) return 0;
-    return el.offsetTop + (el.offsetHeight - window.innerHeight) * (0.55 / 0.95);
-  }, []);
-
-  const revealAboutCopyEnd = useCallback(() => {
-    const el = containerRef.current;
-    if (!el) return 0;
-    return el.offsetTop + (el.offsetHeight - window.innerHeight) * 0.95;
   }, []);
 
   useEffect(() => {
@@ -282,17 +290,17 @@ export default function VisionAbout() {
       const flipDeck = flipDeckRef.current;
       const frontDeck = frontDeckRef.current;
       const backDeck = backDeckRef.current;
-      const visionText = visionTextRef.current;
       const aboutText = aboutTextRef.current;
+      const missionText = missionTextRef.current;
 
-      if (!container || !stage || !deck || !tilt || !flipDeck || !frontDeck || !backDeck || !visionText || !aboutText) return;
+      if (!container || !stage || !deck || !tilt || !flipDeck || !frontDeck || !backDeck || !aboutText || !missionText) return;
 
       if (isDesktop === null) return;
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
       // Initial state
-      gsap.set(aboutText, { opacity: 0, y: 30, pointerEvents: "none" });
-      gsap.set(visionText, { opacity: 1, y: 0, pointerEvents: "auto" });
+      gsap.set(missionText, { opacity: 0, y: 30, pointerEvents: "none" });
+      gsap.set(aboutText, { opacity: 1, y: 0, pointerEvents: "auto" });
       gsap.set(flipDeck, { rotationY: 0, transformOrigin: "center center" });
       gsap.set(frontDeck, { visibility: "visible", pointerEvents: "auto" });
       gsap.set(backDeck, { visibility: "hidden", pointerEvents: "none" });
@@ -304,7 +312,7 @@ export default function VisionAbout() {
        *
        * It has to be the deck's own offset inside the grid — the distance from
        * where it sits to the grid's left edge, which is exactly where the
-       * Vision copy starts. The old reading was the stage's width minus the
+       * About copy starts. The old reading was the stage's width minus the
        * deck's, which is a different and much larger number: it carried the
        * deck past the left edge entirely and a third of the card ended up off
        * the side of the screen.
@@ -340,19 +348,19 @@ export default function VisionAbout() {
         },
       });
 
-      // 1. Fade out Vision text
+      // 1. Fade out About text
       tl.to(
-        visionText,
+        aboutText,
         {
           opacity: 0,
           y: -35,
           ease: "power2.inOut",
           duration: 0.35,
           onComplete: () => {
-            if (visionText) visionText.style.pointerEvents = "none";
+            if (aboutText) aboutText.style.pointerEvents = "none";
           },
           onReverseComplete: () => {
-            if (visionText) visionText.style.pointerEvents = "auto";
+            if (aboutText) aboutText.style.pointerEvents = "auto";
           },
         },
         0.12,
@@ -403,19 +411,19 @@ export default function VisionAbout() {
         0.475,
       );
 
-      // 4. Fade in About text
+      // 4. Fade in Mission text
       tl.to(
-        aboutText,
+        missionText,
         {
           opacity: 1,
           y: 0,
           ease: "power2.out",
           duration: 0.35,
           onStart: () => {
-            if (aboutText) aboutText.style.pointerEvents = "auto";
+            if (missionText) missionText.style.pointerEvents = "auto";
           },
           onReverseComplete: () => {
-            if (aboutText) aboutText.style.pointerEvents = "none";
+            if (missionText) missionText.style.pointerEvents = "none";
           },
         },
         0.55,
@@ -463,8 +471,8 @@ export default function VisionAbout() {
   return (
     <div id="vision-about" ref={containerRef} className="relative h-[220svh]">
       {/* Target anchor triggers for scroll navigation */}
-      <div id="vision" className="absolute top-0 h-1 w-full" />
-      <div id="about" className="absolute top-[52%] h-1 w-full" />
+      <div id="about" className="absolute top-0 h-1 w-full" />
+      <div id="mission" className="absolute top-[52%] h-1 w-full" />
 
       {/* Sticky Fullscreen Stage */}
       <div
@@ -474,56 +482,73 @@ export default function VisionAbout() {
         <div ref={stageRef} className="relative mx-auto w-full max-w-(--maxw) px-(--gutter)">
           {/* Main Grid: stacks vertically on mobile, 2-columns on desktop */}
           <div className="relative flex flex-col justify-center gap-8 sm:gap-10 lg:min-h-[480px] lg:grid lg:grid-cols-12 lg:items-center lg:gap-10">
-            {/* ── MOBILE TEXT STACK CONTAINER / DESKTOP VISION COLUMN ── */}
-            <div className="relative w-full min-h-[180px] sm:min-h-[200px] lg:contents">
-              {/* ── Vision Text ── */}
+            {/* ── MOBILE TEXT STACK / DESKTOP COLUMNS ──
+                On a phone both panels sit in the same grid cell, so the box
+                is as tall as the taller of them: the Mission list is much
+                taller than the About paragraph, and laid over it absolutely
+                it ran down into the photographs. */}
+            <div className="relative grid w-full lg:contents">
+              {/* ── About ── */}
               <div
-                ref={visionTextRef}
-                className="relative z-10 flex w-full flex-col gap-3 sm:gap-4 md:gap-6 lg:max-w-[500px] xl:max-w-[560px] lg:col-span-5 lg:col-start-1 lg:row-start-1"
+                ref={aboutTextRef}
+                className="relative z-10 col-start-1 row-start-1 flex w-full flex-col gap-3 sm:gap-4 md:gap-6 lg:max-w-[500px] xl:max-w-[560px] lg:col-span-5 lg:col-start-1 lg:row-start-1"
               >
                 <div>
                   <LitTitle className={TITLE_SIZE} radius={340} weight={1.9}>
-                    Vision
-                  </LitTitle>
-                </div>
-
-                <ScrollCopy className="text-[clamp(0.875rem,1.05vw,1.15rem)] font-medium leading-[1.65] text-bone lg:leading-[1.85]">
-                  One night where a generation shows up loud. We build the stage, the sound and the room around them, so the music is the only thing anyone leaves remembering.
-                </ScrollCopy>
-              </div>
-
-              {/* ── About Text (Fades in on same top spot on mobile, right column on desktop) ── */}
-              <div
-                ref={aboutTextRef}
-                className="pointer-events-none absolute inset-0 z-10 flex w-full flex-col gap-3 sm:gap-4 md:gap-6 lg:static lg:max-w-[500px] xl:max-w-[560px] lg:col-span-5 lg:col-start-8 lg:row-start-1"
-              >
-                <div>
-                  <LitTitle
-                    trigger={containerRef}
-                    start={revealAboutStart}
-                    className={TITLE_SIZE}
-                    radius={340}
-                    weight={1.9}
-                  >
                     About
                   </LitTitle>
                 </div>
 
-                <ScrollCopy
-                  trigger={containerRef}
-                  start={revealAboutCopyStart}
-                  end={revealAboutCopyEnd}
-                  className="text-[clamp(0.875rem,1.05vw,1.15rem)] font-medium leading-[1.65] text-bone lg:leading-[1.85]"
-                >
-                  Generation is produced by Echem. Live performance, design and sound engineering held to a single production standard, for an audience that still turns up in person.
+                <ScrollCopy className="text-[clamp(0.875rem,1.05vw,1.15rem)] font-medium leading-[1.65] text-bone lg:leading-[1.85]">
+                  Generation is a premier event by Echem Edu celebrating student diversity in arts like dance, song, drama and visual arts, providing a stage for self-expression and confidence-building to illuminate their talents.
                 </ScrollCopy>
+              </div>
+
+              {/* ── Mission (same spot on a phone, right column on desktop) ── */}
+              <div
+                ref={missionTextRef}
+                className="pointer-events-none relative z-10 col-start-1 row-start-1 flex w-full flex-col gap-4 sm:gap-5 md:gap-6 lg:max-w-[500px] xl:max-w-[560px] lg:col-span-5 lg:col-start-8 lg:row-start-1"
+              >
+                <div>
+                  <LitTitle
+                    trigger={containerRef}
+                    start={revealMissionStart}
+                    className={TITLE_SIZE}
+                    radius={340}
+                    weight={1.9}
+                  >
+                    Mission
+                  </LitTitle>
+                </div>
+
+                <ul className="flex flex-col gap-4 sm:gap-5 lg:gap-6">
+                  {MISSION.map((m) => (
+                    <li key={m.title} className="flex items-start gap-4">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-hairline-bold text-red-hot sm:h-12 sm:w-12">
+                        {m.icon}
+                      </span>
+                      <div>
+                        <p className="text-base font-extrabold leading-tight text-white sm:text-lg">
+                          {m.title}
+                        </p>
+                        <p className="mt-1.5 text-[clamp(0.8125rem,0.95vw,1rem)] font-medium leading-[1.6] text-bone-muted">
+                          {m.text}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
 
             {/* ── CARD STACK DECK: Flips in 3D across scroll ── */}
+            {/* On a phone the fan is about 1.3 cards wide (each card is pushed
+                out a sixth and turned), so the card is held to what leaves the
+                whole fan inside the gutters: at 270px on a 330px screen it ran
+                off the edge. */}
             <div
               ref={deckRef}
-              className="relative z-20 mx-auto aspect-[4/3] w-full max-w-[270px] sm:max-w-[320px] mt-4 sm:mt-6 lg:mt-0 lg:ml-auto lg:mr-0 lg:max-w-[420px] xl:max-w-[460px] lg:col-span-7 lg:col-start-6 lg:row-start-1"
+              className="relative z-20 mx-auto aspect-[4/3] w-full max-w-[min(270px,calc((100vw_-_2.5rem)/1.3))] sm:max-w-[320px] mt-4 sm:mt-6 lg:mt-0 lg:ml-auto lg:mr-0 lg:max-w-[420px] xl:max-w-[460px] lg:col-span-7 lg:col-start-6 lg:row-start-1"
               style={{ perspective: 1800 }}
             >
               {/* Mouse Parallax Tilt Container */}
@@ -533,7 +558,7 @@ export default function VisionAbout() {
                   ref={flipDeckRef}
                   className="relative h-full w-full [transform-style:preserve-3d] will-change-transform"
                 >
-                  {/* ── FRONT DECK (Vision: 2 Fanned Cards) ── */}
+                  {/* ── FRONT DECK (About: 2 Fanned Cards) ── */}
                   <div
                     ref={frontDeckRef}
                     onPointerMove={onFrontPointerMove}
@@ -559,7 +584,7 @@ export default function VisionAbout() {
                     */}
                     <span aria-hidden className="absolute -inset-[22%]" />
 
-                    {VISION_CARDS.map((c, i) => {
+                    {ABOUT_CARDS.map((c, i) => {
                       const isHovered = frontHovered === i;
                       const isOtherHovered = frontHovered !== null && frontHovered !== i;
 
@@ -632,7 +657,7 @@ export default function VisionAbout() {
                     })}
                   </div>
 
-                  {/* ── BACK DECK (About: 2 Fanned Cards, Pre-flipped 180deg) ── */}
+                  {/* ── BACK DECK (Mission: 2 Fanned Cards, Pre-flipped 180deg) ── */}
                   <div
                     ref={backDeckRef}
                     onPointerMove={onBackPointerMove}
@@ -659,7 +684,7 @@ export default function VisionAbout() {
                     */}
                     <span aria-hidden className="absolute -inset-[22%]" />
 
-                    {ABOUT_CARDS.map((c, i) => {
+                    {MISSION_CARDS.map((c, i) => {
                       const isHovered = backHovered === i;
                       const isOtherHovered = backHovered !== null && backHovered !== i;
 

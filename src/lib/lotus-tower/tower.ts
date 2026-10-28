@@ -43,16 +43,32 @@ const QUARTER = Math.PI / 2;
 /**
  * Petal tiers, root to crown: eight to a tier, alternate tiers turned half a
  * petal, every one laid on the bud's outline (layout.ts) with its edges
- * pressed to it. Each tier sits further inside than the last by more than a
- * petal's ridge stands proud, so the lower petals always lie over the upper
- * ones — the closed, overlapping bud of the real tower.
+ * pressed to it, tips included, so the bud keeps one smooth outline with
+ * nothing standing outside it; its fullness through the middle is in the
+ * outline itself. The upper tiers' tips curve in, rounding the crown off. Each tier sits further inside than the
+ * last by more than a petal's ridge stands proud, so the lower petals always
+ * lie over the upper ones, never cutting through.
  */
 const TIERS: PetalSpec[] = [
-  { count: 8, offset: 0, y0: 363.6, y1: 388, inset: 0, width: 9.2, crease: 0.75, bulge: 0.15, belly: 0.42, lean: 0.9 },
-  { count: 8, offset: Math.PI / 8, y0: 364.5, y1: 396, inset: 1.0, width: 9.4, crease: 0.75, bulge: 0.15, belly: 0.44, lean: 0.8 },
-  { count: 8, offset: 0, y0: 369, y1: 404, inset: 2.0, width: 8.8, crease: 0.7, bulge: 0.15, belly: 0.46, lean: 0.7 },
-  { count: 8, offset: Math.PI / 8, y0: 377, y1: 411.5, inset: 3.0, width: 7.6, crease: 0.6, bulge: 0.12, belly: 0.5, lean: 0.6 },
+  { count: 8, offset: 0, y0: 363.6, y1: 389, inset: 0, width: 8.6, crease: 0.7, bulge: 0.15, belly: 0.42, lean: 0 },
+  { count: 8, offset: Math.PI / 8, y0: 366, y1: 401, inset: 1.0, width: 8.4, crease: 0.7, bulge: 0.15, belly: 0.44, lean: 0 },
+  { count: 8, offset: 0, y0: 374, y1: 409, inset: 2.0, width: 7.2, crease: 0.6, bulge: 0.12, belly: 0.48, lean: -0.9 },
+  { count: 8, offset: Math.PI / 8, y0: 382, y1: 414.5, inset: 3.0, width: 5.6, crease: 0.5, bulge: 0.1, belly: 0.52, lean: -1.2 },
 ];
+
+/**
+ * The cup's crown: a band of wide pointed teeth round its rim, one rising
+ * between each pair of the lowest petals, the petals' roots coming down into
+ * the valleys between them. One continuous surface rather than separate
+ * leaves, so the teeth meet edge to edge and the zigzag runs unbroken.
+ */
+const CROWN_TEETH = 8;
+const CROWN_BASE = 368.8;
+const CROWN_RISE = 8.6;
+
+/** Where the bud's crown now stands, against where the dome and spire were
+ *  first placed (411): they are lifted by the difference. */
+const BUD_TOP = 413.5;
 
 export type Tower = {
   group: THREE.Group;
@@ -87,7 +103,7 @@ export function buildTower(family: string): Tower {
     metalness: 0.55,
   });
   const darkMetal = new THREE.MeshStandardMaterial({
-    color: 0x23262c,
+    color: 0x555a63,
     roughness: 0.5,
     metalness: 0.6,
   });
@@ -320,6 +336,8 @@ export function buildTower(family: string): Tower {
           mullions: 64,
           seed: 14,
           lit: 0.4,
+          glass: 0x1c2533,
+          sky: 0x3a4a66,
         }),
       ),
     );
@@ -345,14 +363,75 @@ export function buildTower(family: string): Tower {
         [13.4, HEAD.drumTop],
         [14.2, HEAD.drumTop + 0.05],
         [14.2, HEAD.roof],
-        [11.8, HEAD.roof],
-        [10.6, HEAD.roof + 1.8],
-        [9.6, HEAD.roof + 3.4],
-        [9.2, HEAD.neckTop],
+        [13.6, HEAD.roof],
       ], 96),
       darkMetal,
     ),
   );
+
+  /* The dome and spire, lifted onto the bud's crown. */
+  const crown = new THREE.Group();
+  crown.position.y = BUD_TOP - 411;
+  head.add(crown);
+
+  /* The cup the bud sits in: it rises from the drum and flares out round the
+     roots of the lowest petals, as on the tower, with pointed leaves standing
+     up between them. Concrete, to match the shaft. */
+  head.add(
+    new THREE.Mesh(
+      lathe([
+        [10.4, HEAD.roof - 0.05],
+        [10.9, HEAD.roof + 1.8],
+        [11.8, HEAD.roof + 4.0],
+        [13.1, HEAD.roof + 6.4],
+        [14.5, HEAD.roof + 8.8],
+        [15.4, HEAD.roof + 10.4],
+        [15.0, HEAD.roof + 10.8],
+        [13.6, HEAD.roof + 10.2],
+      ], 96),
+      slabConcrete,
+    ),
+  );
+  {
+    /* Columns land exactly on every peak and valley, so the points stay
+       sharp; the rows run from the base up to that column's edge. */
+    const perTooth = 12;
+    const cols = CROWN_TEETH * perTooth;
+    const rows = 8;
+    const pos: number[] = [];
+    const uv: number[] = [];
+    for (let j = 0; j <= rows; j++) {
+      for (let i = 0; i <= cols; i++) {
+        const theta = Math.PI / CROWN_TEETH + (i / cols) * Math.PI * 2;
+        const f = (i % perTooth) / perTooth;
+        /* 1 at a peak, 0 at a valley, sides bowed slightly out so each tooth
+           reads as a broad leaf rather than a thin spike. */
+        const tri = Math.pow(1 - Math.abs(f * 2 - 1), 1.25);
+        const peak = 1 - tri;
+        const top = CROWN_BASE + CROWN_RISE * peak;
+        const y = CROWN_BASE + ((top - CROWN_BASE) * j) / rows;
+        const r = budRadius(y) + 0.9;
+        pos.push(Math.sin(theta) * r, y, Math.cos(theta) * r);
+        uv.push((i / cols) * 6, (y - CROWN_BASE) / 25.6);
+      }
+    }
+    const idx: number[] = [];
+    for (let j = 0; j < rows; j++) {
+      for (let i = 0; i < cols; i++) {
+        const a = j * (cols + 1) + i;
+        const b = a + 1;
+        const c = a + cols + 1;
+        const d = c + 1;
+        idx.push(a, b, c, b, d, c);
+      }
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+    g.setIndex(idx);
+    g.computeVertexNormals();
+    head.add(new THREE.Mesh(g, slabConcrete));
+  }
 
   /* ---------------------------------------------------------------- */
   /* Bud                                                               */
@@ -363,22 +442,22 @@ export function buildTower(family: string): Tower {
   head.add(
     new THREE.Mesh(
       lathe([
-        [9.0, 363.6],
-        [10.4, 367.5],
-        [11.9, 373],
-        [12.8, 379],
-        [13.1, 386],
-        [12.9, 392],
-        [12.0, 398],
-        [10.4, 402.8],
-        [8.6, 406.8],
-        [7.7, 409.4],
+        [8.6, 363.6],
+        [9.8, 367.5],
+        [11.4, 373],
+        [12.8, 380],
+        [13.8, 388],
+        [14.2, 396],
+        [14.0, 403],
+        [13.0, 408],
+        [11.6, 411.5],
+        [10.0, 413.6],
       ], 64),
       windowMaterial({
         bands: [
-          { y0: 381.5, y1: 387.5, gain: 0.6, rows: 2 },
           { y0: 389.5, y1: 395, gain: 0.7, rows: 2 },
-          { y0: 397, y1: 401.5, gain: 0.6, rows: 1 },
+          { y0: 397, y1: 402, gain: 0.8, rows: 2 },
+          { y0: 404, y1: 408, gain: 0.7, rows: 1 },
         ],
         mullions: 110,
         seed: 21,
@@ -389,28 +468,32 @@ export function buildTower(family: string): Tower {
     ),
   );
 
-  /* One glass material for every tier, and the outer frame of each petal as
-     real steel: a painted section with its LED strip, not a glowing outline. */
+  /* One glass material for every tier. The rod along each petal's edge
+     wears the glass's own colour and glow, so the edge reads as the petal
+     ending, not as an outline: lit pink it was a neon line, dark it was a
+     black one, and both were taken out. */
   const glass = petalMaterial();
   const frame = new THREE.MeshStandardMaterial({
-    color: 0x6e0c22,
-    roughness: 0.35,
-    metalness: 0.5,
-    emissive: new THREE.Color(0.22, 0.012, 0.07),
+    color: 0x1e0410,
+    roughness: 0.2,
+    metalness: 0.15,
+    emissive: new THREE.Color(0.9, 0.05, 0.36),
+    emissiveIntensity: 0.26,
   });
   TIERS.forEach((spec, i) => {
     head.add(new THREE.Mesh(petalTier(spec, budRadius, 7 + i * 5), glass));
     head.add(new THREE.Mesh(petalRims(spec, budRadius, 0.17), frame));
   });
 
-  /* The crown: a ring roof from the top tier in to the dome. */
+  /* The crown: a ring roof from inside the top tier in to the dome, low
+     enough that the tips stand above it. */
   head.add(
     new THREE.Mesh(
       lathe([
-        [budRadius(409) - 3.2, 408.4],
-        [16, 409.5],
-        [11, 410.0],
-        [8.3, 409.9],
+        [budRadius(411) - 3.6, 410.8],
+        [12.6, 411.9],
+        [10.0, 412.3],
+        [8.3, 412.2],
       ], 64),
       slabConcrete,
     ),
@@ -420,7 +503,7 @@ export function buildTower(family: string): Tower {
   /* Dome and spire                                                    */
   /* ---------------------------------------------------------------- */
 
-  head.add(
+  crown.add(
     new THREE.Mesh(
       lathe([
         [7.4, 409.2],
@@ -445,14 +528,14 @@ export function buildTower(family: string): Tower {
     const ring = new THREE.Mesh(new THREE.TorusGeometry(8.45, 0.18, 6, 96), darkMetal);
     ring.rotation.x = Math.PI / 2;
     ring.position.y = 409.9;
-    head.add(ring);
+    crown.add(ring);
   }
 
   const cyl = (rTop: number, rBot: number, y0: number, y1: number, mat: THREE.Material, seg = 24) => {
     const g = new THREE.CylinderGeometry(rTop, rBot, y1 - y0, seg);
     g.translate(0, (y0 + y1) / 2, 0);
     const mesh = new THREE.Mesh(g, mat);
-    head.add(mesh);
+    crown.add(mesh);
     return mesh;
   };
 
@@ -469,7 +552,7 @@ export function buildTower(family: string): Tower {
     const band = new THREE.Mesh(new THREE.TorusGeometry(2.7, 0.11, 6, 40), darkMetal);
     band.rotation.x = Math.PI / 2;
     band.position.y = y;
-    head.add(band);
+    crown.add(band);
   }
   /* Panel antennas, clamped in a ring. */
   {
@@ -486,7 +569,7 @@ export function buildTower(family: string): Tower {
       m.compose(new THREE.Vector3(Math.sin(a) * 3.0, y, Math.cos(a) * 3.0), q, new THREE.Vector3(1, 1, 1));
       panels.setMatrixAt(i, m);
     }
-    head.add(panels);
+    crown.add(panels);
   }
   /* Microwave dishes on short arms. */
   {
@@ -505,12 +588,12 @@ export function buildTower(family: string): Tower {
       const r = 3.6;
       dish.position.set(Math.sin(a) * r, y, Math.cos(a) * r);
       dish.lookAt(Math.sin(a) * 20, y - 1.5, Math.cos(a) * 20);
-      head.add(dish);
+      crown.add(dish);
       const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.2, 6), steel);
       arm.position.set(Math.sin(a) * 2.95, y, Math.cos(a) * 2.95);
       arm.rotation.set(Math.PI / 2, 0, 0);
       arm.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), a);
-      head.add(arm);
+      crown.add(arm);
     }
   }
   /* Small work lamps on the equipment section. */
@@ -524,7 +607,7 @@ export function buildTower(family: string): Tower {
       m.makeTranslation(Math.sin(a) * 2.78, y, Math.cos(a) * 2.78);
       lamps.setMatrixAt(i, m);
     }
-    head.add(lamps);
+    crown.add(lamps);
   }
 
   /* Collars with lit gold rims, and the floodlit mast between them. */
@@ -533,11 +616,11 @@ export function buildTower(family: string): Tower {
     const rim = new THREE.Mesh(new THREE.TorusGeometry(r, 0.17, 6, 64), gold);
     rim.rotation.x = Math.PI / 2;
     rim.position.y = y + h / 2 - 0.05;
-    head.add(rim);
+    crown.add(rim);
     const under = new THREE.Mesh(new THREE.TorusGeometry(r - 0.4, 0.1, 6, 64), gold);
     under.rotation.x = Math.PI / 2;
     under.position.y = y - h / 2;
-    head.add(under);
+    crown.add(under);
   };
   collar(HEAD.bigCollar, 3.9, 1.3);
   collar(HEAD.upperCollar, 2.15, 0.8);
@@ -580,12 +663,12 @@ export function buildTower(family: string): Tower {
       m.makeTranslation(p.x, p.y, p.z);
       lights.setMatrixAt(i, m);
     });
-    head.add(lights);
+    crown.add(lights);
   }
   const flasherMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(9, 0.4, 0.25) });
   const flasher = new THREE.Mesh(new THREE.SphereGeometry(0.3, 10, 8), flasherMat);
   flasher.position.y = HEAD.tip + 0.2;
-  head.add(flasher);
+  crown.add(flasher);
 
   /* ---------------------------------------------------------------- */
   /* Podium at the foot                                                */

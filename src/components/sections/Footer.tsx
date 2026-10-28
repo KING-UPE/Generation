@@ -2,21 +2,20 @@
 
 import React, { useEffect, useRef } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   IconWhatsApp,
   IconTelegram,
   IconArrowUpRight,
 } from "@/components/ui/icons";
-
-/** The three most-asked-for forms. The rest live on /auditions. */
-const FORMS = [
-  { title: "Singing", href: "https://forms.gle/Rn31tLkLLpUdeTWx6" },
-  { title: "Dancing", href: "https://forms.gle/UjFWe64ufTXyCmYx6" },
-  { title: "Organizing Team", href: "https://forms.gle/G1RGdgCAx7HNsK7F8" },
-];
+import { EVENT, TICKET_URL, bookHref } from "@/lib/event";
 
 export default function Footer() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  /* The footer closes the gallery page too, where there is no tickets
+     section to scroll to. */
+  const onHome = usePathname() === "/";
+  const book = bookHref(onHome);
 
   /*
    * The sweeping contour field behind the footer.
@@ -191,7 +190,7 @@ export default function Footer() {
                 </span>
               </Link>
               <p className="mt-3 text-xs font-mono text-dim leading-relaxed max-w-xs">
-                Live Stage & Arena Experience at Lotus Tower, Colombo. Produced by Echem.
+                Echem&apos;s student talent show, live at the Lotus Tower Open Arena, Colombo.
               </p>
             </div>
 
@@ -201,38 +200,38 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Column 1: Auditions.
+          {/* Column 1: the pages and the way in.
               Two rows tall on a phone, so Channels and Event stack beside it
               in the second column instead of pushing a third row. */}
           <div className="row-span-2 lg:row-span-1">
             <span className="font-mono uppercase text-dim tracking-[0.18em] text-[11px] mb-5 block">
-              Auditions
+              Explore
             </span>
-            {/* Four entries, four destinations. They all pointed at /auditions
-                before, which reads as a list of choices and behaves as one
-                link; the named ones now open the form they name. */}
             <ul className="space-y-3 font-medium text-xs sm:text-sm">
               <li>
+                <Link href="/" scroll={false} className="hover:text-red-hot transition-colors duration-200">
+                  Generation 26
+                </Link>
+              </li>
+              <li>
                 <Link
-                  href="/auditions"
+                  href="/gallery"
+                  scroll={false}
                   className="hover:text-red-hot transition-colors duration-200 flex items-center gap-1 group"
                 >
-                  <span>All Talent Forms</span>
+                  <span>Gallery</span>
                   <IconArrowUpRight className="h-3.5 w-3.5 text-red-hot transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                 </Link>
               </li>
-              {FORMS.map((f) => (
-                <li key={f.href}>
-                  <a
-                    href={f.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="hover:text-red-hot transition-colors duration-200"
-                  >
-                    {f.title}
-                  </a>
-                </li>
-              ))}
+              <li>
+                <a
+                  href={book}
+                  {...(TICKET_URL ? { target: "_blank", rel: "noreferrer" } : {})}
+                  className="hover:text-red-hot transition-colors duration-200"
+                >
+                  Tickets
+                </a>
+              </li>
             </ul>
           </div>
 
@@ -273,12 +272,20 @@ export default function Footer() {
               Event
             </span>
             <ul className="space-y-2 text-xs font-mono text-dim">
-              <li className="text-bone font-medium">Generation 26</li>
-              <li>Lotus Tower Open Arena</li>
-              <li>Colombo, Sri Lanka</li>
-              <li className="text-red-hot font-medium pt-1">Saturday, Dec 12, 2026</li>
+              <li className="text-bone font-medium">{EVENT.name}</li>
+              <li>{EVENT.venue}</li>
+              <li>{EVENT.city}</li>
+              <li className="text-red-hot font-medium pt-1">{EVENT.date}</li>
               <li>Produced by Echem</li>
             </ul>
+            <a
+              href={book}
+              {...(TICKET_URL ? { target: "_blank", rel: "noreferrer" } : {})}
+              data-cursor="link"
+              className="cut-btn mt-5 text-xs"
+            >
+              Book Now <span aria-hidden>→</span>
+            </a>
           </div>
         </div>
 

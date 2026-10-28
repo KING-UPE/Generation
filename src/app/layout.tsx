@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Anton, Inter_Tight, JetBrains_Mono, Noto_Sans_Sinhala } from "next/font/google";
+import { Anton, Inter_Tight, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
 import SmoothScroll from "@/components/providers/SmoothScroll";
@@ -7,6 +7,7 @@ import Cursor from "@/components/ui/Cursor";
 import Grain from "@/components/ui/Grain";
 import Starfield from "@/components/ui/Starfield";
 import ThemeTuner from "@/components/ui/ThemeTuner";
+import { TICKET_URL } from "@/lib/event";
 import dynamic from "next/dynamic";
 
 /**
@@ -43,21 +44,6 @@ const jetbrains = JetBrains_Mono({
 });
 
 /**
- * The Sinhala face, for the auditions copy.
- *
- * None of the three families above carry Sinhala glyphs, so without this the
- * block renders in whatever the device happens to ship — Nirmala UI on Windows,
- * something else on Android — and the line rhythm changes per platform. Declared
- * here because a font has to be in the root layout to expose its variable, but
- * the files are only fetched by a page that actually paints Sinhala.
- */
-const notoSinhala = Noto_Sans_Sinhala({
-  subsets: ["sinhala"],
-  variable: "--font-sinhala",
-  display: "swap",
-});
-
-/**
  * The canonical origin, used to make every URL in the metadata absolute.
  *
  * Crawlers and the social scrapers will not resolve a relative `og:image`, so
@@ -69,9 +55,9 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://generation26.lk";
 
 const TITLE = "Generation 26 — Talents by Echem";
 const DESCRIPTION =
-  "Generation 26 lands at the Lotus Tower Open Arena, Colombo on Saturday 12 December 2026. " +
-  "Ten thousand people, one stage, produced by Echem — the fourth event of Sri Lanka's " +
-  "Generation live music series.";
+  "Generation 26, Echem's student talent show, is at the Lotus Tower Open Arena, Colombo on " +
+  "Saturday 12 December 2026. Book your ticket, and relive Generation 25 in the after movie " +
+  "and gallery.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -84,7 +70,9 @@ export const metadata: Metadata = {
   applicationName: "Generation 26",
   keywords: [
     "Generation 26",
+    "Generation 26 tickets",
     "Echem",
+    "Echem talent show",
     "Colombo concert",
     "Lotus Tower Open Arena",
     "Sri Lanka live music",
@@ -141,9 +129,18 @@ const EVENT_JSONLD = {
   description: DESCRIPTION,
   /* Date only, deliberately. Doors and set times are not known here, and a
      guessed clock time in structured data is a wrong fact served to Google.
-     Add the time — and a `performer` and `offers` block once the line-up and
-     ticketing exist — when they are real. */
+     Add the time — and a `performer` block once the line-up exists — when
+     they are real. The offer appears on its own once TICKET_URL is set. */
   startDate: "2026-12-12",
+  ...(TICKET_URL
+    ? {
+        offers: {
+          "@type": "Offer",
+          url: TICKET_URL,
+          availability: "https://schema.org/InStock",
+        },
+      }
+    : {}),
   eventStatus: "https://schema.org/EventScheduled",
   eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
   image: [`${SITE_URL}/opengraph-image.png`],
@@ -173,7 +170,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${anton.variable} ${interTight.variable} ${jetbrains.variable} ${notoSinhala.variable} h-full antialiased`}
+      className={`${anton.variable} ${interTight.variable} ${jetbrains.variable} h-full antialiased`}
     >
       {/* No background here: it is set on <html>, so the hero footage can sit on a
           negative z-index and still be seen. */}

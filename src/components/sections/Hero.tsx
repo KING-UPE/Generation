@@ -8,6 +8,7 @@ import Spotlight from "@/components/ui/Spotlight";
 import Magnetic from "@/components/ui/Magnetic";
 import RevealText from "@/components/ui/RevealText";
 import EditionMark from "@/components/ui/EditionMark";
+import { EVENT, TICKET_URL, bookHref } from "@/lib/event";
 
 /* Brand marks. */
 const WORDMARK = "GENERATION";
@@ -185,26 +186,35 @@ export default function Hero() {
           className="mt-6 flex flex-wrap items-center justify-between gap-x-8 gap-y-6 md:mt-14 will-change-transform"
         >
           <RevealText as="p" delay={0.95} start="top 100%" className="eyebrow">
-            The 2026 event
+            {/* Short enough to hold one line on a phone. */}
+            {EVENT.dayMonth} {EVENT.year}, Lotus Tower
           </RevealText>
 
-          <div ref={ctaRef}>
+          <div ref={ctaRef} className="flex flex-wrap items-center gap-3 sm:gap-4">
             <Magnetic strength={16}>
-              <Link
-                href="/auditions"
-                scroll={false}
+              <a
+                href={bookHref()}
+                {...(TICKET_URL ? { target: "_blank", rel: "noreferrer" } : {})}
                 data-cursor="link"
                 className="cut-btn group gap-3 px-8 py-4 text-white"
               >
-                Auditions
+                Book Now
                 <span
                   aria-hidden
                   className="transition-transform duration-500 group-hover:translate-x-1"
                 >
                   →
                 </span>
-              </Link>
+              </a>
             </Magnetic>
+            <Link
+              href="/gallery"
+              scroll={false}
+              data-cursor="link"
+              className="cut-btn-outline px-6 py-4"
+            >
+              Gallery
+            </Link>
           </div>
         </div>
       </div>
