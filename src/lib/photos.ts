@@ -66,3 +66,13 @@ export function photoSrcSet(src: string): string {
   set.push(`${src} ${w}w`);
   return set.join(", ");
 }
+
+/**
+ * The 640 copy, by path. The fly-through shows its prints at this size and the
+ * preloader loads exactly these files, so the two cannot disagree on which
+ * copy a screen picks: none of its prints is ever drawn much wider than 640.
+ */
+export function photoSmall(src: string): string {
+  const cut = src.lastIndexOf("/");
+  return `${src.slice(0, cut)}/640/${src.slice(cut + 1)}`;
+}

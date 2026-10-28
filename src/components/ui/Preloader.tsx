@@ -10,6 +10,20 @@ import {
   resolveMedia,
   type MediaKey,
 } from "@/lib/media-cache";
+import { PHOTOS, photoSmall } from "@/lib/photos";
+
+/* Only used if the server withholds content-length; the real size is read from
+   the response. Kept roughly honest so the bar is not wildly wrong when it is
+   needed. */
+const ESTIMATED_SIZE = 8_624_921; // the aftermovie, ~8.2 MB
+
+/* The fly-through's prints are counted as images, not bytes, and weighed as
+   this much each against the film -- roughly what a 640 copy is. */
+const PRINT_WEIGHT = 44_000;
+
+/* Held for the life of the page, so the prints stay in the document's image
+   cache and the fly-through draws them without asking the network again. */
+const heldPrints: HTMLImageElement[] = [];
 
 /**
  * When to give up on the footage and let the page through without it.
@@ -33,13 +47,12 @@ const STALL_MS = 12000;
 const HARD_CAP_MS = 120000;
 
 /**
- * How long the loader will wait for the tower to report a frame.
+ * How long the bar will hold at 95 waiting for the tower to report a frame,
+ * once everything else is in.
  *
- * The tower is the only thing the page waits for now. The gate below will not
- * reach 100 until the tower says it has drawn, which is what makes the page
- * arrive with the tower already on it. But the tower has to be able to say
- * so -- no WebGL, a lost context -- so the wait is bounded, measured from the
- * start of the load.
+ * The gate below will not pass 95 until the tower says it has drawn, which is
+ * what makes the page arrive with the tower already on it. But the tower has
+ * to be able to say so -- no WebGL, a lost context -- so the wait is bounded.
  */
 const TOWER_WAIT_MS = 8000;
 
@@ -47,13 +60,12 @@ const TOWER_WAIT_MS = 8000;
 const MIME = "video/mp4";
 
 /**
- * How the bar runs while the tower is being built: on time, easing toward 90
- * and holding there until the tower reports its first frame. There are no
- * bytes to count any more -- the film is not waited for -- and building the
- * scene is one job with no progress of its own to read.
+ * How far the bar may run on elapsed time before any bytes are counted, and
+ * over how long. Small on purpose: it exists to cover connection setup, not to
+ * flatter the download.
  */
-const WARMUP_CEILING = 90;
-const WARMUP_MS = 1400;
+const WARMUP_CEILING = 18;
+const WARMUP_MS = 1800;
 
 export default function Preloader({ onComplete }: { onComplete?: () => void }) {
   const [progress, setProgress] = useState(0);
@@ -132,66 +144,62 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
     openScrollRef.current = openScroll;
 
     let isCancelled = false;
-    /* The witness the release guard reads: set on every chunk, so a slow
-       download keeps renewing its own deadline. */
+    /* 0..100 over the film's bytes and the fly-through's prints together. */
+    let actualLoaded = 0;
+    /* The witness the release guard reads: set on every chunk and print, so a
+       slow download keeps renewing its own deadline. */
     let lastByteAt = performance.now();
 
-    // Check if DOM video element is ready
-    if (typeof window !== "undefined" && (window as any).__TOWER_READY) {
+    if (typeof window !== "undefined" && (window as Window & { __TOWER_READY?: boolean }).__TOWER_READY) {
       towerReadyRef.current = true;
     }
-
-    /* The film waits for the tower: on a slow connection it would otherwise
-       compete with the scene for the same bandwidth and hold up the only
-       thing the page opens on. */
-    let started = false;
-    let startedLoad = 0;
-    const startDownload = () => {
-      if (started || isCancelled) return;
-      started = true;
-      startedLoad = performance.now();
-      lastByteAt = startedLoad;
-      downloadAll();
-    };
-
     const onTowerReady = () => {
       towerReadyRef.current = true;
-      startDownload();
     };
     window.addEventListener("tower:ready", onTowerReady, { once: true });
 
-    /* 1. Fetch every piece of footage in full, behind the page, tracking real
-     *    bytes.
+    /*
+     * 1. Everything the page plays, in full, before it opens: the after movie
+     *    and the fly-through's prints.
      *
-     * Both files are kept as blobs and handed to the players as object URLs.
-     * Counting bytes and throwing them away would leave the players to fetch
-     * again — and these are served `max-age=0`, so that second fetch
-     * revalidates rather than being free. Holding the bytes is what actually
-     * guarantees nothing touches the network once the page is running, which
-     * is the whole point of waiting here. */
-    const downloadAll = async () => {
-      /* The player cancels this if it is reached before the bytes are all
-         in, and streams instead -- see `needMedia`. */
-      const controller = new AbortController();
-      registerPreloadCancel(() => controller.abort());
-      const keys = Object.keys(MEDIA) as MediaKey[];
-      const paths = keys.map(mediaPath);
+     * The page was opened on the tower alone once, with these following in
+     * the background. On a slow connection the film was then reached before
+     * it had arrived and stuttered as it streamed, and the prints were still
+     * coming down as they flew past. So the bar is the download again.
+     *
+     * The film is kept as a blob and handed to the player as an object URL:
+     * it is served `max-age=0`, so a second request would revalidate rather
+     * than be free. The prints are loaded as images and held, which keeps
+     * them in the document's image cache for the fly-through.
+     */
+    const controller = new AbortController();
+    registerPreloadCancel(() => controller.abort());
+
+    const keys = Object.keys(MEDIA) as MediaKey[];
+    const paths = keys.map(mediaPath);
+    const sizes = new Array(keys.length).fill(0);
+    const got = new Array(keys.length).fill(0);
+    const prints = PHOTOS.map((p) => photoSmall(p.src));
+    let printsDone = 0;
+
+    const measure = () => {
+      lastByteAt = performance.now();
+      const total = sizes.reduce((x, y) => x + y, 0) + prints.length * PRINT_WEIGHT;
+      const done = got.reduce((x, y) => x + y, 0) + printsDone * PRINT_WEIGHT;
+      if (total > 0) actualLoaded = Math.min(99, (done / total) * 100);
+    };
+
+    const downloadFilm = async () => {
       const urls: Partial<Record<MediaKey, string>> = {};
-
-      const progress = () => {
-        lastByteAt = performance.now();
-      };
-
       try {
+        /* Sized first so the bar reflects the whole job from the start. */
         const responses = await Promise.all(
-          paths.map(async (path) => {
-            /* Low priority: it should never hold up anything on screen. */
-            const res = await fetch(path, {
-              signal: controller.signal,
-              priority: "low",
-            } as RequestInit);
+          paths.map(async (path, i) => {
+            const res = await fetch(path, { signal: controller.signal });
             if (!res.ok) throw new Error(`fetch ${path}`);
-            lastByteAt = performance.now();
+            const len = res.headers.get("content-length");
+            sizes[i] = len ? parseInt(len, 10) : ESTIMATED_SIZE;
+            measure();
             return res;
           }),
         );
@@ -201,10 +209,11 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
             const reader = res.body?.getReader();
             if (!reader) {
               const blob = await res.blob();
+              got[i] = sizes[i];
               urls[keys[i]] = URL.createObjectURL(
                 blob.type ? blob : new Blob([blob], { type: MIME }),
               );
-              progress();
+              measure();
               return;
             }
             const chunks: BlobPart[] = [];
@@ -212,32 +221,55 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
               const { done, value } = await reader.read();
               if (done || isCancelled) break;
               chunks.push(value);
-              progress();
+              got[i] += value.length;
+              measure();
             }
             /* The type is not optional. A blob URL with an empty type gives
                the element nothing to identify the container by; Chrome sniffs
                it and copes, other browsers refuse to decode and the video
                simply never appears. */
-            urls[keys[i]] = URL.createObjectURL(
-              new Blob(chunks, { type: MIME }),
-            );
+            urls[keys[i]] = URL.createObjectURL(new Blob(chunks, { type: MIME }));
           }),
         );
-
         if (!isCancelled) resolveMedia(urls);
-        /* Nothing left to give up on. Without this the guard keeps ticking
-           against a `lastByteAt` that has stopped moving, and twelve seconds
-           later calls resolveMedia again -- harmless, since that is guarded,
-           but it should not be relying on that. */
-        clearInterval(releaseGuard);
       } catch {
-        /* Blocked, offline, or out of memory — let the players fall back to
-           the plain paths rather than leaving them without a source. */
+        /* Blocked, offline, or out of memory: let the player fall back to
+           the plain path rather than leaving it without a source. */
         resolveMedia({});
       }
     };
 
-    if (towerReadyRef.current) startDownload();
+    /* Loaded and decoded, so the first frame they appear in does not wait on
+       either. A print that fails still counts: one missing photograph must
+       not hold the page. */
+    const loadPrints = () =>
+      Promise.all(
+        prints.map(
+          (src) =>
+            new Promise<void>((done) => {
+              const img = new Image();
+              img.decoding = "async";
+              const settle = () => {
+                printsDone++;
+                measure();
+                done();
+              };
+              img.onload = () => {
+                img.decode().then(settle, settle);
+              };
+              img.onerror = settle;
+              img.src = src;
+              heldPrints.push(img);
+            }),
+        ),
+      );
+
+    Promise.all([downloadFilm(), loadPrints()]).then(() => {
+      /* Finishing is the authoritative signal, whatever the headers claimed:
+         a withheld content-length leaves the ratio short of 100 for good. */
+      actualLoaded = 100;
+      clearInterval(releaseGuard);
+    });
 
     /* 2. The escape hatch, for a connection that has stopped rather than one
      *    that is merely slow.
@@ -245,29 +277,45 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
      * Releasing here is a last resort: the player falls back to the plain
      * path and streams the footage itself. It is keyed to the download having
      * actually stalled, never to it merely being slow. */
+    const startedLoad = performance.now();
     const releaseGuard = setInterval(() => {
-      if (isCancelled || !started) return;
+      if (isCancelled) return;
       const now = performance.now();
       if (now - lastByteAt < STALL_MS && now - startedLoad < HARD_CAP_MS) return;
       clearInterval(releaseGuard);
+      controller.abort();
       resolveMedia({});
+      actualLoaded = 100;
     }, 1000);
 
     // 3. Smooth animation ticker for progress counter
     const startedAt = performance.now();
     let lastTickAt = startedAt;
+    /* When everything finished arriving, so the wait for the tower's first
+       frame can be given a limit. Zero until it has. */
+    let downloadedAt = 0;
 
     const tick = () => {
       if (isCancelled) return;
       lastTickAt = performance.now();
 
-      const elapsed = lastTickAt - startedAt;
-      const warm = WARMUP_CEILING * (1 - Math.exp(-elapsed / WARMUP_MS));
+      /* Connection setup and the response headers both land before a single
+         byte is counted, and a bar sitting at 0 through that reads as broken.
+         This lets it creep on time alone for a moment, bounded hard. */
+      const warm = Math.min(1, (lastTickAt - startedAt) / WARMUP_MS) * WARMUP_CEILING;
 
-      /* The gate: 100 only once the tower has drawn its first frame, or
-         once it has had TOWER_WAIT_MS to try. The film is not part of it. */
-      const maxTarget =
-        towerReadyRef.current || elapsed > TOWER_WAIT_MS ? 100 : Math.min(90, warm);
+      /* The gate: up to 90 on the bytes, 95 once they are all in, and 100
+         only once the tower has drawn as well (or has had TOWER_WAIT_MS). */
+      let maxTarget = 0;
+      if (actualLoaded < 100) {
+        maxTarget = Math.min(90, Math.max(actualLoaded * 0.9, warm));
+        downloadedAt = 0;
+      } else if (!towerReadyRef.current) {
+        if (!downloadedAt) downloadedAt = lastTickAt;
+        maxTarget = lastTickAt - downloadedAt > TOWER_WAIT_MS ? 100 : 95;
+      } else {
+        maxTarget = 100;
+      }
 
       const remaining = maxTarget - progressVal.current;
       const step = remaining > 0 ? Math.max(0.25, remaining * 0.12) : 0;
@@ -283,10 +331,12 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
       const p = Math.floor(progressVal.current);
       setProgress(p);
 
-      if (p < 40) {
+      if (p < 20) {
         setStatusText("INITIALIZING SYSTEM CORE");
-      } else if (p < 85) {
-        setStatusText("BUILDING LOTUS TOWER GEOMETRY");
+      } else if (p < 70) {
+        setStatusText("BUFFERING AFTERMOVIE FOOTAGE");
+      } else if (p < 90) {
+        setStatusText("LOADING GENERATION 25 GALLERY");
       } else if (p < 99) {
         setStatusText(
           !towerReadyRef.current
@@ -311,7 +361,8 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
       if (
         !isCancelled &&
         performance.now() - lastTickAt > 1200 &&
-        towerReadyRef.current
+        towerReadyRef.current &&
+        actualLoaded >= 100
       ) {
         progressVal.current = 100;
         setProgress(100);
@@ -322,6 +373,9 @@ export default function Preloader({ onComplete }: { onComplete?: () => void }) {
 
     return () => {
       isCancelled = true;
+      /* Stop the download with the component: left running, a remount (dev
+         mode mounts every effect twice) fetched the whole film a second time. */
+      controller.abort();
       clearInterval(stallGuard);
       window.removeEventListener("tower:ready", onTowerReady);
       clearInterval(releaseGuard);

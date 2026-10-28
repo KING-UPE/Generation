@@ -6,7 +6,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
 import Lightbox from "@/components/ui/Lightbox";
-import { PHOTOS, photoSrcSet } from "@/lib/photos";
+import { PHOTOS, photoSmall } from "@/lib/photos";
 import { EVENT } from "@/lib/event";
 
 /**
@@ -360,12 +360,12 @@ export default function GalleryFlow() {
                   boxShadow: "0 20px 60px rgba(0,0,0,0.8), 0 0 20px hsl(var(--red-hot-c) / 0.15)",
                 }}
               >
+                {/* The 640 copy, which the preloader has already loaded and
+                    decoded: these fly past, and a print still arriving was
+                    visible as it came in. Not lazy, for the same reason. */}
                 <img
-                  src={it.src}
-                  srcSet={photoSrcSet(it.src)}
-                  sizes="(max-width: 768px) 50vw, 22vw"
+                  src={photoSmall(it.src)}
                   alt=""
-                  loading="lazy"
                   decoding="async"
                   className="h-full w-full object-cover"
                 />

@@ -200,10 +200,10 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Column 1: the pages and the way in.
-              Two rows tall on a phone, so Channels and Event stack beside it
-              in the second column instead of pushing a third row. */}
-          <div className="row-span-2 lg:row-span-1">
+          {/* Column 1: the pages and the way in. On a phone it pairs with
+              Channels, and Event takes the full row below them: squeezed into
+              the second column beside this one, the venue ran off the edge. */}
+          <div>
             <span className="font-mono uppercase text-dim tracking-[0.18em] text-[11px] mb-5 block">
               Explore
             </span>
@@ -266,8 +266,9 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Column 3: Event Info */}
-          <div>
+          {/* Column 3: Event Info. Its own full row on a phone, ruled off
+              from the pair above. */}
+          <div className="col-span-2 border-t border-hairline/60 pt-8 lg:col-span-1 lg:border-t-0 lg:pt-0">
             <span className="font-mono uppercase text-dim tracking-[0.18em] text-[11px] mb-5 block">
               Event
             </span>

@@ -453,8 +453,8 @@ export default function Film() {
       };
       video.addEventListener("error", onSrcError);
 
-      /* Take the preloaded bytes as soon as they exist: the preloader fetches
-         them behind the page once the tower is up. */
+      /* Take the preloaded bytes as soon as they exist: the preloader holds
+         the page until the film is downloaded. */
       const stopWaiting = onMediaResolved(() => {
         const src = mediaSrc("film");
         if (video.getAttribute("src") !== src) {
@@ -465,9 +465,9 @@ export default function Film() {
         }
       });
 
-      /* The film downloads behind the page and is not waited for. Coming
-         within a screen and a half of it with the download still running,
-         take the plain path and stream, so it is never reached empty. */
+      /* Normally settled long before this is reached. If the preloader let
+         the page through on a stalled download, take the plain path and
+         stream on the way in, so the film is never reached empty. */
       const approach = new IntersectionObserver(
         ([entry]) => {
           if (!entry?.isIntersecting) return;
