@@ -438,42 +438,70 @@ html.lenis, html.lenis body { height: auto; }
 
 /*
  * The ticket: a stub and a body with a perforation between them, and a bite
- * out of each edge where the tear runs. The bites are a mask, two half-boxes
- * each holding one hole, so the edge is really open and the stars show
- * through it. Below lg the stub sits on top and the tear runs across, at the
- * stub's height (h-56, h-64, h-72); from lg up they sit side by side and the
- * tear runs down at the column split, 1.15 / 2.15 of the width.
+ * out of each edge where the tear runs. Below lg the stub sits on top and the
+ * tear runs across, at the stub's height (h-56, h-64, h-72); from lg up they
+ * sit side by side and the tear runs down at the column split, 1.15 / 2.15 of
+ * the width.
+ *
+ * The bites are painted, not cut. They were a mask on the ticket, and Safari
+ * on a phone drops the background of a masked element whose ancestor has a
+ * filter (the outline is one): the photograph stayed and the body went black.
+ * Each bite is now a disc of the page's black laid over the edge, with a
+ * hairline arc to carry the outline round it, clipped to the half inside the
+ * ticket (plus the pixel the outline sits in).
  */
-.ticket {
+.ticket-wrap {
   --notch: 14px;
   --tear-y: 14rem;
-  -webkit-mask:
-    radial-gradient(circle var(--notch) at 0 var(--tear-y), #0000 98%, #000) left / 51% 100% no-repeat,
-    radial-gradient(circle var(--notch) at 100% var(--tear-y), #0000 98%, #000) right / 51% 100% no-repeat;
-  mask:
-    radial-gradient(circle var(--notch) at 0 var(--tear-y), #0000 98%, #000) left / 51% 100% no-repeat,
-    radial-gradient(circle var(--notch) at 100% var(--tear-y), #0000 98%, #000) right / 51% 100% no-repeat;
 }
 @media (min-width: 40rem) {
-  .ticket { --tear-y: 16rem; }
+  .ticket-wrap { --tear-y: 16rem; }
 }
 @media (min-width: 48rem) {
-  .ticket { --tear-y: 18rem; }
+  .ticket-wrap { --tear-y: 18rem; }
 }
 @media (min-width: 64rem) {
-  .ticket {
+  .ticket-wrap {
     --notch: 18px;
     --tear-x: 53.49%;
-    -webkit-mask:
-      radial-gradient(circle var(--notch) at var(--tear-x) 0, #0000 98%, #000) top / 100% 51% no-repeat,
-      radial-gradient(circle var(--notch) at var(--tear-x) 100%, #0000 98%, #000) bottom / 100% 51% no-repeat;
-    mask:
-      radial-gradient(circle var(--notch) at var(--tear-x) 0, #0000 98%, #000) top / 100% 51% no-repeat,
-      radial-gradient(circle var(--notch) at var(--tear-x) 100%, #0000 98%, #000) bottom / 100% 51% no-repeat;
   }
 }
 
-/* The ticket's outline, on a wrapper so it traces the cut and the bites. */
+.ticket-notch {
+  position: absolute;
+  top: calc(var(--tear-y) - var(--notch));
+  width: calc(var(--notch) * 2);
+  height: calc(var(--notch) * 2);
+  border-radius: 9999px;
+  background: #000;
+  box-shadow: inset 0 0 0 1px rgba(237, 237, 240, 0.28);
+  pointer-events: none;
+}
+.ticket-notch-a {
+  left: calc(-1 * var(--notch));
+  clip-path: inset(0 0 0 calc(50% - 1px));
+}
+.ticket-notch-b {
+  right: calc(-1 * var(--notch));
+  clip-path: inset(0 calc(50% - 1px) 0 0);
+}
+@media (min-width: 64rem) {
+  .ticket-notch {
+    left: calc(var(--tear-x) - var(--notch));
+    right: auto;
+  }
+  .ticket-notch-a {
+    top: calc(-1 * var(--notch));
+    clip-path: inset(calc(50% - 1px) 0 0 0);
+  }
+  .ticket-notch-b {
+    top: auto;
+    bottom: calc(-1 * var(--notch));
+    clip-path: inset(0 0 calc(50% - 1px) 0);
+  }
+}
+
+/* The ticket's outline, on a wrapper so it traces the chamfered cut. */
 .ticket-edge {
   filter: drop-shadow(1px 0 0 rgba(237, 237, 240, 0.28))
           drop-shadow(-1px 0 0 rgba(237, 237, 240, 0.28))
